@@ -2,6 +2,8 @@ NULL =
 
 ACLOCAL_AMFLAGS = -I m4
 
+SUBDIRS = data service
+
 EXTRA_DIST = m4
 
 MAINTAINERCLEANFILES = \

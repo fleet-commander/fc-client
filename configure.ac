@@ -20,6 +20,8 @@ PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.36)  # Just a guess
 PKG_CHECK_MODULES(GIO, gio-unix-2.0)
 
 AC_CONFIG_FILES([
+  data/Makefile
+  service/Makefile
   Makefile
 ])
 AC_OUTPUT
