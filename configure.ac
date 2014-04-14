@@ -18,6 +18,7 @@ GLIB_GSETTINGS
 # Dependencies
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.36)  # Just a guess
 PKG_CHECK_MODULES(GIO, gio-unix-2.0)
+PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0)
 
 AC_CONFIG_FILES([
   data/Makefile

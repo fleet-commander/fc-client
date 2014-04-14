@@ -22,6 +22,8 @@
 
 #include <gio/gio.h>
 
+#include "fcmdr-profile.h"
+
 /* Standard GObject macros */
 #define FCMDR_TYPE_SERVICE \
 	(fcmdr_service_get_type ())
@@ -57,6 +59,11 @@ void		fcmdr_service_user_session_hold	(FCmdrService *service,
 void		fcmdr_service_user_session_release
 						(FCmdrService *service,
 						 uid_t uid);
+void		fcmdr_service_add_profile	(FCmdrService *service,
+						 FCmdrProfile *profile);
+FCmdrProfile *	fcmdr_service_ref_profile	(FCmdrService *service,
+						 const gchar *profile_uid);
+GList *		fcmdr_service_list_profiles	(FCmdrService *service);
 
 G_END_DECLS
 

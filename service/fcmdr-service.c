@@ -30,10 +30,22 @@
 
 #define DBUS_OBJECT_PATH "/org/gnome/FleetCommander"
 
+typedef struct _AsyncContext AsyncContext;
+
 struct _FCmdrServicePrivate {
 	GDBusConnection *connection;
-	FCmdrMain *interface;
+	FCmdrProfiles *profiles_interface;
 	FCmdrLoginMonitor *login_monitor;
+
+	/* Profile UID -> FCmdrProfile */
+	GHashTable *profiles;
+	GMutex profiles_lock;
+};
+
+struct _AsyncContext {
+	GDBusInterface *interface;
+	GDBusMethodInvocation *invocation;
+	FCmdrService *service;
 };
 
 enum {
@@ -53,12 +65,203 @@ G_DEFINE_TYPE_WITH_CODE (
 		G_TYPE_INITABLE,
 		fcmdr_service_initable_interface_init))
 
-static gboolean
-fcmdr_service_handle_add_session_cb (FCmdrMain *interface,
-                                     GDBusMethodInvocation *invocation,
-                                     const gchar *user,
-                                     FCmdrService *service)
+static void
+async_context_free (AsyncContext *async_context)
 {
+	g_clear_object (&async_context->interface);
+	g_clear_object (&async_context->invocation);
+	g_clear_object (&async_context->service);
+
+	g_slice_free (AsyncContext, async_context);
+}
+
+static gboolean
+fcmdr_service_handle_profiles_add_cb (FCmdrProfiles *interface,
+                                      GDBusMethodInvocation *invocation,
+                                      const gchar *json_data,
+                                      FCmdrService *service)
+{
+	GInputStream *stream;
+	FCmdrProfile *profile;
+	GError *local_error = NULL;
+
+	stream = g_memory_input_stream_new_from_data (
+		json_data, -1, (GDestroyNotify) NULL);
+
+	profile = fcmdr_profile_load_sync (stream, NULL, &local_error);
+
+	g_object_unref (stream);
+
+	/* Sanity check */
+	g_warn_if_fail (
+		((profile != NULL) && (local_error == NULL)) ||
+		((profile == NULL) && (local_error != NULL)));
+
+	if (profile != NULL) {
+		fcmdr_service_add_profile (service, profile);
+		g_object_unref (profile);
+	}
+
+	if (local_error == NULL) {
+		fcmdr_profiles_complete_add (interface, invocation);
+	} else {
+		g_dbus_method_invocation_take_error (invocation, local_error);
+	}
+
+	return TRUE;
+}
+
+/* Helper for "AddFile" method handler. */
+static void
+fcmdr_service_add_file_load_cb (GObject *source_object,
+                                GAsyncResult *result,
+                                gpointer user_data)
+{
+	AsyncContext *async_context = user_data;
+	FCmdrProfile *profile;
+	GError *local_error = NULL;
+
+	profile = fcmdr_profile_load_finish (result, &local_error);
+
+	/* Sanity check */
+	g_warn_if_fail (
+		((profile != NULL) && (local_error == NULL)) ||
+		((profile == NULL) && (local_error != NULL)));
+
+	if (profile != NULL) {
+		fcmdr_service_add_profile (async_context->service, profile);
+		g_object_unref (profile);
+	}
+
+	if (local_error == NULL) {
+		fcmdr_profiles_complete_add_file (
+			FCMDR_PROFILES (async_context->interface),
+			async_context->invocation);
+	} else {
+		g_dbus_method_invocation_take_error (
+			async_context->invocation, local_error);
+	}
+
+	async_context_free (async_context);
+}
+
+/* Helper for "AddFile" method handler. */
+static void
+fcmdr_service_add_file_read_cb (GObject *source_object,
+                                GAsyncResult *result,
+                                gpointer user_data)
+{
+	AsyncContext *async_context = user_data;
+	GFileInputStream *stream;
+	GError *local_error = NULL;
+
+	stream = g_file_read_finish (
+		G_FILE (source_object), result, &local_error);
+
+	/* Sanity check */
+	g_warn_if_fail (
+		((stream != NULL) && (local_error == NULL)) ||
+		((stream == NULL) && (local_error != NULL)));
+
+	if (stream != NULL) {
+		fcmdr_profile_load (
+			G_INPUT_STREAM (stream), NULL,
+			fcmdr_service_add_file_load_cb,
+			async_context);
+		g_object_unref (stream);
+	}
+
+	if (local_error != NULL) {
+		g_dbus_method_invocation_take_error (
+			async_context->invocation, local_error);
+		async_context_free (async_context);
+	}
+}
+
+static gboolean
+fcmdr_service_handle_profiles_add_file_cb (FCmdrProfiles *interface,
+                                           GDBusMethodInvocation *invocation,
+                                           const gchar *json_file,
+                                           FCmdrService *service)
+{
+	AsyncContext *async_context;
+	GFile *file;
+	GTask *task;
+
+	file = g_file_new_for_commandline_arg (json_file);
+
+	async_context = g_slice_new0 (AsyncContext);
+	async_context->interface = g_object_ref (interface);
+	async_context->invocation = g_object_ref (invocation);
+	async_context->service = g_object_ref (service);
+
+	g_file_read_async (
+		file, G_PRIORITY_DEFAULT, NULL,
+		fcmdr_service_add_file_read_cb,
+		async_context);
+
+	g_object_unref (file);
+
+	return TRUE;
+}
+
+static gboolean
+fcmdr_service_handle_profiles_get_cb (FCmdrProfiles *interface,
+                                      GDBusMethodInvocation *invocation,
+                                      const gchar *uid,
+                                      FCmdrService *service)
+{
+	FCmdrProfile *profile;
+
+	profile = fcmdr_service_ref_profile (service, uid);
+
+	if (profile != NULL) {
+		gchar *json_data;
+
+		json_data = fcmdr_profile_to_data (profile, TRUE, NULL);
+		fcmdr_profiles_complete_get (interface, invocation, json_data);
+		g_free (json_data);
+
+		g_object_unref (profile);
+	} else {
+		g_dbus_method_invocation_return_error (
+			invocation, G_IO_ERROR,
+			G_IO_ERROR_NOT_FOUND,
+			"No profile with UID '%s'", uid);
+	}
+
+	return TRUE;
+}
+
+static gboolean
+fcmdr_service_handle_profiles_list_cb (FCmdrProfiles *interface,
+                                       GDBusMethodInvocation *invocation,
+                                       FCmdrService *service)
+{
+	GList *list, *link;
+	guint length, ii = 0;
+	gchar **strv;
+
+	list = fcmdr_service_list_profiles (service);
+	strv = g_new0 (gchar *, g_list_length (list) + 1);
+
+	for (link = list; link != NULL; link = g_list_next (link)) {
+		FCmdrProfile *profile;
+		const gchar *profile_uid;
+
+		profile = FCMDR_PROFILE (link->data);
+		profile_uid = fcmdr_profile_get_uid (profile);
+		strv[ii++] = g_strdup (profile_uid);
+	}
+
+	fcmdr_profiles_complete_list (
+		interface, invocation, (const gchar * const *) strv);
+
+	g_strfreev (strv);
+
+	g_list_free_full (list, (GDestroyNotify) g_object_unref);
+
+	return TRUE;
 }
 
 static void
@@ -114,11 +317,26 @@ fcmdr_service_dispose (GObject *object)
 	priv = FCMDR_SERVICE_GET_PRIVATE (object);
 
 	g_clear_object (&priv->connection);
-	g_clear_object (&priv->interface);
+	g_clear_object (&priv->profiles_interface);
 	g_clear_object (&priv->login_monitor);
+
+	g_hash_table_remove_all (priv->profiles);
 
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->dispose (object);
+}
+
+static void
+fcmdr_service_finalize (GObject *object)
+{
+	FCmdrServicePrivate *priv;
+
+	priv = FCMDR_SERVICE_GET_PRIVATE (object);
+
+	g_hash_table_destroy (priv->profiles);
+
+	/* Chain up to parent's finalize() method. */
+	G_OBJECT_CLASS (fcmdr_service_parent_class)->finalize (object);
 }
 
 static void
@@ -145,7 +363,7 @@ fcmdr_service_initable_init (GInitable *initable,
 	priv = FCMDR_SERVICE_GET_PRIVATE (initable);
 
 	return g_dbus_interface_skeleton_export (
-		G_DBUS_INTERFACE_SKELETON (priv->interface),
+		G_DBUS_INTERFACE_SKELETON (priv->profiles_interface),
 		priv->connection, DBUS_OBJECT_PATH, error);
 }
 
@@ -184,12 +402,40 @@ fcmdr_service_initable_interface_init (GInitableIface *interface)
 static void
 fcmdr_service_init (FCmdrService *service)
 {
+	GHashTable *profiles;
+
+	profiles = g_hash_table_new_full (
+		(GHashFunc) g_str_hash,
+		(GEqualFunc) g_str_equal,
+		(GDestroyNotify) g_free,
+		(GDestroyNotify) g_object_unref);
+
 	service->priv = FCMDR_SERVICE_GET_PRIVATE (service);
-	service->priv->interface = fcmdr_main_skeleton_new ();
+	service->priv->profiles_interface = fcmdr_profiles_skeleton_new ();
+	service->priv->profiles = profiles;
 
 	g_signal_connect (
-		service->priv->interface, "handle-add-session",
-		G_CALLBACK (fcmdr_service_handle_add_session_cb),
+		service->priv->profiles_interface,
+		"handle-add",
+		G_CALLBACK (fcmdr_service_handle_profiles_add_cb),
+		service);
+
+	g_signal_connect (
+		service->priv->profiles_interface,
+		"handle-add-file",
+		G_CALLBACK (fcmdr_service_handle_profiles_add_file_cb),
+		service);
+
+	g_signal_connect (
+		service->priv->profiles_interface,
+		"handle-get",
+		G_CALLBACK (fcmdr_service_handle_profiles_get_cb),
+		service);
+
+	g_signal_connect (
+		service->priv->profiles_interface,
+		"handle-list",
+		G_CALLBACK (fcmdr_service_handle_profiles_list_cb),
 		service);
 }
 
@@ -230,5 +476,65 @@ fcmdr_service_user_session_release (FCmdrService *service,
 	g_return_if_fail (uid > 0);
 
 	g_print ("%s(%u)\n", G_STRFUNC, uid);
+}
+
+void
+fcmdr_service_add_profile (FCmdrService *service,
+                           FCmdrProfile *profile)
+{
+	const gchar *profile_uid;
+
+	g_return_if_fail (FCMDR_IS_SERVICE (service));
+	g_return_if_fail (FCMDR_IS_PROFILE (profile));
+
+	g_mutex_lock (&service->priv->profiles_lock);
+
+	profile_uid = fcmdr_profile_get_uid (profile);
+
+	g_hash_table_insert (
+		service->priv->profiles,
+		g_strdup (profile_uid),
+		g_object_ref (profile));
+
+	g_mutex_unlock (&service->priv->profiles_lock);
+}
+
+FCmdrProfile *
+fcmdr_service_ref_profile (FCmdrService *service,
+                           const gchar *profile_uid)
+{
+	FCmdrProfile *profile;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+	g_return_val_if_fail (profile_uid != NULL, NULL);
+
+	g_mutex_lock (&service->priv->profiles_lock);
+
+	profile = g_hash_table_lookup (service->priv->profiles, profile_uid);
+
+	if (profile != NULL)
+		g_object_ref (profile);
+
+	g_mutex_unlock (&service->priv->profiles_lock);
+
+	return profile;
+}
+
+GList *
+fcmdr_service_list_profiles (FCmdrService *service)
+{
+	GList *list;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+
+	g_mutex_lock (&service->priv->profiles_lock);
+
+	list = g_hash_table_get_values (service->priv->profiles);
+
+	g_list_foreach (list, (GFunc) g_object_ref, NULL);
+
+	g_mutex_unlock (&service->priv->profiles_lock);
+
+	return list;
 }
 

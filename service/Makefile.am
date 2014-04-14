@@ -14,7 +14,7 @@ $(dbus_built_sources) : Makefile.am org.gnome.FleetCommander.xml
 dbus_built_sources = \
 	fcmdr-generated.c \
 	fcmdr-generated.h \
-	fcmdr-generated-doc-org.gnome.FleetCommander.Main.xml \
+	fcmdr-generated-doc-org.gnome.FleetCommander.Profiles.xml \
 	$(NULL)
 
 BUILT_SOURCES = \
@@ -23,10 +23,12 @@ BUILT_SOURCES = \
 
 fcmdr_service_CFLAGS = \
 	-DG_LOG_DOMAIN=\"fleet-commander\" \
+	$(JSON_GLIB_CFLAGS) \
 	$(GIO_CFLAGS) \
 	$(NULL)
 
 fcmdr_service_LDADD = \
+	$(JSON_GLIB_LIBS) \
 	$(GIO_LIBS) \
 	$(NULL)
 
@@ -36,6 +38,8 @@ fcmdr_service_SOURCES = \
 	fcmdr-login-monitor.h \
 	fcmdr-logind-monitor.c \
 	fcmdr-logind-monitor.h \
+	fcmdr-profile.c \
+	fcmdr-profile.h \
 	fcmdr-service.c \
 	fcmdr-service.h \
 	main.c \
