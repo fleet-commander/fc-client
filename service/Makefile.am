@@ -34,6 +34,8 @@ fcmdr_service_LDADD = \
 
 fcmdr_service_SOURCES = \
 	$(BUILT_SOURCES) \
+	fcmdr-extensions.c \
+	fcmdr-extensions.h \
 	fcmdr-login-monitor.c \
 	fcmdr-login-monitor.h \
 	fcmdr-logind-monitor.c \
@@ -42,6 +44,8 @@ fcmdr_service_SOURCES = \
 	fcmdr-profile.h \
 	fcmdr-service.c \
 	fcmdr-service.h \
+	fcmdr-settings-backend.c \
+	fcmdr-settings-backend.h \
 	main.c \
 	$(NULL)
 

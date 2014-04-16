@@ -23,6 +23,9 @@
 
 #include <json-glib/json-glib.h>
 
+#include "fcmdr-extensions.h"
+#include "fcmdr-settings-backend.h"
+
 #define FCMDR_PROFILE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
 	((obj), FCMDR_TYPE_PROFILE, FCmdrProfilePrivate))
@@ -30,6 +33,8 @@
 struct _FCmdrProfilePrivate {
 	JsonParser *json_parser;
 	JsonObject *json_object;
+
+	GPtrArray *settings_backends;
 
 	/* This is only set during instance initialization. */
 	GInputStream *temporary_stream;
@@ -169,6 +174,52 @@ fcmdr_profile_validate (FCmdrProfile *profile,
 }
 
 static void
+fcmdr_profile_init_settings_backends (FCmdrProfile *profile)
+{
+	GIOExtensionPoint *extension_point;
+	JsonObject *json_object;
+	GList *list = NULL, *link;
+
+	fcmdr_ensure_extensions_registered ();
+
+	extension_point = g_io_extension_point_lookup (
+		FCMDR_SETTINGS_BACKEND_EXTENSION_POINT_NAME);
+
+	json_object = json_object_get_object_member (
+		profile->priv->json_object, "settings");
+
+	if (json_object != NULL)
+		list = json_object_get_members (json_object);
+
+	/* The member names double as extension names. */
+	for (link = list; link != NULL; link = g_list_next (link)) {
+		GSettingsBackend *backend;
+		GIOExtension *extension;
+		JsonNode *settings;
+		const gchar *name = link->data;
+
+		extension = g_io_extension_point_get_extension_by_name (
+			extension_point, name);
+		if (extension == NULL) {
+			g_critical ("No extension available for '%s'", name);
+			continue;
+		}
+
+		settings = json_object_get_member (json_object, name);
+
+		backend = g_object_new (
+			g_io_extension_get_type (extension),
+			"profile", profile,
+			"settings", settings,
+			NULL);
+
+		g_ptr_array_add (profile->priv->settings_backends, backend);
+	}
+
+	g_list_free (list);
+}
+
+static void
 fcmdr_profile_dispose (GObject *object)
 {
 	FCmdrProfilePrivate *priv;
@@ -184,8 +235,23 @@ fcmdr_profile_dispose (GObject *object)
 		priv->json_object = NULL;
 	}
 
+	g_ptr_array_set_size (priv->settings_backends, 0);
+
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (fcmdr_profile_parent_class)->dispose (object);
+}
+
+static void
+fcmdr_profile_finalize (GObject *object)
+{
+	FCmdrProfilePrivate *priv;
+
+	priv = FCMDR_PROFILE_GET_PRIVATE (object);
+
+	g_ptr_array_free (priv->settings_backends, TRUE);
+
+	/* Chain up to parent's finalize() method. */
+	G_OBJECT_CLASS (fcmdr_profile_parent_class)->finalize (object);
 }
 
 static gboolean
@@ -206,6 +272,9 @@ fcmdr_profile_initable_init (GInitable *initable,
 	if (success)
 		success = fcmdr_profile_validate (profile, error);
 
+	if (success)
+		fcmdr_profile_init_settings_backends (profile);
+
 	g_clear_object (&profile->priv->temporary_stream);
 
 	return success;
@@ -220,6 +289,7 @@ fcmdr_profile_class_init (FCmdrProfileClass *class)
 
 	object_class = G_OBJECT_CLASS (class);
 	object_class->dispose = fcmdr_profile_dispose;
+	object_class->finalize = fcmdr_profile_finalize;
 }
 
 static void
@@ -234,6 +304,9 @@ fcmdr_profile_init (FCmdrProfile *profile)
 	profile->priv = FCMDR_PROFILE_GET_PRIVATE (profile);
 
 	profile->priv->json_parser = json_parser_new ();
+
+	profile->priv->settings_backends =
+		g_ptr_array_new_with_free_func (g_object_unref);
 }
 
 FCmdrProfile *
