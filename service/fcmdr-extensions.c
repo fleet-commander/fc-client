@@ -23,6 +23,8 @@
 
 #include "fcmdr-settings-backend.h"
 
+extern GType fcmdr_gsettings_backend_get_type (void);
+
 /* Helper for fcmdr_ensure_extension_points_registered() */
 static gpointer
 register_extension_points (gpointer unused)
@@ -49,4 +51,6 @@ void
 fcmdr_ensure_extensions_registered (void)
 {
 	/* Register GTypes for built-in extensions. */
+
+	g_type_ensure (fcmdr_gsettings_backend_get_type ());
 }
