@@ -21,6 +21,7 @@
 #define __FCMDR_PROFILE_H__
 
 #include <gio/gio.h>
+#include <json-glib/json-glib.h>
 
 /* Standard GObject macros */
 #define FCMDR_TYPE_PROFILE \
@@ -57,22 +58,17 @@ struct _FCmdrProfileClass {
 };
 
 GType		fcmdr_profile_get_type		(void) G_GNUC_CONST;
-FCmdrProfile *	fcmdr_profile_load_sync		(GInputStream *stream,
-						 GCancellable *cancellable,
-						 GError **error);
-void		fcmdr_profile_load		(GInputStream *stream,
-						 GCancellable *cancellable,
-						 GAsyncReadyCallback callback,
-						 gpointer user_data);
-FCmdrProfile *	fcmdr_profile_load_finish	(GAsyncResult *result,
+FCmdrProfile *	fcmdr_profile_new		(const gchar *data,
+						 gssize length,
 						 GError **error);
 guint		fcmdr_profile_hash		(FCmdrProfile *profile);
 gboolean	fcmdr_profile_equal		(FCmdrProfile *profile1,
 						 FCmdrProfile *profile2);
 const gchar *	fcmdr_profile_get_uid		(FCmdrProfile *profile);
-gchar *		fcmdr_profile_to_data		(FCmdrProfile *profile,
-						 gboolean pretty_print,
-						 gsize *length);
+const gchar *	fcmdr_profile_get_etag		(FCmdrProfile *profile);
+const gchar *	fcmdr_profile_get_name		(FCmdrProfile *profile);
+const gchar *	fcmdr_profile_get_description	(FCmdrProfile *profile);
+JsonObject *	fcmdr_profile_ref_settings	(FCmdrProfile *profile);
 
 G_END_DECLS
 

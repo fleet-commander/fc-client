@@ -81,16 +81,10 @@ fcmdr_service_handle_profiles_add_cb (FCmdrProfiles *interface,
                                       const gchar *json_data,
                                       FCmdrService *service)
 {
-	GInputStream *stream;
 	FCmdrProfile *profile;
 	GError *local_error = NULL;
 
-	stream = g_memory_input_stream_new_from_data (
-		json_data, -1, (GDestroyNotify) NULL);
-
-	profile = fcmdr_profile_load_sync (stream, NULL, &local_error);
-
-	g_object_unref (stream);
+	profile = fcmdr_profile_new (json_data, -1, &local_error);
 
 	/* Sanity check */
 	g_warn_if_fail (
@@ -118,10 +112,18 @@ fcmdr_service_add_file_load_cb (GObject *source_object,
                                 gpointer user_data)
 {
 	AsyncContext *async_context = user_data;
-	FCmdrProfile *profile;
+	FCmdrProfile *profile = NULL;
+	gchar *json_data = NULL;
 	GError *local_error = NULL;
 
-	profile = fcmdr_profile_load_finish (result, &local_error);
+	g_file_load_contents_finish (
+		G_FILE (source_object), result,
+		&json_data, NULL, NULL, &local_error);
+
+	if (json_data != NULL) {
+		profile = fcmdr_profile_new (json_data, -1, &local_error);
+		g_free (json_data);
+	}
 
 	/* Sanity check */
 	g_warn_if_fail (
@@ -145,39 +147,6 @@ fcmdr_service_add_file_load_cb (GObject *source_object,
 	async_context_free (async_context);
 }
 
-/* Helper for "AddFile" method handler. */
-static void
-fcmdr_service_add_file_read_cb (GObject *source_object,
-                                GAsyncResult *result,
-                                gpointer user_data)
-{
-	AsyncContext *async_context = user_data;
-	GFileInputStream *stream;
-	GError *local_error = NULL;
-
-	stream = g_file_read_finish (
-		G_FILE (source_object), result, &local_error);
-
-	/* Sanity check */
-	g_warn_if_fail (
-		((stream != NULL) && (local_error == NULL)) ||
-		((stream == NULL) && (local_error != NULL)));
-
-	if (stream != NULL) {
-		fcmdr_profile_load (
-			G_INPUT_STREAM (stream), NULL,
-			fcmdr_service_add_file_load_cb,
-			async_context);
-		g_object_unref (stream);
-	}
-
-	if (local_error != NULL) {
-		g_dbus_method_invocation_take_error (
-			async_context->invocation, local_error);
-		async_context_free (async_context);
-	}
-}
-
 static gboolean
 fcmdr_service_handle_profiles_add_file_cb (FCmdrProfiles *interface,
                                            GDBusMethodInvocation *invocation,
@@ -195,9 +164,9 @@ fcmdr_service_handle_profiles_add_file_cb (FCmdrProfiles *interface,
 	async_context->invocation = g_object_ref (invocation);
 	async_context->service = g_object_ref (service);
 
-	g_file_read_async (
-		file, G_PRIORITY_DEFAULT, NULL,
-		fcmdr_service_add_file_read_cb,
+	g_file_load_contents_async (
+		file, NULL,
+		fcmdr_service_add_file_load_cb,
 		async_context);
 
 	g_object_unref (file);
@@ -218,7 +187,7 @@ fcmdr_service_handle_profiles_get_cb (FCmdrProfiles *interface,
 	if (profile != NULL) {
 		gchar *json_data;
 
-		json_data = fcmdr_profile_to_data (profile, TRUE, NULL);
+		json_data = json_gobject_to_data (G_OBJECT (profile), NULL);
 		fcmdr_profiles_complete_get (interface, invocation, json_data);
 		g_free (json_data);
 
