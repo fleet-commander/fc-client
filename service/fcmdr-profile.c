@@ -29,9 +29,6 @@
 	((obj), FCMDR_TYPE_PROFILE, FCmdrProfilePrivate))
 
 struct _FCmdrProfilePrivate {
-	JsonParser *json_parser;
-	JsonObject *json_object;
-
 	gchar *uid;
 	gchar *etag;
 	gchar *name;
@@ -296,13 +293,6 @@ fcmdr_profile_dispose (GObject *object)
 
 	priv = FCMDR_PROFILE_GET_PRIVATE (object);
 
-	g_clear_object (&priv->json_parser);
-
-	if (priv->json_object != NULL) {
-		json_object_unref (priv->json_object);
-		priv->json_object = NULL;
-	}
-
 	if (priv->settings != NULL) {
 		json_object_unref (priv->settings);
 		priv->settings = NULL;
@@ -450,8 +440,6 @@ static void
 fcmdr_profile_init (FCmdrProfile *profile)
 {
 	profile->priv = FCMDR_PROFILE_GET_PRIVATE (profile);
-
-	profile->priv->json_parser = json_parser_new ();
 
 	profile->priv->settings_backends =
 		g_ptr_array_new_with_free_func (g_object_unref);
