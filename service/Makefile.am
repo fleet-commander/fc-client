@@ -48,6 +48,8 @@ fcmdr_service_SOURCES = \
 	fcmdr-settings-backend.h \
 	fcmdr-gsettings-backend.c \
 	fcmdr-gsettings-backend.h \
+	fcmdr-utils.c \
+	fcmdr-utils.h \
 	main.c \
 	$(NULL)
 
