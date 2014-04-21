@@ -58,6 +58,9 @@ struct _FCmdrSettingsBackend {
 
 struct _FCmdrSettingsBackendClass {
 	GObjectClass parent_class;
+
+	/* Methods */
+	void	(*apply_settings)	(FCmdrSettingsBackend *backend);
 };
 
 GType		fcmdr_settings_backend_get_type
@@ -65,6 +68,8 @@ GType		fcmdr_settings_backend_get_type
 FCmdrProfile *	fcmdr_settings_backend_ref_profile
 					(FCmdrSettingsBackend *backend);
 JsonNode *	fcmdr_settings_backend_get_settings
+					(FCmdrSettingsBackend *backend);
+void		fcmdr_settings_backend_apply_settings
 					(FCmdrSettingsBackend *backend);
 
 G_END_DECLS

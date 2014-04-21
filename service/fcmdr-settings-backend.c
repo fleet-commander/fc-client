@@ -133,6 +133,8 @@ fcmdr_settings_backend_class_init (FCmdrSettingsBackendClass *class)
 	object_class->get_property = fcmdr_settings_backend_get_property;
 	object_class->dispose = fcmdr_settings_backend_dispose;
 
+	class->apply_settings = NULL;
+
 	g_object_class_install_property (
 		object_class,
 		PROP_PROFILE,
@@ -178,5 +180,18 @@ fcmdr_settings_backend_get_settings (FCmdrSettingsBackend *backend)
 	g_return_val_if_fail (FCMDR_IS_SETTINGS_BACKEND (backend), NULL);
 
 	return backend->priv->settings;
+}
+
+void
+fcmdr_settings_backend_apply_settings (FCmdrSettingsBackend *backend)
+{
+	FCmdrSettingsBackendClass *class;
+
+	g_return_if_fail (FCMDR_IS_SETTINGS_BACKEND (backend));
+
+	class = FCMDR_SETTINGS_BACKEND_GET_CLASS (backend);
+
+	if (class->apply_settings != NULL)
+		class->apply_settings (backend);
 }
 
