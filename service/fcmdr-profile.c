@@ -47,9 +47,16 @@ enum {
 	PROP_UID
 };
 
+enum {
+	APPLY_SETTINGS,
+	LAST_SIGNAL
+};
+
 /* Forward Declarations */
 static void	fcmdr_profile_initable_interface_init
 					(GInitableIface *interface);
+
+static guint signals[LAST_SIGNAL];
 
 G_DEFINE_TYPE_WITH_CODE (
 	FCmdrProfile,
@@ -322,6 +329,21 @@ fcmdr_profile_finalize (GObject *object)
 	G_OBJECT_CLASS (fcmdr_profile_parent_class)->finalize (object);
 }
 
+static void
+fcmdr_profile_real_apply_settings (FCmdrProfile *profile)
+{
+	FCmdrSettingsBackend *backend;
+	GPtrArray *array;
+	guint ii;
+
+	array = profile->priv->settings_backends;
+
+	for (ii = 0; ii < array->len; ii++) {
+		backend = g_ptr_array_index (array, ii);
+		fcmdr_settings_backend_apply_settings (backend);
+	}
+}
+
 static gboolean
 fcmdr_profile_initable_init (GInitable *initable,
                              GCancellable *cancellable,
@@ -351,6 +373,8 @@ fcmdr_profile_class_init (FCmdrProfileClass *class)
 	object_class->get_property = fcmdr_profile_get_property;
 	object_class->dispose = fcmdr_profile_dispose;
 	object_class->finalize = fcmdr_profile_finalize;
+
+	class->apply_settings = fcmdr_profile_real_apply_settings;
 
 	g_object_class_install_property (
 		object_class,
@@ -411,6 +435,14 @@ fcmdr_profile_class_init (FCmdrProfileClass *class)
 			G_PARAM_READWRITE |
 			G_PARAM_CONSTRUCT_ONLY |
 			G_PARAM_STATIC_STRINGS));
+
+	signals[APPLY_SETTINGS] = g_signal_new (
+		"apply-settings",
+		G_OBJECT_CLASS_TYPE (class),
+		G_SIGNAL_RUN_LAST,
+		G_STRUCT_OFFSET (FCmdrProfileClass, apply_settings),
+		NULL, NULL, NULL,
+		G_TYPE_NONE, 0);
 
 	/* XXX json-glib does not know how to serialize or deserialize
 	 *     its own boxed types, so we need to teach it how for the
@@ -534,5 +566,13 @@ fcmdr_profile_ref_settings (FCmdrProfile *profile)
 	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), NULL);
 
 	return json_object_ref (profile->priv->settings);
+}
+
+void
+fcmdr_profile_apply_settings (FCmdrProfile *profile)
+{
+	g_return_if_fail (FCMDR_IS_PROFILE (profile));
+
+	g_signal_emit (profile, signals[APPLY_SETTINGS], 0);
 }
 
