@@ -22,7 +22,7 @@ BUILT_SOURCES = \
 	$(NULL)
 
 fcmdr_service_CFLAGS = \
-	-DG_LOG_DOMAIN=\"fleet-commander\" \
+	-DG_LOG_DOMAIN=\"fcmdr-service\" \
 	$(JSON_GLIB_CFLAGS) \
 	$(GIO_CFLAGS) \
 	$(NULL)
