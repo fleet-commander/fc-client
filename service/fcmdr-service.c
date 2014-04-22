@@ -466,6 +466,9 @@ fcmdr_service_add_profile (FCmdrService *service,
 		g_object_ref (profile));
 
 	g_mutex_unlock (&service->priv->profiles_lock);
+
+	/* XXX Just here temporarily for testing. */
+	fcmdr_profile_apply_settings (profile);
 }
 
 FCmdrProfile *
