@@ -20,7 +20,7 @@
 #ifndef __FCMDR_GSETTINGS_BACKEND_H__
 #define __FCMDR_GSETTINGS_BACKEND_H__
 
-#include "fcmdr-settings-backend.h"
+#include "fcmdr-service-backend.h"
 
 /* Standard GObject macros */
 #define FCMDR_TYPE_GSETTINGS_BACKEND \
@@ -50,12 +50,12 @@ typedef struct _FCmdrGSettingsBackendClass FCmdrGSettingsBackendClass;
 typedef struct _FCmdrGSettingsBackendPrivate FCmdrGSettingsBackendPrivate;
 
 struct _FCmdrGSettingsBackend {
-	FCmdrSettingsBackend parent;
+	FCmdrServiceBackend parent;
 	FCmdrGSettingsBackendPrivate *priv;
 };
 
 struct _FCmdrGSettingsBackendClass {
-	FCmdrSettingsBackendClass parent_class;
+	FCmdrServiceBackendClass parent_class;
 };
 
 GType		fcmdr_gsettings_backend_get_type

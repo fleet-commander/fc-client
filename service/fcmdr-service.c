@@ -21,6 +21,7 @@
 
 #include "fcmdr-service.h"
 
+#include "fcmdr-extensions.h"
 #include "fcmdr-generated.h"
 #include "fcmdr-logind-monitor.h"
 
@@ -36,6 +37,10 @@ struct _FCmdrServicePrivate {
 	GDBusConnection *connection;
 	FCmdrProfiles *profiles_interface;
 	FCmdrLoginMonitor *login_monitor;
+
+	/* Name -> FCmdrServiceBackend */
+	GHashTable *backends;
+	GMutex backends_lock;
 
 	/* Profile UID -> FCmdrProfile */
 	GHashTable *profiles;
@@ -234,6 +239,43 @@ fcmdr_service_handle_profiles_list_cb (FCmdrProfiles *interface,
 }
 
 static void
+fcmdr_service_init_backends (FCmdrService *service)
+{
+	GIOExtensionPoint *extension_point;
+	GList *list, *link;
+
+	fcmdr_ensure_extensions_registered ();
+
+	extension_point = g_io_extension_point_lookup (
+		FCMDR_SERVICE_BACKEND_EXTENSION_POINT_NAME);
+
+	list = g_io_extension_point_get_extensions (extension_point);
+
+	for (link = list; link != NULL; link = g_list_next (link)) {
+		GIOExtension *extension = link->data;
+		FCmdrServiceBackend *backend;
+		const gchar *name;
+		GType type;
+
+		name = g_io_extension_get_name (extension);
+		type = g_io_extension_get_type (extension);
+
+		backend = g_object_new (type, "service", service, NULL);
+
+		g_mutex_lock (&service->priv->backends_lock);
+
+		g_hash_table_replace (
+			service->priv->backends,
+			g_strdup (name),
+			g_object_ref (backend));
+
+		g_mutex_unlock (&service->priv->backends_lock);
+
+		g_object_unref (backend);
+	}
+}
+
+static void
 fcmdr_service_set_connection (FCmdrService *service,
                               GDBusConnection *connection)
 {
@@ -289,6 +331,7 @@ fcmdr_service_dispose (GObject *object)
 	g_clear_object (&priv->profiles_interface);
 	g_clear_object (&priv->login_monitor);
 
+	g_hash_table_remove_all (priv->backends);
 	g_hash_table_remove_all (priv->profiles);
 
 	/* Chain up to parent's dispose() method. */
@@ -302,7 +345,11 @@ fcmdr_service_finalize (GObject *object)
 
 	priv = FCMDR_SERVICE_GET_PRIVATE (object);
 
+	g_hash_table_destroy (priv->backends);
 	g_hash_table_destroy (priv->profiles);
+
+	g_mutex_clear (&priv->backends_lock);
+	g_mutex_clear (&priv->profiles_lock);
 
 	/* Chain up to parent's finalize() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->finalize (object);
@@ -316,6 +363,8 @@ fcmdr_service_constructed (GObject *object)
 	service = FCMDR_SERVICE (object);
 
 	service->priv->login_monitor = fcmdr_logind_monitor_new (service);
+
+	fcmdr_service_init_backends (service);
 
 	/* Chain up to parent's constructed() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->constructed (object);
@@ -371,7 +420,14 @@ fcmdr_service_initable_interface_init (GInitableIface *interface)
 static void
 fcmdr_service_init (FCmdrService *service)
 {
+	GHashTable *backends;
 	GHashTable *profiles;
+
+	backends = g_hash_table_new_full (
+		(GHashFunc) g_str_hash,
+		(GEqualFunc) g_str_equal,
+		(GDestroyNotify) g_free,
+		(GDestroyNotify) g_object_unref);
 
 	profiles = g_hash_table_new_full (
 		(GHashFunc) g_str_hash,
@@ -381,7 +437,11 @@ fcmdr_service_init (FCmdrService *service)
 
 	service->priv = FCMDR_SERVICE_GET_PRIVATE (service);
 	service->priv->profiles_interface = fcmdr_profiles_skeleton_new ();
+	service->priv->backends = backends;
 	service->priv->profiles = profiles;
+
+	g_mutex_init (&service->priv->backends_lock);
+	g_mutex_init (&service->priv->profiles_lock);
 
 	g_signal_connect (
 		service->priv->profiles_interface,
@@ -447,6 +507,45 @@ fcmdr_service_user_session_release (FCmdrService *service,
 	g_print ("%s(%u)\n", G_STRFUNC, uid);
 }
 
+FCmdrServiceBackend *
+fcmdr_service_ref_backend (FCmdrService *service,
+                           const gchar *backend_name)
+{
+	FCmdrServiceBackend *backend;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+	g_return_val_if_fail (backend_name != NULL, NULL);
+
+	g_mutex_lock (&service->priv->backends_lock);
+
+	backend = g_hash_table_lookup (service->priv->backends, backend_name);
+
+	if (backend != NULL)
+		g_object_ref (backend);
+
+	g_mutex_unlock (&service->priv->backends_lock);
+
+	return backend;
+}
+
+GList *
+fcmdr_service_list_backends (FCmdrService *service)
+{
+	GList *list;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+
+	g_mutex_lock (&service->priv->backends_lock);
+
+	list = g_hash_table_get_values (service->priv->backends);
+
+	g_list_foreach (list, (GFunc) g_object_ref, NULL);
+
+	g_mutex_unlock (&service->priv->backends_lock);
+
+	return list;
+}
+
 void
 fcmdr_service_add_profile (FCmdrService *service,
                            FCmdrProfile *profile)
@@ -468,7 +567,7 @@ fcmdr_service_add_profile (FCmdrService *service,
 	g_mutex_unlock (&service->priv->profiles_lock);
 
 	/* XXX Just here temporarily for testing. */
-	fcmdr_profile_apply_settings (profile);
+	fcmdr_service_apply_profiles (service);
 }
 
 FCmdrProfile *
@@ -508,5 +607,28 @@ fcmdr_service_list_profiles (FCmdrService *service)
 	g_mutex_unlock (&service->priv->profiles_lock);
 
 	return list;
+}
+
+void
+fcmdr_service_apply_profiles (FCmdrService *service)
+{
+	GList *backends;
+	GList *profiles;
+	GList *link;
+
+	g_return_if_fail (FCMDR_IS_SERVICE (service));
+
+	backends = fcmdr_service_list_backends (service);
+	profiles = fcmdr_service_list_profiles (service);
+
+	for (link = backends; link != NULL; link = g_list_next (link)) {
+		FCmdrServiceBackend *backend;
+
+		backend = FCMDR_SERVICE_BACKEND (link->data);
+		fcmdr_service_backend_apply_profiles (backend, profiles);
+	}
+
+	g_list_free_full (backends, (GDestroyNotify) g_object_unref);
+	g_list_free_full (profiles, (GDestroyNotify) g_object_unref);
 }
 

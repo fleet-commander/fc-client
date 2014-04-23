@@ -55,9 +55,6 @@ struct _FCmdrProfile {
 
 struct _FCmdrProfileClass {
 	GObjectClass parent_class;
-
-	/* Signals */
-	void		(*apply_settings)	(FCmdrProfile *profile);
 };
 
 GType		fcmdr_profile_get_type		(void) G_GNUC_CONST;
@@ -72,7 +69,6 @@ const gchar *	fcmdr_profile_get_etag		(FCmdrProfile *profile);
 const gchar *	fcmdr_profile_get_name		(FCmdrProfile *profile);
 const gchar *	fcmdr_profile_get_description	(FCmdrProfile *profile);
 JsonObject *	fcmdr_profile_ref_settings	(FCmdrProfile *profile);
-void		fcmdr_profile_apply_settings	(FCmdrProfile *profile);
 
 G_END_DECLS
 

@@ -44,8 +44,8 @@ fcmdr_service_SOURCES = \
 	fcmdr-profile.h \
 	fcmdr-service.c \
 	fcmdr-service.h \
-	fcmdr-settings-backend.c \
-	fcmdr-settings-backend.h \
+	fcmdr-service-backend.c \
+	fcmdr-service-backend.h \
 	fcmdr-gsettings-backend.c \
 	fcmdr-gsettings-backend.h \
 	fcmdr-utils.c \

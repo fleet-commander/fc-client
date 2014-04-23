@@ -22,7 +22,6 @@
 #include "fcmdr-profile.h"
 
 #include "fcmdr-extensions.h"
-#include "fcmdr-settings-backend.h"
 
 #define FCMDR_PROFILE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
@@ -35,7 +34,6 @@ struct _FCmdrProfilePrivate {
 	gchar *description;
 
 	JsonObject *settings;
-	GPtrArray *settings_backends;
 };
 
 enum {
@@ -47,16 +45,9 @@ enum {
 	PROP_UID
 };
 
-enum {
-	APPLY_SETTINGS,
-	LAST_SIGNAL
-};
-
 /* Forward Declarations */
 static void	fcmdr_profile_initable_interface_init
 					(GInitableIface *interface);
-
-static guint signals[LAST_SIGNAL];
 
 G_DEFINE_TYPE_WITH_CODE (
 	FCmdrProfile,
@@ -112,52 +103,6 @@ fcmdr_profile_validate (FCmdrProfile *profile,
 	}
 
 	return TRUE;
-}
-
-static void
-fcmdr_profile_init_settings_backends (FCmdrProfile *profile)
-{
-	GIOExtensionPoint *extension_point;
-	JsonObject *settings;
-	GList *list = NULL, *link;
-
-	fcmdr_ensure_extensions_registered ();
-
-	extension_point = g_io_extension_point_lookup (
-		FCMDR_SETTINGS_BACKEND_EXTENSION_POINT_NAME);
-
-	settings = fcmdr_profile_ref_settings (profile);
-
-	list = json_object_get_members (settings);
-
-	/* The member names double as extension names. */
-	for (link = list; link != NULL; link = g_list_next (link)) {
-		GSettingsBackend *backend;
-		GIOExtension *extension;
-		JsonNode *json_node;
-		const gchar *name = link->data;
-
-		extension = g_io_extension_point_get_extension_by_name (
-			extension_point, name);
-		if (extension == NULL) {
-			g_critical ("No extension available for '%s'", name);
-			continue;
-		}
-
-		json_node = json_object_get_member (settings, name);
-
-		backend = g_object_new (
-			g_io_extension_get_type (extension),
-			"profile", profile,
-			"settings", json_node,
-			NULL);
-
-		g_ptr_array_add (profile->priv->settings_backends, backend);
-	}
-
-	g_list_free (list);
-
-	json_object_unref (settings);
 }
 
 static void
@@ -305,8 +250,6 @@ fcmdr_profile_dispose (GObject *object)
 		priv->settings = NULL;
 	}
 
-	g_ptr_array_set_size (priv->settings_backends, 0);
-
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (fcmdr_profile_parent_class)->dispose (object);
 }
@@ -323,25 +266,8 @@ fcmdr_profile_finalize (GObject *object)
 	g_free (priv->name);
 	g_free (priv->description);
 
-	g_ptr_array_free (priv->settings_backends, TRUE);
-
 	/* Chain up to parent's finalize() method. */
 	G_OBJECT_CLASS (fcmdr_profile_parent_class)->finalize (object);
-}
-
-static void
-fcmdr_profile_real_apply_settings (FCmdrProfile *profile)
-{
-	FCmdrSettingsBackend *backend;
-	GPtrArray *array;
-	guint ii;
-
-	array = profile->priv->settings_backends;
-
-	for (ii = 0; ii < array->len; ii++) {
-		backend = g_ptr_array_index (array, ii);
-		fcmdr_settings_backend_apply_settings (backend);
-	}
 }
 
 static gboolean
@@ -349,16 +275,7 @@ fcmdr_profile_initable_init (GInitable *initable,
                              GCancellable *cancellable,
                              GError **error)
 {
-	FCmdrProfile *profile;
-
-	profile = FCMDR_PROFILE (initable);
-
-	if (!fcmdr_profile_validate (profile, error))
-		return FALSE;
-
-	fcmdr_profile_init_settings_backends (profile);
-
-	return TRUE;
+	return fcmdr_profile_validate (FCMDR_PROFILE (initable), error);
 }
 
 static void
@@ -373,8 +290,6 @@ fcmdr_profile_class_init (FCmdrProfileClass *class)
 	object_class->get_property = fcmdr_profile_get_property;
 	object_class->dispose = fcmdr_profile_dispose;
 	object_class->finalize = fcmdr_profile_finalize;
-
-	class->apply_settings = fcmdr_profile_real_apply_settings;
 
 	g_object_class_install_property (
 		object_class,
@@ -436,14 +351,6 @@ fcmdr_profile_class_init (FCmdrProfileClass *class)
 			G_PARAM_CONSTRUCT_ONLY |
 			G_PARAM_STATIC_STRINGS));
 
-	signals[APPLY_SETTINGS] = g_signal_new (
-		"apply-settings",
-		G_OBJECT_CLASS_TYPE (class),
-		G_SIGNAL_RUN_LAST,
-		G_STRUCT_OFFSET (FCmdrProfileClass, apply_settings),
-		NULL, NULL, NULL,
-		G_TYPE_NONE, 0);
-
 	/* XXX json-glib does not know how to serialize or deserialize
 	 *     its own boxed types, so we need to teach it how for the
 	 *     "settings" property.
@@ -472,9 +379,6 @@ static void
 fcmdr_profile_init (FCmdrProfile *profile)
 {
 	profile->priv = FCMDR_PROFILE_GET_PRIVATE (profile);
-
-	profile->priv->settings_backends =
-		g_ptr_array_new_with_free_func (g_object_unref);
 }
 
 FCmdrProfile *
@@ -566,13 +470,5 @@ fcmdr_profile_ref_settings (FCmdrProfile *profile)
 	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), NULL);
 
 	return json_object_ref (profile->priv->settings);
-}
-
-void
-fcmdr_profile_apply_settings (FCmdrProfile *profile)
-{
-	g_return_if_fail (FCMDR_IS_PROFILE (profile));
-
-	g_signal_emit (profile, signals[APPLY_SETTINGS], 0);
 }
 
