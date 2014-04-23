@@ -261,10 +261,21 @@ fcmdr_gsettings_backend_apply_profiles (FCmdrServiceBackend *backend,
                                         GList *profiles)
 {
 	GList *link;
+	GError *local_error = NULL;
 
 	for (link = profiles; link != NULL; link = g_list_next (link)) {
 		fcmdr_gsettings_backend_apply_profile_settings (
 			backend, FCMDR_PROFILE (link->data));
+	}
+
+	g_spawn_command_line_sync (
+		DCONF_PATH " update", NULL, NULL, NULL, &local_error);
+
+	if (local_error != NULL) {
+		g_critical (
+			"Failed to spawn dconf tool: %s",
+			local_error->message);
+		g_clear_error (&local_error);
 	}
 }
 

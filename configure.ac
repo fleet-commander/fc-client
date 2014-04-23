@@ -12,6 +12,13 @@ AM_SILENT_RULES([yes])
 # Check for programs
 AC_PROG_CC
 
+AC_ARG_VAR([DCONF], [path to dconf(1) tool])
+AC_PATH_PROG([DCONF], [dconf], [no])
+
+AS_IF([test "x$DCONF" = xno],
+      [AC_MSG_ERROR([Could not find 'dconf' in your PATH])])
+AC_DEFINE_UNQUOTED(DCONF_PATH, "$DCONF", [Path to dconf(1) tool])
+
 # Use GSettings
 GLIB_GSETTINGS
 
