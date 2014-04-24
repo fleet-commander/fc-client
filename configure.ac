@@ -27,6 +27,17 @@ PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.36)  # Just a guess
 PKG_CHECK_MODULES(GIO, gio-unix-2.0)
 PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0)
 
+# systemd
+AC_ARG_WITH([systemdsystemunitdir],
+            AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
+                           [Directory for systemd service files]),
+            [],
+            [with_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)])
+if test "x$with_systemdsystemunitdir" != "xno"; then
+  AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
+fi
+AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$systemdsystemunitdir"])
+
 AC_CONFIG_FILES([
   data/Makefile
   service/Makefile

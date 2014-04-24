@@ -10,10 +10,29 @@ org.gnome.FleetCommander.service: Makefile
 	$(AM_V_GEN) (echo '[D-Bus Service]'; \
 	             echo 'Name=org.gnome.FleetCommander'; \
 	             echo 'Exec=${libexecdir}/fcmdr-service'; \
+	             echo 'SystemdService=fleet-commander.service'; \
 	             echo 'User=root') > $@.tmp && \
 	            mv $@.tmp $@
 
-BUILT_SOURCES = $(dbusservice_DATA)
+if HAVE_SYSTEMD
+systemdservicedir = $(systemdsystemunitdir)
+systemdservice_DATA = fleet-commander.service
+
+fleet-commander.service: Makefile
+	$(AM_V_GEN) (echo '[Unit]'; \
+	             echo 'Description=Settings Lockdown'; \
+	             echo; \
+	             echo '[Service]'; \
+	             echo 'Type=dbus'; \
+	             echo 'BusName=org.gnome.FleetCommander'; \
+	             echo 'ExecStart=${libexecdir}/fcmdr-service') > $@.tmp && \
+	            mv $@.tmp $@
+endif
+
+BUILT_SOURCES = \
+	$(dbusservice_DATA) \
+	$(systemdservice_DATA) \
+	$(NULL)
 
 CLEANFILES = $(BUILT_SOURCES)
 
