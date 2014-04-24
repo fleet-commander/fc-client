@@ -9,7 +9,7 @@ dbusservice_DATA = org.gnome.FleetCommander.service
 org.gnome.FleetCommander.service: Makefile
 	$(AM_V_GEN) (echo '[D-Bus Service]'; \
 	             echo 'Name=org.gnome.FleetCommander'; \
-	             echo 'Exec=${libexecdir}/dconf-service'; \
+	             echo 'Exec=${libexecdir}/fcmdr-service'; \
 	             echo 'User=root') > $@.tmp && \
 	            mv $@.tmp $@
 
