@@ -262,6 +262,23 @@ fcmdr_service_init_backends (FCmdrService *service)
 
 		backend = g_object_new (type, "service", service, NULL);
 
+		if (G_IS_INITABLE (backend)) {
+			GError *local_error = NULL;
+
+			g_initable_init (
+				G_INITABLE (backend), NULL, &local_error);
+
+			if (local_error != NULL) {
+				g_critical (
+					"Could not initialize %s: %s",
+					G_OBJECT_TYPE_NAME (backend),
+					local_error->message);
+				g_error_free (local_error);
+				g_object_unref (backend);
+				continue;
+			}
+		}
+
 		g_mutex_lock (&service->priv->backends_lock);
 
 		g_hash_table_replace (
