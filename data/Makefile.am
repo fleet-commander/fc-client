@@ -7,7 +7,7 @@ dbusservicedir = $(datadir)/dbus-1/system-services
 dbusservice_DATA = org.gnome.FleetCommander.service
 
 org.gnome.FleetCommander.service: Makefile
-	$(AM_V_GEN) (echo '[D-Bus Service]'; \
+	$(AM_V_GEN) (echo '[D-BUS Service]'; \
 	             echo 'Name=org.gnome.FleetCommander'; \
 	             echo 'Exec=${libexecdir}/fcmdr-service'; \
 	             echo 'SystemdService=fleet-commander.service'; \
