@@ -393,7 +393,6 @@ fcmdr_service_initable_init (GInitable *initable,
                              GError **error)
 {
 	FCmdrServicePrivate *priv;
-	gboolean success;
 
 	priv = FCMDR_SERVICE_GET_PRIVATE (initable);
 
