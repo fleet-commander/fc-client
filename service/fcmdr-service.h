@@ -35,6 +35,8 @@
 	(G_TYPE_CHECK_INSTANCE_TYPE \
 	((obj), FCMDR_TYPE_SERVICE))
 
+#define FCMDR_SERVICE_DBUS_OBJECT_PATH "/org/gnome/FleetCommander"
+
 G_BEGIN_DECLS
 
 typedef struct _FCmdrService FCmdrService;
@@ -69,6 +71,9 @@ void		fcmdr_service_add_profile	(FCmdrService *service,
 FCmdrProfile *	fcmdr_service_ref_profile	(FCmdrService *service,
 						 const gchar *profile_uid);
 GList *		fcmdr_service_list_profiles	(FCmdrService *service);
+GList *		fcmdr_service_list_profiles_for_user
+						(FCmdrService *service,
+						 uid_t uid);
 void		fcmdr_service_apply_profiles	(FCmdrService *service);
 
 G_END_DECLS

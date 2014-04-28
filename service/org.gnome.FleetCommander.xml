@@ -3,6 +3,14 @@
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
 
+  <interface name="org.gnome.FleetCommander.DConf">
+
+    <method name="WriteProfile">
+      <arg name="filename" direction="in" type="s"/>
+    </method>
+
+  </interface>
+
   <interface name="org.gnome.FleetCommander.Profiles">
 
     <method name="Add">

@@ -29,8 +29,6 @@
 	(G_TYPE_INSTANCE_GET_PRIVATE \
 	((obj), FCMDR_TYPE_SERVICE, FCmdrServicePrivate))
 
-#define DBUS_OBJECT_PATH "/org/gnome/FleetCommander"
-
 typedef struct _AsyncContext AsyncContext;
 
 struct _FCmdrServicePrivate {
@@ -398,7 +396,7 @@ fcmdr_service_initable_init (GInitable *initable,
 
 	return g_dbus_interface_skeleton_export (
 		G_DBUS_INTERFACE_SKELETON (priv->profiles_interface),
-		priv->connection, DBUS_OBJECT_PATH, error);
+		priv->connection, FCMDR_SERVICE_DBUS_OBJECT_PATH, error);
 }
 
 static void
@@ -623,6 +621,19 @@ fcmdr_service_list_profiles (FCmdrService *service)
 	g_mutex_unlock (&service->priv->profiles_lock);
 
 	return list;
+}
+
+GList *
+fcmdr_service_list_profiles_for_user (FCmdrService *service,
+                                      uid_t uid)
+{
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+
+	/* FIXME Eventually this will return an ordered list of
+	 *       profile objects applicable to 'uid', but for now
+	 *       we just return all the profiles. */
+
+	return fcmdr_service_list_profiles (service);
 }
 
 void

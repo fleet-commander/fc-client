@@ -14,6 +14,7 @@ $(dbus_built_sources) : Makefile.am org.gnome.FleetCommander.xml
 dbus_built_sources = \
 	fcmdr-generated.c \
 	fcmdr-generated.h \
+	fcmdr-generated-doc-org.gnome.FleetCommander.DConf.xml \
 	fcmdr-generated-doc-org.gnome.FleetCommander.Profiles.xml \
 	$(NULL)
 
