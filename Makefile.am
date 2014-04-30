@@ -6,6 +6,10 @@ SUBDIRS = data service
 
 EXTRA_DIST = m4
 
+DISTCHECK_CONFIGURE_FLAGS = \
+	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir) \
+	$(NULL)
+
 MAINTAINERCLEANFILES = \
 	$(srcdir)/aclocal.m4 \
 	$(srcdir)/config.h.in \
