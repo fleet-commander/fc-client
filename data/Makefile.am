@@ -6,6 +6,9 @@ dbusconf_DATA = org.gnome.FleetCommander.conf
 dbusservicedir = $(datadir)/dbus-1/system-services
 dbusservice_DATA = org.gnome.FleetCommander.service
 
+profiledir = $(sysconfdir)/profile.d
+profile_DATA = fleet-commander.sh fleet-commander.csh
+
 org.gnome.FleetCommander.service: Makefile
 	$(AM_V_GEN) (echo '[D-BUS Service]'; \
 	             echo 'Name=org.gnome.FleetCommander'; \
@@ -38,6 +41,7 @@ CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = \
 	$(dbusconf_DATA) \
+	$(profile_DATA) \
 	$(NULL)
 
 -include $(top_srcdir)/git.mk
