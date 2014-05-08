@@ -21,6 +21,7 @@
 
 #include "fcmdr-extensions.h"
 
+#include "fcmdr-profile-source.h"
 #include "fcmdr-service-backend.h"
 
 extern GType fcmdr_gsettings_backend_get_type (void);
@@ -30,6 +31,11 @@ static gpointer
 register_extension_points (gpointer unused)
 {
 	GIOExtensionPoint *extension_point;
+
+	extension_point = g_io_extension_point_register (
+		FCMDR_PROFILE_SOURCE_EXTENSION_POINT_NAME);
+	g_io_extension_point_set_required_type (
+		extension_point, FCMDR_TYPE_PROFILE_SOURCE);
 
 	extension_point = g_io_extension_point_register (
 		FCMDR_SERVICE_BACKEND_EXTENSION_POINT_NAME);

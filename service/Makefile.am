@@ -25,11 +25,13 @@ BUILT_SOURCES = \
 fcmdr_service_CFLAGS = \
 	-DG_LOG_DOMAIN=\"fcmdr-service\" \
 	$(JSON_GLIB_CFLAGS) \
+	$(LIBSOUP_CFLAGS) \
 	$(GIO_CFLAGS) \
 	$(NULL)
 
 fcmdr_service_LDADD = \
 	$(JSON_GLIB_LIBS) \
+	$(LIBSOUP_LIBS) \
 	$(GIO_LIBS) \
 	$(NULL)
 
@@ -43,6 +45,8 @@ fcmdr_service_SOURCES = \
 	fcmdr-logind-monitor.h \
 	fcmdr-profile.c \
 	fcmdr-profile.h \
+	fcmdr-profile-source.c \
+	fcmdr-profile-source.h \
 	fcmdr-service.c \
 	fcmdr-service.h \
 	fcmdr-service-backend.c \
