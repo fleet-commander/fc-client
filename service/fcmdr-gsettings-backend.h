@@ -41,8 +41,6 @@
 	(G_TYPE_INSTANCE_GET_CLASS \
 	((obj), FCMDR_TYPE_GSETTINGS_BACKEND, FCmdrGSettingsBackendClass))
 
-#define FCMDR_GSETTINGS_BACKEND_EXTENSION_POINT_NAME "fcmdr-gsettings-backend"
-
 G_BEGIN_DECLS
 
 typedef struct _FCmdrGSettingsBackend FCmdrGSettingsBackend;
