@@ -39,6 +39,8 @@ fcmdr_service_SOURCES = \
 	$(BUILT_SOURCES) \
 	fcmdr-extensions.c \
 	fcmdr-extensions.h \
+	fcmdr-http-profile-source.c \
+	fcmdr-http-profile-source.h \
 	fcmdr-login-monitor.c \
 	fcmdr-login-monitor.h \
 	fcmdr-logind-monitor.c \
