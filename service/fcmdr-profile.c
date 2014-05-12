@@ -34,6 +34,8 @@ struct _FCmdrProfilePrivate {
 	gchar *description;
 
 	JsonObject *settings;
+
+	GWeakRef source;
 };
 
 enum {
@@ -42,6 +44,7 @@ enum {
 	PROP_ETAG,
 	PROP_NAME,
 	PROP_SETTINGS,
+	PROP_SOURCE,
 	PROP_UID
 };
 
@@ -182,6 +185,12 @@ fcmdr_profile_set_property (GObject *object,
 				g_value_get_boxed (value));
 			return;
 
+		case PROP_SOURCE:
+			fcmdr_profile_set_source (
+				FCMDR_PROFILE (object),
+				g_value_get_object (value));
+			return;
+
 		case PROP_UID:
 			fcmdr_profile_set_uid (
 				FCMDR_PROFILE (object),
@@ -227,6 +236,13 @@ fcmdr_profile_get_property (GObject *object,
 				FCMDR_PROFILE (object)));
 			return;
 
+		case PROP_SOURCE:
+			g_value_take_object (
+				value,
+				fcmdr_profile_ref_source (
+				FCMDR_PROFILE (object)));
+			return;
+
 		case PROP_UID:
 			g_value_set_string (
 				value,
@@ -249,6 +265,8 @@ fcmdr_profile_dispose (GObject *object)
 		json_object_unref (priv->settings);
 		priv->settings = NULL;
 	}
+
+	g_weak_ref_set (&priv->source, NULL);
 
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (fcmdr_profile_parent_class)->dispose (object);
@@ -337,6 +355,17 @@ fcmdr_profile_class_init (FCmdrProfileClass *class)
 			JSON_TYPE_OBJECT,
 			G_PARAM_READWRITE |
 			G_PARAM_CONSTRUCT_ONLY |
+			G_PARAM_STATIC_STRINGS));
+
+	g_object_class_install_property (
+		object_class,
+		PROP_SOURCE,
+		g_param_spec_object (
+			"source",
+			"Source",
+			"The source of this profile",
+			FCMDR_TYPE_PROFILE_SOURCE,
+			G_PARAM_READWRITE |
 			G_PARAM_STATIC_STRINGS));
 
 	g_object_class_install_property (
@@ -509,5 +538,23 @@ fcmdr_profile_ref_settings (FCmdrProfile *profile)
 	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), NULL);
 
 	return json_object_ref (profile->priv->settings);
+}
+
+FCmdrProfileSource *
+fcmdr_profile_ref_source (FCmdrProfile *profile)
+{
+	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), NULL);
+
+	return g_weak_ref_get (&profile->priv->source);
+}
+
+void
+fcmdr_profile_set_source (FCmdrProfile *profile,
+                          FCmdrProfileSource *source)
+{
+	g_return_if_fail (FCMDR_IS_PROFILE (profile));
+	g_return_if_fail (source == NULL || FCMDR_IS_PROFILE_SOURCE (source));
+
+	g_weak_ref_set (&profile->priv->source, source);
 }
 
