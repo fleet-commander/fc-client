@@ -402,6 +402,45 @@ fcmdr_profile_new (const gchar *data,
 	return profile;
 }
 
+FCmdrProfile *
+fcmdr_profile_new_from_stream (GInputStream *stream,
+                               GCancellable *cancellable,
+                               GError **error)
+{
+	FCmdrProfile *profile = NULL;
+	GOutputStream *buffer;
+	gssize length;
+
+	g_return_val_if_fail (G_IS_INPUT_STREAM (stream), NULL);
+
+	buffer = g_memory_output_stream_new_resizable ();
+
+	length = g_output_stream_splice (
+		buffer, stream,
+		G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+		NULL, error);
+
+	if (length >= 0) {
+		const gchar *data;
+
+		data = g_memory_output_stream_get_data (
+			G_MEMORY_OUTPUT_STREAM (buffer));
+
+		if (data != NULL) {
+			profile = fcmdr_profile_new (data, length, error);
+		} else {
+			g_set_error_literal (
+				error, G_IO_ERROR,
+				G_IO_ERROR_INVALID_DATA,
+				"Empty input stream");
+		}
+	}
+
+	g_object_unref (buffer);
+
+	return profile;
+}
+
 guint
 fcmdr_profile_hash (FCmdrProfile *profile)
 {

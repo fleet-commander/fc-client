@@ -61,6 +61,9 @@ GType		fcmdr_profile_get_type		(void) G_GNUC_CONST;
 FCmdrProfile *	fcmdr_profile_new		(const gchar *data,
 						 gssize length,
 						 GError **error);
+FCmdrProfile *	fcmdr_profile_new_from_stream	(GInputStream *stream,
+						 GCancellable *cancellable,
+						 GError **error);
 guint		fcmdr_profile_hash		(FCmdrProfile *profile);
 gboolean	fcmdr_profile_equal		(FCmdrProfile *profile1,
 						 FCmdrProfile *profile2);
