@@ -23,6 +23,7 @@
 #include <gio/gio.h>
 
 #include "fcmdr-profile.h"
+#include "fcmdr-profile-source.h"
 #include "fcmdr-service-backend.h"
 
 /* Standard GObject macros */
@@ -76,6 +77,9 @@ GList *		fcmdr_service_list_profiles_for_user
 						 uid_t uid);
 GList *		fcmdr_service_list_profile_sources
 						(FCmdrService *service);
+gboolean	fcmdr_service_update_profiles	(FCmdrService *service,
+						 FCmdrProfileSource *source,
+						 GList *new_profiles);
 void		fcmdr_service_apply_profiles	(FCmdrService *service);
 
 G_END_DECLS

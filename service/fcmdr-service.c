@@ -783,6 +783,116 @@ fcmdr_service_list_profile_sources (FCmdrService *service)
 	return list;
 }
 
+gboolean
+fcmdr_service_update_profiles (FCmdrService *service,
+                               FCmdrProfileSource *source,
+                               GList *new_profiles)
+{
+	GList *old_profiles, *link;
+	GHashTable *old_profiles_ht;
+	gboolean apply_profiles = FALSE;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), FALSE);
+	g_return_val_if_fail (FCMDR_IS_PROFILE_SOURCE (source), FALSE);
+
+	old_profiles_ht = g_hash_table_new_full (
+		(GHashFunc) fcmdr_profile_hash,
+		(GEqualFunc) fcmdr_profile_equal,
+		(GDestroyNotify) g_object_unref,
+		(GDestroyNotify) NULL);
+
+	old_profiles = fcmdr_service_list_profiles (service);
+
+	/* Build a set of profiles belonging to the FCmdrProfileSource. */
+	for (link = old_profiles; link != NULL; link = g_list_next (link)) {
+		FCmdrProfile *old_profile;
+		FCmdrProfileSource *profile_source;
+
+		old_profile = FCMDR_PROFILE (link->data);
+
+		/* This might return NULL. */
+		profile_source = fcmdr_profile_ref_source (old_profile);
+
+		if (profile_source == source) {
+			g_object_ref (old_profile);
+			g_hash_table_add (old_profiles_ht, old_profile);
+		}
+
+		g_clear_object (&profile_source);
+	}
+
+	g_list_free_full (old_profiles, (GDestroyNotify) g_object_unref);
+	old_profiles = NULL;
+
+	g_mutex_lock (&service->priv->profiles_lock);
+
+	/* Add or update profiles, taking etags into account. */
+	for (link = new_profiles; link != NULL; link = g_list_next (link)) {
+		FCmdrProfile *new_profile;
+		FCmdrProfile *old_profile;
+		const gchar *profile_uid;
+		const gchar *new_etag;
+		const gchar *old_etag;
+
+		new_profile = FCMDR_PROFILE (link->data);
+
+		/* Sanity check */
+		if (!FCMDR_IS_PROFILE (new_profile)) {
+			g_warn_if_reached ();
+			continue;
+		}
+
+		profile_uid = fcmdr_profile_get_uid (new_profile);
+
+		old_profile = g_hash_table_lookup (
+			old_profiles_ht, new_profile);
+
+		if (old_profile == NULL) {
+			g_hash_table_replace (
+				service->priv->profiles,
+				g_strdup (profile_uid),
+				g_object_ref (new_profile));
+			apply_profiles = TRUE;
+			continue;
+		}
+
+		new_etag = fcmdr_profile_get_etag (new_profile);
+		old_etag = fcmdr_profile_get_etag (old_profile);
+
+		if (g_strcmp0 (new_etag, old_etag) != 0) {
+			g_hash_table_replace (
+				service->priv->profiles,
+				g_strdup (profile_uid),
+				g_object_ref (new_profile));
+			apply_profiles = TRUE;
+			continue;
+		}
+
+		g_hash_table_remove (old_profiles_ht, old_profile);
+	}
+
+	old_profiles = g_hash_table_get_keys (old_profiles_ht);
+
+	/* Remove any remaining old profiles. */
+	for (link = old_profiles; link != NULL; link = g_list_next (link)) {
+		FCmdrProfile *old_profile;
+		const gchar *profile_uid;
+
+		old_profile = FCMDR_PROFILE (link->data);
+		profile_uid = fcmdr_profile_get_uid (old_profile);
+		g_hash_table_remove (service->priv->profiles, profile_uid);
+		apply_profiles = TRUE;
+	}
+
+	g_list_free (old_profiles);
+
+	g_mutex_unlock (&service->priv->profiles_lock);
+
+	g_hash_table_destroy (old_profiles_ht);
+
+	return apply_profiles;
+}
+
 void
 fcmdr_service_apply_profiles (FCmdrService *service)
 {
