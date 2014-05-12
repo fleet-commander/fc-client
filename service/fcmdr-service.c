@@ -25,6 +25,9 @@
 #include "fcmdr-generated.h"
 #include "fcmdr-logind-monitor.h"
 
+/* temporary */
+#include "fcmdr-http-profile-source.h"
+
 #define FCMDR_SERVICE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
 	((obj), FCMDR_TYPE_SERVICE, FCmdrServicePrivate))
@@ -43,6 +46,8 @@ struct _FCmdrServicePrivate {
 	/* Profile UID -> FCmdrProfile */
 	GHashTable *profiles;
 	GMutex profiles_lock;
+
+	FCmdrProfileSource *source;
 };
 
 struct _AsyncContext {
@@ -345,6 +350,7 @@ fcmdr_service_dispose (GObject *object)
 	g_clear_object (&priv->connection);
 	g_clear_object (&priv->profiles_interface);
 	g_clear_object (&priv->login_monitor);
+	g_clear_object (&priv->source);
 
 	g_hash_table_remove_all (priv->backends);
 	g_hash_table_remove_all (priv->profiles);
@@ -394,6 +400,9 @@ fcmdr_service_initable_init (GInitable *initable,
 
 	priv = FCMDR_SERVICE_GET_PRIVATE (initable);
 
+	/* FIXME Temporary; see fcmdr_service_init(). */
+	fcmdr_profile_source_load_remote (priv->source);
+
 	return g_dbus_interface_skeleton_export (
 		G_DBUS_INTERFACE_SKELETON (priv->profiles_interface),
 		priv->connection, FCMDR_SERVICE_DBUS_OBJECT_PATH, error);
@@ -436,6 +445,7 @@ fcmdr_service_init (FCmdrService *service)
 {
 	GHashTable *backends;
 	GHashTable *profiles;
+	SoupURI *uri;
 
 	backends = g_hash_table_new_full (
 		(GHashFunc) g_str_hash,
@@ -480,6 +490,19 @@ fcmdr_service_init (FCmdrService *service)
 		"handle-list",
 		G_CALLBACK (fcmdr_service_handle_profiles_list_cb),
 		service);
+
+	/* FIXME This is a hack to get something testable.  Eventually
+	 *       we want to read profile URIs from a configuration file.
+	 *       The URI scheme will determine which FcmdrProfileSource
+	 *       subclass is instantiated. */
+
+	uri = soup_uri_new ("http://localhost:8181/profiles/");
+
+	service->priv->source = g_object_new (
+		FCMDR_TYPE_HTTP_PROFILE_SOURCE,
+		"service", service, "uri", uri, NULL);
+
+	soup_uri_free (uri);
 }
 
 FCmdrService *
