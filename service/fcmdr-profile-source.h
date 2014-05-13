@@ -75,6 +75,9 @@ struct _FCmdrProfileSourceClass {
 };
 
 GType		fcmdr_profile_source_get_type	(void) G_GNUC_CONST;
+FCmdrProfileSource *
+		fcmdr_profile_source_try_new	(struct _FCmdrService *service,
+						 SoupURI *uri);
 struct _FCmdrService *
 		fcmdr_profile_source_ref_service
 						(FCmdrProfileSource *source);

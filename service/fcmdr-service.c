@@ -25,9 +25,6 @@
 #include "fcmdr-generated.h"
 #include "fcmdr-logind-monitor.h"
 
-/* temporary */
-#include "fcmdr-http-profile-source.h"
-
 #define FCMDR_SERVICE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
 	((obj), FCMDR_TYPE_SERVICE, FCmdrServicePrivate))
@@ -497,11 +494,7 @@ fcmdr_service_init (FCmdrService *service)
 	 *       subclass is instantiated. */
 
 	uri = soup_uri_new ("http://localhost:8181/profiles/");
-
-	service->priv->source = g_object_new (
-		FCMDR_TYPE_HTTP_PROFILE_SOURCE,
-		"service", service, "uri", uri, NULL);
-
+	service->priv->source = fcmdr_profile_source_try_new (service, uri);
 	soup_uri_free (uri);
 }
 

@@ -21,6 +21,7 @@
 
 #include "fcmdr-profile-source.h"
 
+#include "fcmdr-extensions.h"
 #include "fcmdr-service.h"
 
 #define FCMDR_PROFILE_SOURCE_GET_PRIVATE(obj) \
@@ -177,6 +178,34 @@ static void
 fcmdr_profile_source_init (FCmdrProfileSource *source)
 {
 	source->priv = FCMDR_PROFILE_SOURCE_GET_PRIVATE (source);
+}
+
+FCmdrProfileSource *
+fcmdr_profile_source_try_new (FCmdrService *service,
+                              SoupURI *uri)
+{
+	GIOExtensionPoint *extension_point;
+	GIOExtension *extension;
+	FCmdrProfileSource *source = NULL;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+	g_return_val_if_fail (uri != NULL, NULL);
+
+	fcmdr_ensure_extensions_registered ();
+
+	extension_point = g_io_extension_point_lookup (
+		FCMDR_PROFILE_SOURCE_EXTENSION_POINT_NAME);
+
+	extension = g_io_extension_point_get_extension_by_name (
+		extension_point, uri->scheme);
+
+	if (extension != NULL) {
+		source = g_object_new (
+			g_io_extension_get_type (extension),
+			"service", service, "uri", uri, NULL);
+	}
+
+	return source;
 }
 
 FCmdrService *
