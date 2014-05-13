@@ -44,7 +44,8 @@ struct _FCmdrServicePrivate {
 	GHashTable *profiles;
 	GMutex profiles_lock;
 
-	FCmdrProfileSource *source;
+	GQueue sources;
+	GMutex sources_lock;
 };
 
 struct _AsyncContext {
@@ -78,6 +79,125 @@ async_context_free (AsyncContext *async_context)
 	g_clear_object (&async_context->service);
 
 	g_slice_free (AsyncContext, async_context);
+}
+
+static GDataInputStream *
+fcmdr_service_open_config (FCmdrService *service)
+{
+	GDataInputStream *data_input_stream = NULL;
+	const gchar * const *system_config_dirs;
+	gboolean stop = FALSE;
+	guint ii;
+
+	system_config_dirs = g_get_system_config_dirs ();
+	g_return_if_fail (system_config_dirs != NULL);
+
+	for (ii = 0; !stop && system_config_dirs[ii] != NULL; ii++) {
+		GFileInputStream *file_input_stream;
+		GFile *file;
+		gchar *path;
+		GError *local_error = NULL;
+
+		path = g_build_filename (
+			system_config_dirs[ii],
+			"fleet-commander.conf", NULL);
+
+		file = g_file_new_for_path (path);
+		file_input_stream = g_file_read (file, NULL, &local_error);
+		g_object_unref (file);
+
+		/* If no file found, try the next system config dir. */
+		if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+			g_clear_error (&local_error);
+
+		if (file_input_stream != NULL) {
+			g_warn_if_fail (local_error == NULL);
+			data_input_stream = g_data_input_stream_new (
+				G_INPUT_STREAM (file_input_stream));
+			g_object_unref (file_input_stream);
+			stop = TRUE;
+
+		} else if (local_error != NULL) {
+			g_warning ("%s: %s", path, local_error->message);
+			g_error_free (local_error);
+			stop = TRUE;
+		}
+
+		g_free (path);
+	}
+
+	return data_input_stream;
+}
+
+static void
+fcmdr_service_read_config_line (FCmdrService *service,
+                                const gchar *line)
+{
+	if (g_ascii_strncasecmp (line, "source:", 7) == 0) {
+		FCmdrProfileSource *source = NULL;
+		SoupURI *uri;
+		const gchar *cp = line + 7;
+
+		while (g_ascii_isspace (*cp))
+			cp++;
+
+		if (*cp == '\0')
+			return;
+
+		uri = soup_uri_new (cp);
+
+		if (uri == NULL) {
+			g_warning ("Malformed source uri: %s", cp);
+			return;
+		}
+
+		source = fcmdr_profile_source_try_new (service, uri);
+
+		soup_uri_free (uri);
+
+		if (source == NULL) {
+			g_warning ("Unsupported source uri: %s", cp);
+			return;
+		}
+
+		g_debug ("%s handling %s\n", G_OBJECT_TYPE_NAME (source), cp);
+
+		g_mutex_lock (&service->priv->sources_lock);
+		g_queue_push_tail (
+			&service->priv->sources,
+			g_object_ref (source));
+		g_mutex_unlock (&service->priv->sources_lock);
+
+		g_object_unref (source);
+	}
+}
+
+static void
+fcmdr_service_read_config (FCmdrService *service)
+{
+	GDataInputStream *input_stream;
+	gchar *line;
+	GError *local_error = NULL;
+
+	input_stream = fcmdr_service_open_config (service);
+	if (input_stream == NULL)
+		return;
+
+	line = g_data_input_stream_read_line_utf8 (
+		input_stream, NULL, NULL, &local_error);
+
+	while (line != NULL) {
+		fcmdr_service_read_config_line (service, g_strstrip (line));
+		g_free (line);
+
+		line = g_data_input_stream_read_line_utf8 (
+			input_stream, NULL, NULL, &local_error);
+	}
+
+	if (local_error != NULL) {
+		g_warning ("%s: %s", G_STRFUNC, local_error->message);
+		g_error_free (local_error);
+	}
 }
 
 static gboolean
@@ -347,10 +467,12 @@ fcmdr_service_dispose (GObject *object)
 	g_clear_object (&priv->connection);
 	g_clear_object (&priv->profiles_interface);
 	g_clear_object (&priv->login_monitor);
-	g_clear_object (&priv->source);
 
 	g_hash_table_remove_all (priv->backends);
 	g_hash_table_remove_all (priv->profiles);
+
+	while (!g_queue_is_empty (&priv->sources))
+		g_object_unref (g_queue_pop_head (&priv->sources));
 
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->dispose (object);
@@ -368,6 +490,7 @@ fcmdr_service_finalize (GObject *object)
 
 	g_mutex_clear (&priv->backends_lock);
 	g_mutex_clear (&priv->profiles_lock);
+	g_mutex_clear (&priv->sources_lock);
 
 	/* Chain up to parent's finalize() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->finalize (object);
@@ -383,6 +506,7 @@ fcmdr_service_constructed (GObject *object)
 	service->priv->login_monitor = fcmdr_logind_monitor_new (service);
 
 	fcmdr_service_init_backends (service);
+	fcmdr_service_read_config (service);
 
 	/* Chain up to parent's constructed() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->constructed (object);
@@ -396,9 +520,6 @@ fcmdr_service_initable_init (GInitable *initable,
 	FCmdrServicePrivate *priv;
 
 	priv = FCMDR_SERVICE_GET_PRIVATE (initable);
-
-	/* FIXME Temporary; see fcmdr_service_init(). */
-	fcmdr_profile_source_load_remote (priv->source, NULL, NULL, NULL);
 
 	return g_dbus_interface_skeleton_export (
 		G_DBUS_INTERFACE_SKELETON (priv->profiles_interface),
@@ -463,6 +584,7 @@ fcmdr_service_init (FCmdrService *service)
 
 	g_mutex_init (&service->priv->backends_lock);
 	g_mutex_init (&service->priv->profiles_lock);
+	g_mutex_init (&service->priv->sources_lock);
 
 	g_signal_connect (
 		service->priv->profiles_interface,
@@ -487,15 +609,6 @@ fcmdr_service_init (FCmdrService *service)
 		"handle-list",
 		G_CALLBACK (fcmdr_service_handle_profiles_list_cb),
 		service);
-
-	/* FIXME This is a hack to get something testable.  Eventually
-	 *       we want to read profile URIs from a configuration file.
-	 *       The URI scheme will determine which FcmdrProfileSource
-	 *       subclass is instantiated. */
-
-	uri = soup_uri_new ("http://localhost:8181/profiles/");
-	service->priv->source = fcmdr_profile_source_try_new (service, uri);
-	soup_uri_free (uri);
 }
 
 FCmdrService *
