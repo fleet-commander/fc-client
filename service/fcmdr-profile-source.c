@@ -211,15 +211,36 @@ fcmdr_profile_source_load_cached (FCmdrProfileSource *source,
 }
 
 void
-fcmdr_profile_source_load_remote (FCmdrProfileSource *source)
+fcmdr_profile_source_load_remote (FCmdrProfileSource *source,
+                                  GCancellable *cancellable,
+                                  GAsyncReadyCallback callback,
+                                  gpointer user_data)
 {
 	FCmdrProfileSourceClass *class;
 
 	g_return_if_fail (FCMDR_IS_PROFILE_SOURCE (source));
 
 	class = FCMDR_PROFILE_SOURCE_GET_CLASS (source);
+	g_return_if_fail (class->load_remote != NULL);
 
-	if (class->load_remote != NULL)
-		class->load_remote (source);
+	class->load_remote (source, cancellable, callback, user_data);
+}
+
+gboolean
+fcmdr_profile_source_load_remote_finish (FCmdrProfileSource *source,
+                                         GQueue *out_profiles,
+                                         GAsyncResult *result,
+                                         GError **error)
+{
+	FCmdrProfileSourceClass *class;
+
+	g_return_val_if_fail (FCMDR_IS_PROFILE_SOURCE (source), FALSE);
+	g_return_val_if_fail (out_profiles != NULL, FALSE);
+	g_return_val_if_fail (G_IS_ASYNC_RESULT (result), FALSE);
+
+	class = FCMDR_PROFILE_SOURCE_GET_CLASS (source);
+	g_return_val_if_fail (class->load_remote_finish != NULL, FALSE);
+
+	return class->load_remote_finish (source, out_profiles, result, error);
 }
 

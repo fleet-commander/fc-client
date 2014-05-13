@@ -64,7 +64,14 @@ struct _FCmdrProfileSourceClass {
 	/* Methods */
 	void		(*load_cached)		(FCmdrProfileSource *source,
 						 const gchar *path);
-	void		(*load_remote)		(FCmdrProfileSource *source);
+	void		(*load_remote)		(FCmdrProfileSource *source,
+						 GCancellable *cancellable,
+						 GAsyncReadyCallback callback,
+						 gpointer user_data);
+	gboolean	(*load_remote_finish)	(FCmdrProfileSource *source,
+						 GQueue *out_profiles,
+						 GAsyncResult *result,
+						 GError **error);
 };
 
 GType		fcmdr_profile_source_get_type	(void) G_GNUC_CONST;
@@ -76,7 +83,15 @@ void		fcmdr_profile_source_load_cached
 						(FCmdrProfileSource *source,
 						 const gchar *path);
 void		fcmdr_profile_source_load_remote
-						(FCmdrProfileSource *source);
+						(FCmdrProfileSource *source,
+						 GCancellable *cancellable,
+						 GAsyncReadyCallback callback,
+						 gpointer user_data);
+gboolean	fcmdr_profile_source_load_remote_finish
+						(FCmdrProfileSource *source,
+						 GQueue *out_profiles,
+						 GAsyncResult *result,
+						 GError **error);
 
 G_END_DECLS
 

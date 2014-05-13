@@ -30,8 +30,15 @@
 	(G_TYPE_INSTANCE_GET_PRIVATE \
 	((obj), FCMDR_TYPE_HTTP_PROFILE_SOURCE, FCmdrHttpProfileSourcePrivate))
 
+typedef struct _AsyncContext AsyncContext;
+
 struct _FCmdrHttpProfileSourcePrivate {
 	SoupSession *session;
+};
+
+struct _AsyncContext {
+	SoupURI *uri;
+	GHashTable *profiles;
 };
 
 G_DEFINE_TYPE_WITH_CODE (
@@ -44,13 +51,22 @@ G_DEFINE_TYPE_WITH_CODE (
 		g_define_type_id,
 		"http", 0))
 
+static void
+async_context_free (AsyncContext *async_context)
+{
+	soup_uri_free (async_context->uri);
+	g_hash_table_destroy (async_context->profiles);
+
+	g_slice_free (AsyncContext, async_context);
+}
+
 static gboolean
-fcmdr_http_profile_source_get_uris (FCmdrProfileSource *source,
+fcmdr_http_profile_source_get_uris (SoupSession *session,
+                                    SoupURI *base_uri,
                                     GQueue *out_uris,
+                                    GCancellable *cancellable,
                                     GError **error)
 {
-	FCmdrHttpProfileSourcePrivate *priv;
-	SoupURI *base_uri;
 	SoupRequest *request;
 	JsonNode *json_node;
 	JsonArray *json_array;
@@ -58,22 +74,18 @@ fcmdr_http_profile_source_get_uris (FCmdrProfileSource *source,
 	GList *list, *link;
 	gboolean success = FALSE;
 
-	priv = FCMDR_HTTP_PROFILE_SOURCE_GET_PRIVATE (source);
-
 	json_parser = json_parser_new ();
 
-	base_uri = fcmdr_profile_source_dup_uri (source);
-
-	request = soup_session_request_uri (priv->session, base_uri, error);
+	request = soup_session_request_uri (session, base_uri, error);
 
 	if (request != NULL) {
 		GInputStream *stream;
 
-		stream = soup_request_send (request, NULL, error);
+		stream = soup_request_send (request, cancellable, error);
 
 		if (stream != NULL) {
 			success = json_parser_load_from_stream (
-				json_parser, stream, NULL, error);
+				json_parser, stream, cancellable, error);
 			g_object_unref (stream);
 		}
 
@@ -133,23 +145,19 @@ fcmdr_http_profile_source_get_uris (FCmdrProfileSource *source,
 exit:
 	g_object_unref (json_parser);
 
-	soup_uri_free (base_uri);
-
 	return success;
 }
 
 static FCmdrProfile *
-fcmdr_http_profile_source_get_profile (FCmdrProfileSource *source,
+fcmdr_http_profile_source_get_profile (SoupSession *session,
                                        SoupURI *uri,
+                                       GCancellable *cancellable,
                                        GError **error)
 {
-	FCmdrHttpProfileSourcePrivate *priv;
 	FCmdrProfile *profile = NULL;
 	SoupRequest *request;
 
-	priv = FCMDR_HTTP_PROFILE_SOURCE_GET_PRIVATE (source);
-
-	request = soup_session_request_uri (priv->session, uri, error);
+	request = soup_session_request_uri (session, uri, error);
 
 	if (request != NULL) {
 		GInputStream *stream;
@@ -168,30 +176,27 @@ fcmdr_http_profile_source_get_profile (FCmdrProfileSource *source,
 	return profile;
 }
 
-static gpointer
-fcmdr_http_profile_source_load_remote_thread (gpointer user_data)
+static void
+fcmdr_http_profile_source_load_remote_thread (GTask *task,
+                                              gpointer source_object,
+                                              gpointer task_data,
+                                              GCancellable *cancellable)
 {
-	FCmdrProfileSource *source;
-	FCmdrHttpProfileSourcePrivate *priv;
-	FCmdrService *service;
+	FCmdrHttpProfileSource *source;
 	GQueue uris = G_QUEUE_INIT;
-	GHashTable *profiles;
+	AsyncContext *async_context;
 	GError *local_error = NULL;
 
-	source = FCMDR_PROFILE_SOURCE (user_data);
-	priv = FCMDR_HTTP_PROFILE_SOURCE_GET_PRIVATE (source);
+	source = FCMDR_HTTP_PROFILE_SOURCE (source_object);
+	async_context = (AsyncContext *) task_data;
 
-	service = fcmdr_profile_source_ref_service (source);
-	g_return_val_if_fail (service != NULL, NULL);
+	fcmdr_http_profile_source_get_uris (
+		source->priv->session,
+		async_context->uri, &uris,
+		cancellable, &local_error);
 
-	if (!fcmdr_http_profile_source_get_uris (source, &uris, &local_error))
+	if (local_error != NULL)
 		goto exit;
-
-	profiles = g_hash_table_new_full (
-		(GHashFunc) fcmdr_profile_hash,
-		(GEqualFunc) fcmdr_profile_equal,
-		(GDestroyNotify) g_object_unref,
-		(GDestroyNotify) NULL);
 
 	while (!g_queue_is_empty (&uris)) {
 		FCmdrProfile *profile;
@@ -200,16 +205,24 @@ fcmdr_http_profile_source_load_remote_thread (gpointer user_data)
 		uri = g_queue_pop_head (&uris);
 
 		profile = fcmdr_http_profile_source_get_profile (
-			source, uri, &local_error);
+			source->priv->session, uri, cancellable, &local_error);
 
 		/* Sanity check */
 		g_warn_if_fail (
 			((profile != NULL) && (local_error == NULL)) ||
 			((profile == NULL) && (local_error != NULL)));
 
-		if (profile != NULL)
-			g_hash_table_add (profiles, profile);
+		if (profile != NULL) {
+			fcmdr_profile_set_source (
+				profile, FCMDR_PROFILE_SOURCE (source));
+			g_hash_table_add (
+				async_context->profiles,
+				g_object_ref (profile));
+			g_object_unref (profile);
+		}
 
+		/* Errors fetching individual profiles are not fatal to
+		 * the class method, but we do want to warn about them. */
 		if (local_error != NULL) {
 			gchar *uri_string;
 
@@ -219,17 +232,17 @@ fcmdr_http_profile_source_load_remote_thread (gpointer user_data)
 
 			g_clear_error (&local_error);
 		}
+
+		soup_uri_free (uri);
 	}
 
 exit:
-	if (local_error != NULL) {
-		g_warning ("%s: %s", G_STRFUNC, local_error->message);
-		g_error_free (local_error);
-	}
+	g_warn_if_fail (g_queue_is_empty (&uris));
 
-	g_object_unref (source);
-
-	return NULL;
+	if (local_error != NULL)
+		g_task_return_error (task, local_error);
+	else
+		g_task_return_boolean (task, TRUE);
 }
 
 static void
@@ -253,29 +266,65 @@ fcmdr_http_profile_source_load_cached (FCmdrProfileSource *source,
 }
 
 static void
-fcmdr_http_profile_source_load_remote (FCmdrProfileSource *source)
+fcmdr_http_profile_source_load_remote (FCmdrProfileSource *source,
+                                       GCancellable *cancellable,
+                                       GAsyncReadyCallback callback,
+                                       gpointer user_data)
 {
-	GThread *thread;
-	GError *local_error = NULL;
+	GTask *task;
+	GHashTable *profiles;
+	AsyncContext *async_context;
 
-	thread = g_thread_try_new (
-		"http-load-remote-thread",
-		fcmdr_http_profile_source_load_remote_thread,
-		g_object_ref (source),
-		&local_error);
+	/* This is used as a set. */
+	profiles = g_hash_table_new_full (
+		(GHashFunc) fcmdr_profile_hash,
+		(GEqualFunc) fcmdr_profile_equal,
+		(GDestroyNotify) g_object_unref,
+		(GDestroyNotify) NULL);
 
-	/* Sanity check */
-	g_warn_if_fail (
-		((thread != NULL) && (local_error == NULL)) ||
-		((thread == NULL) && (local_error != NULL)));
+	async_context = g_slice_new0 (AsyncContext);
+	async_context->uri = fcmdr_profile_source_dup_uri (source);
+	async_context->profiles = profiles;  /* takes ownership */
 
-	if (thread != NULL)
-		g_thread_unref (thread);
+	task = g_task_new (source, cancellable, callback, user_data);
+	g_task_set_source_tag (task, fcmdr_http_profile_source_load_remote);
 
-	if (local_error != NULL) {
-		g_critical ("%s: %s", G_STRFUNC, local_error->message);
-		g_error_free (local_error);
+	g_task_set_task_data (
+		task, async_context, (GDestroyNotify) async_context_free);
+
+	g_task_run_in_thread (
+		task, fcmdr_http_profile_source_load_remote_thread);
+
+	g_object_unref (task);
+}
+
+static gboolean
+fcmdr_http_profile_source_load_remote_finish (FCmdrProfileSource *source,
+                                              GQueue *out_profiles,
+                                              GAsyncResult *result,
+                                              GError **error)
+{
+	g_return_val_if_fail (g_task_is_valid (result, source), FALSE);
+	g_return_val_if_fail (
+		g_async_result_is_tagged (
+		result, fcmdr_http_profile_source_load_remote), FALSE);
+
+	if (!g_task_had_error (G_TASK (result))) {
+		AsyncContext *async_context;
+		GHashTableIter iter;
+		gpointer profile;
+
+		async_context = g_task_get_task_data (G_TASK (result));
+
+		g_hash_table_iter_init (&iter, async_context->profiles);
+
+		while (g_hash_table_iter_next (&iter, &profile, NULL)) {
+			g_object_ref (profile);
+			g_queue_push_tail (out_profiles, profile);
+		}
 	}
+
+	return g_task_propagate_boolean (G_TASK (result), error);
 }
 
 static void
@@ -293,6 +342,7 @@ fcmdr_http_profile_source_class_init (FCmdrHttpProfileSourceClass *class)
 	source_class = FCMDR_PROFILE_SOURCE_CLASS (class);
 	source_class->load_cached = fcmdr_http_profile_source_load_cached;
 	source_class->load_remote = fcmdr_http_profile_source_load_remote;
+	source_class->load_remote_finish = fcmdr_http_profile_source_load_remote_finish;
 }
 
 static void

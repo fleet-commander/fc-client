@@ -401,7 +401,7 @@ fcmdr_service_initable_init (GInitable *initable,
 	priv = FCMDR_SERVICE_GET_PRIVATE (initable);
 
 	/* FIXME Temporary; see fcmdr_service_init(). */
-	fcmdr_profile_source_load_remote (priv->source);
+	fcmdr_profile_source_load_remote (priv->source, NULL, NULL, NULL);
 
 	return g_dbus_interface_skeleton_export (
 		G_DBUS_INTERFACE_SKELETON (priv->profiles_interface),
