@@ -74,6 +74,8 @@ GList *		fcmdr_service_list_profiles	(FCmdrService *service);
 GList *		fcmdr_service_list_profiles_for_user
 						(FCmdrService *service,
 						 uid_t uid);
+GList *		fcmdr_service_list_profile_sources
+						(FCmdrService *service);
 void		fcmdr_service_apply_profiles	(FCmdrService *service);
 
 G_END_DECLS

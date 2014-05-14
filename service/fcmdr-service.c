@@ -765,6 +765,24 @@ fcmdr_service_list_profiles_for_user (FCmdrService *service,
 	return fcmdr_service_list_profiles (service);
 }
 
+GList *
+fcmdr_service_list_profile_sources (FCmdrService *service)
+{
+	GList *list;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+
+	g_mutex_lock (&service->priv->sources_lock);
+
+	list = g_queue_peek_head_link (&service->priv->sources);
+
+	list = g_list_copy_deep (list, (GCopyFunc) g_object_ref, NULL);
+
+	g_mutex_unlock (&service->priv->sources_lock);
+
+	return list;
+}
+
 void
 fcmdr_service_apply_profiles (FCmdrService *service)
 {
