@@ -77,6 +77,15 @@ GList *		fcmdr_service_list_profiles_for_user
 						 uid_t uid);
 GList *		fcmdr_service_list_profile_sources
 						(FCmdrService *service);
+void		fcmdr_service_load_remote_profiles
+						(FCmdrService *service,
+						 GList *profile_sources,
+						 GCancellable *cancellable,
+						 GAsyncReadyCallback callback,
+						 gpointer user_data);
+GHashTable *	fcmdr_service_load_remote_profiles_finish
+						(FCmdrService *service,
+						 GAsyncResult *result);
 gboolean	fcmdr_service_update_profiles	(FCmdrService *service,
 						 FCmdrProfileSource *source,
 						 GList *new_profiles);

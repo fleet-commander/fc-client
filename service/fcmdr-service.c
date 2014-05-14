@@ -49,9 +49,16 @@ struct _FCmdrServicePrivate {
 };
 
 struct _AsyncContext {
+	/* for D-Bus methods */
 	GDBusInterface *interface;
 	GDBusMethodInvocation *invocation;
 	FCmdrService *service;
+
+	/* for load_remote_profiles() */
+	guint unfinished_subtasks;
+	gboolean apply_profiles;
+	GArray *cancel_ids;
+	GHashTable *errors;
 };
 
 enum {
@@ -77,6 +84,12 @@ async_context_free (AsyncContext *async_context)
 	g_clear_object (&async_context->interface);
 	g_clear_object (&async_context->invocation);
 	g_clear_object (&async_context->service);
+
+	if (async_context->cancel_ids != NULL)
+		g_array_free (async_context->cancel_ids, TRUE);
+
+	if (async_context->errors != NULL)
+		g_hash_table_destroy (async_context->errors);
 
 	g_slice_free (AsyncContext, async_context);
 }
@@ -781,6 +794,189 @@ fcmdr_service_list_profile_sources (FCmdrService *service)
 	g_mutex_unlock (&service->priv->sources_lock);
 
 	return list;
+}
+
+/* Helper for fcmdr_service_load_remote_profiles() */
+static void
+fcmdr_service_load_remote_profiles_cancelled (GCancellable *main_cancellable,
+                                              GCancellable *cancellable)
+{
+	g_cancellable_cancel (cancellable);
+}
+
+/* Helper for fcmdr_service_load_remote_profiles() */
+static void
+fcmdr_service_load_remote_profiles_subtask_done_cb (GObject *source_object,
+                                                    GAsyncResult *result,
+                                                    gpointer user_data)
+{
+	FCmdrService *service;
+	FCmdrProfileSource *source;
+	GTask *main_task;
+	GQueue profiles = G_QUEUE_INIT;
+	AsyncContext *async_context;
+	GError *local_error = NULL;
+
+	source = FCMDR_PROFILE_SOURCE (source_object);
+	main_task = G_TASK (user_data);
+
+	service = g_task_get_source_object (main_task);
+	async_context = g_task_get_task_data (main_task);
+
+	fcmdr_profile_source_load_remote_finish (
+		source, &profiles, result, &local_error);
+
+	if (local_error != NULL) {
+		/* Takes ownership of the GError. */
+		g_hash_table_replace (
+			async_context->errors,
+			g_object_ref (source),
+			local_error);
+	} else {
+		gboolean apply_profiles;
+
+		apply_profiles = fcmdr_service_update_profiles (
+			service, source, profiles.head);
+
+		async_context->apply_profiles |= apply_profiles;
+	}
+
+	while (!g_queue_is_empty (&profiles))
+		g_object_unref (g_queue_pop_head (&profiles));
+
+	g_warn_if_fail (async_context->unfinished_subtasks > 0);
+
+	async_context->unfinished_subtasks--;
+
+	if (async_context->unfinished_subtasks == 0) {
+		GCancellable *cancellable;
+		guint ii;
+
+		cancellable = g_task_get_cancellable (main_task);
+
+		/* If no cancellable then the array should be empty. */
+		for (ii = 0; ii < async_context->cancel_ids->len; ii++) {
+			gulong cancel_id;
+
+			cancel_id = g_array_index (
+				async_context->cancel_ids, gulong, ii);
+			g_cancellable_disconnect (cancellable, cancel_id);
+		}
+
+		if (async_context->apply_profiles)
+			fcmdr_service_apply_profiles (service);
+
+		g_task_return_pointer (
+			main_task, async_context->errors,
+			(GDestroyNotify) g_hash_table_destroy);
+		async_context->errors = NULL;
+	}
+
+	g_object_unref (main_task);
+}
+
+/* Helper for fcmdr_service_load_remote_profiles() */
+static void
+fcmdr_service_load_remote_profiles_subtask (gpointer data,
+                                            gpointer user_data)
+{
+	FCmdrProfileSource *source;
+	GTask *main_task;
+	GCancellable *main_cancellable;
+	GCancellable *cancellable = NULL;
+	AsyncContext *async_context;
+
+	g_return_if_fail (FCMDR_IS_PROFILE_SOURCE (data));
+
+	source = FCMDR_PROFILE_SOURCE (data);
+	main_task = G_TASK (user_data);
+
+	async_context = g_task_get_task_data (main_task);
+	main_cancellable = g_task_get_cancellable (main_task);
+
+	if (main_cancellable != NULL) {
+		gulong cancel_id;
+
+		cancellable = g_cancellable_new ();
+		cancel_id = g_cancellable_connect (
+			main_cancellable,
+			G_CALLBACK (fcmdr_service_load_remote_profiles_cancelled),
+			g_object_ref (cancellable),
+			(GDestroyNotify) g_object_unref);
+		g_array_append_val (async_context->cancel_ids, cancel_id);
+	}
+
+	async_context->unfinished_subtasks++;
+
+	fcmdr_profile_source_load_remote (
+		source, cancellable,
+		fcmdr_service_load_remote_profiles_subtask_done_cb,
+		g_object_ref (main_task));
+
+	g_clear_object (&cancellable);
+}
+
+void
+fcmdr_service_load_remote_profiles (FCmdrService *service,
+                                    GList *profile_sources,
+                                    GCancellable *cancellable,
+                                    GAsyncReadyCallback callback,
+                                    gpointer user_data)
+{
+	GTask *task;
+	AsyncContext *async_context;
+
+	g_return_if_fail (FCMDR_IS_SERVICE (service));
+
+	async_context = g_slice_new0 (AsyncContext);
+	async_context->cancel_ids =
+		g_array_new (FALSE, FALSE, sizeof (gulong));
+	async_context->errors = g_hash_table_new_full (
+		(GHashFunc) g_direct_hash,
+		(GEqualFunc) g_direct_equal,
+		(GDestroyNotify) g_object_unref,
+		(GDestroyNotify) g_error_free);
+
+	task = g_task_new (service, cancellable, callback, user_data);
+	g_task_set_source_tag (task, fcmdr_service_load_remote_profiles);
+
+	g_task_set_task_data (
+		task, async_context, (GDestroyNotify) async_context_free);
+
+	/* Complete the trivial case directly. */
+	if (profile_sources == NULL) {
+		g_task_return_pointer (
+			task, async_context->errors,
+			(GDestroyNotify) g_hash_table_destroy);
+		async_context->errors = NULL;
+	} else {
+		g_list_foreach (
+			profile_sources,
+			fcmdr_service_load_remote_profiles_subtask,
+			task);
+	}
+
+	g_object_unref (task);
+}
+
+GHashTable *
+fcmdr_service_load_remote_profiles_finish (FCmdrService *service,
+                                           GAsyncResult *result)
+{
+	g_return_val_if_fail (g_task_is_valid (result, service), NULL);
+	g_return_val_if_fail (
+		g_async_result_is_tagged (
+		result, fcmdr_service_load_remote_profiles), NULL);
+
+	/* This works a little different from the usual async convention.
+	 * Since this task dispatches multiple concurrent subtasks, what
+	 * we're returning is a hash table of errors for failed subtasks.
+	 * The main task itself never fails, which is why we don't take a
+	 * GError argument. */
+
+	g_warn_if_fail (!g_task_had_error (G_TASK (result)));
+
+	return g_task_propagate_pointer (G_TASK (result), NULL);
 }
 
 gboolean
