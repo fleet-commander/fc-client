@@ -46,6 +46,8 @@ struct _FCmdrServicePrivate {
 
 	GQueue sources;
 	GMutex sources_lock;
+
+	guint refresh_timeout_id;
 };
 
 struct _AsyncContext {
@@ -69,6 +71,9 @@ enum {
 /* Forward Declarations */
 static void	fcmdr_service_initable_interface_init
 						(GInitableIface *interface);
+static gboolean
+		fcmdr_service_refresh_profiles_start_cb
+						(gpointer user_data);
 
 G_DEFINE_TYPE_WITH_CODE (
 	FCmdrService,
@@ -211,6 +216,69 @@ fcmdr_service_read_config (FCmdrService *service)
 		g_warning ("%s: %s", G_STRFUNC, local_error->message);
 		g_error_free (local_error);
 	}
+}
+
+static void
+fcmdr_service_refresh_profiles_done_cb (GObject *source_object,
+                                        GAsyncResult *result,
+                                        gpointer user_data)
+{
+	FCmdrService *service;
+	GHashTable *errors;
+
+	service = FCMDR_SERVICE (source_object);
+
+	errors = fcmdr_service_load_remote_profiles_finish (service, result);
+
+	if (g_hash_table_size (errors) > 0) {
+		GHashTableIter iter;
+		gpointer key, value;
+
+		g_warning ("Failures occurred while fetching profiles:");
+
+		g_hash_table_iter_init (&iter, errors);
+
+		while (g_hash_table_iter_next (&iter, &key, &value)) {
+			FCmdrProfileSource *source = key;
+			GError *error = value;
+			SoupURI *uri;
+			gchar *uri_string;
+
+			uri = fcmdr_profile_source_dup_uri (source);
+			uri_string = soup_uri_to_string (uri, FALSE);
+
+			g_warning ("  %s: %s", uri_string, error->message);
+
+			g_free (uri_string);
+			soup_uri_free (uri);
+		}
+	}
+
+	g_hash_table_destroy (errors);
+
+	service->priv->refresh_timeout_id = g_timeout_add_seconds (
+		60 * 60, fcmdr_service_refresh_profiles_start_cb, service);
+}
+
+static gboolean
+fcmdr_service_refresh_profiles_start_cb (gpointer user_data)
+{
+	FCmdrService *service;
+	GList *profile_sources;
+
+	service = FCMDR_SERVICE (user_data);
+
+	profile_sources = fcmdr_service_list_profile_sources (service);
+
+	fcmdr_service_load_remote_profiles (
+		service, profile_sources, NULL,
+		fcmdr_service_refresh_profiles_done_cb, NULL);
+
+	g_list_free_full (profile_sources, (GDestroyNotify) g_object_unref);
+
+	service->priv->refresh_timeout_id = 0;
+
+	return G_SOURCE_REMOVE;
 }
 
 static gboolean
@@ -487,6 +555,11 @@ fcmdr_service_dispose (GObject *object)
 	while (!g_queue_is_empty (&priv->sources))
 		g_object_unref (g_queue_pop_head (&priv->sources));
 
+	if (priv->refresh_timeout_id > 0) {
+		g_source_remove (priv->refresh_timeout_id);
+		priv->refresh_timeout_id = 0;
+	}
+
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->dispose (object);
 }
@@ -533,6 +606,14 @@ fcmdr_service_initable_init (GInitable *initable,
 	FCmdrServicePrivate *priv;
 
 	priv = FCMDR_SERVICE_GET_PRIVATE (initable);
+
+	/* XXX Likely we'll want to take network availability into
+	 *     consideration before attempting to load remote profiles.
+	 *     But that can wait until our requirements become clearer.
+	 *     For now we just use a simple timeout -- a short delay
+	 *     for the initial load, then refresh every hour. */
+	priv->refresh_timeout_id = g_timeout_add_seconds (
+		3, fcmdr_service_refresh_profiles_start_cb, initable);
 
 	return g_dbus_interface_skeleton_export (
 		G_DBUS_INTERFACE_SKELETON (priv->profiles_interface),
