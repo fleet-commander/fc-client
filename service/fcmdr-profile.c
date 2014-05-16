@@ -51,6 +51,8 @@ enum {
 /* Forward Declarations */
 static void	fcmdr_profile_initable_interface_init
 					(GInitableIface *interface);
+static void	fcmdr_profile_serializable_interface_init
+					(JsonSerializableIface *interface);
 
 G_DEFINE_TYPE_WITH_CODE (
 	FCmdrProfile,
@@ -58,7 +60,10 @@ G_DEFINE_TYPE_WITH_CODE (
 	G_TYPE_OBJECT,
 	G_IMPLEMENT_INTERFACE (
 		G_TYPE_INITABLE,
-		fcmdr_profile_initable_interface_init))
+		fcmdr_profile_initable_interface_init)
+	G_IMPLEMENT_INTERFACE (
+		JSON_TYPE_SERIALIZABLE,
+		fcmdr_profile_serializable_interface_init))
 
 static JsonNode *
 fcmdr_profile_serialize_json_object (gconstpointer boxed)
@@ -296,6 +301,41 @@ fcmdr_profile_initable_init (GInitable *initable,
 	return fcmdr_profile_validate (FCMDR_PROFILE (initable), error);
 }
 
+static JsonNode *
+fcmdr_profile_serialize_property (JsonSerializable *serializable,
+                                  const gchar *property_name,
+                                  const GValue *value,
+                                  GParamSpec *pspec)
+{
+	JsonNode *node = NULL;
+
+	if (g_str_equal (property_name, "source")) {
+		FCmdrProfileSource *source;
+
+		source = g_value_get_object (value);
+
+		if (source != NULL) {
+			SoupURI *uri;
+			gchar *uri_string;
+
+			uri = fcmdr_profile_source_dup_uri (source);
+			uri_string = soup_uri_to_string (uri, FALSE);
+
+			node = json_node_alloc ();
+			json_node_init_string (node, uri_string);
+
+			soup_uri_free (uri);
+			g_free (uri_string);
+		}
+
+	} else {
+		node = json_serializable_default_serialize_property (
+			serializable, property_name, value, pspec);
+	}
+
+	return node;
+}
+
 static void
 fcmdr_profile_class_init (FCmdrProfileClass *class)
 {
@@ -402,6 +442,12 @@ static void
 fcmdr_profile_initable_interface_init (GInitableIface *interface)
 {
 	interface->init = fcmdr_profile_initable_init;
+}
+
+static void
+fcmdr_profile_serializable_interface_init (JsonSerializableIface *interface)
+{
+	interface->serialize_property = fcmdr_profile_serialize_property;
 }
 
 static void
