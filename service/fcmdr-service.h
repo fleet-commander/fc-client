@@ -75,6 +75,10 @@ GList *		fcmdr_service_list_profiles	(FCmdrService *service);
 GList *		fcmdr_service_list_profiles_for_user
 						(FCmdrService *service,
 						 uid_t uid);
+FCmdrProfileSource *
+		fcmdr_service_ref_profile_source
+						(FCmdrService *service,
+						 SoupURI *source_uri);
 GList *		fcmdr_service_list_profile_sources
 						(FCmdrService *service);
 void		fcmdr_service_load_remote_profiles

@@ -859,6 +859,42 @@ fcmdr_service_list_profiles_for_user (FCmdrService *service,
 	return fcmdr_service_list_profiles (service);
 }
 
+FCmdrProfileSource *
+fcmdr_service_ref_profile_source (FCmdrService *service,
+                                  SoupURI *source_uri)
+{
+	FCmdrProfileSource *match = NULL;
+	GList *list, *link;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+	g_return_val_if_fail (source_uri != NULL, NULL);
+
+	g_mutex_lock (&service->priv->sources_lock);
+
+	list = g_queue_peek_head_link (&service->priv->sources);
+
+	for (link = list; link != NULL; link = g_list_next (link)) {
+		FCmdrProfileSource *source;
+		SoupURI *uri;
+		gboolean uri_match;
+
+		source = FCMDR_PROFILE_SOURCE (link->data);
+
+		uri = fcmdr_profile_source_dup_uri (source);
+		uri_match = soup_uri_equal (uri, source_uri);
+		soup_uri_free (uri);
+
+		if (uri_match) {
+			match = g_object_ref (source);
+			break;
+		}
+	}
+
+	g_mutex_unlock (&service->priv->sources_lock);
+
+	return match;
+}
+
 GList *
 fcmdr_service_list_profile_sources (FCmdrService *service)
 {
