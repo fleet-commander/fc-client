@@ -29,6 +29,14 @@
 	(G_TYPE_INSTANCE_GET_PRIVATE \
 	((obj), FCMDR_TYPE_SERVICE, FCmdrServicePrivate))
 
+#define PROFILE_CACHE_DIR \
+	LOCALSTATEDIR \
+	G_DIR_SEPARATOR_S "cache" \
+	G_DIR_SEPARATOR_S "fleet-commander"
+
+#define PROFILE_CACHE_FILE \
+	PROFILE_CACHE_DIR G_DIR_SEPARATOR_S "profiles.json"
+
 typedef struct _AsyncContext AsyncContext;
 
 struct _FCmdrServicePrivate {
@@ -949,6 +957,7 @@ fcmdr_service_load_remote_profiles_subtask_done_cb (GObject *source_object,
 			async_context->errors,
 			g_object_ref (source),
 			local_error);
+		local_error = NULL;
 	} else {
 		gboolean apply_profiles;
 
@@ -982,6 +991,16 @@ fcmdr_service_load_remote_profiles_subtask_done_cb (GObject *source_object,
 
 		if (async_context->apply_profiles)
 			fcmdr_service_apply_profiles (service);
+
+		/* Failure here is not fatal to the operation. */
+		fcmdr_service_cache_profiles (service, &local_error);
+
+		if (local_error != NULL) {
+			g_warning (
+				"Failed to cache profiles: %s",
+				local_error->message);
+			g_clear_error (&local_error);
+		}
 
 		g_task_return_pointer (
 			main_task, async_context->errors,
@@ -1227,5 +1246,51 @@ fcmdr_service_apply_profiles (FCmdrService *service)
 
 	g_list_free_full (backends, (GDestroyNotify) g_object_unref);
 	g_list_free_full (profiles, (GDestroyNotify) g_object_unref);
+}
+
+gboolean
+fcmdr_service_cache_profiles (FCmdrService *service,
+                              GError **error)
+{
+	JsonNode *json_node;
+	JsonArray *json_array;
+	JsonGenerator *generator;
+	GList *list, *link;
+	gboolean success;
+
+	g_return_if_fail (FCMDR_IS_SERVICE (service));
+
+	json_array = json_array_new ();
+
+	list = fcmdr_service_list_profiles (service);
+
+	for (link = list; link != NULL; link = g_list_next (link)) {
+		FCmdrProfile *profile;
+
+		profile = FCMDR_PROFILE (link->data);
+		json_node = json_gobject_serialize (G_OBJECT (profile));
+
+		/* This takes ownership of the node. */
+		json_array_add_element (json_array, json_node);
+	}
+
+	g_list_free_full (list, (GDestroyNotify) g_object_unref);
+
+	generator = json_generator_new ();
+	json_generator_set_pretty (generator, TRUE);
+
+	json_node = json_node_new (JSON_NODE_ARRAY);
+	json_node_take_array (json_node, json_array);
+	json_generator_set_root (generator, json_node);
+	json_node_free (json_node);
+
+	g_mkdir_with_parents (PROFILE_CACHE_DIR, 0755);
+
+	success = json_generator_to_file (
+		generator, PROFILE_CACHE_FILE, error);
+
+	g_object_unref (generator);
+
+	return success;
 }
 

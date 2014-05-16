@@ -24,6 +24,7 @@ BUILT_SOURCES = \
 
 fcmdr_service_CFLAGS = \
 	-DG_LOG_DOMAIN=\"fcmdr-service\" \
+	-DLOCALSTATEDIR=\""$(localstatedir)"\" \
 	$(JSON_GLIB_CFLAGS) \
 	$(LIBSOUP_CFLAGS) \
 	$(GIO_CFLAGS) \

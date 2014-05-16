@@ -94,6 +94,8 @@ gboolean	fcmdr_service_update_profiles	(FCmdrService *service,
 						 FCmdrProfileSource *source,
 						 GList *new_profiles);
 void		fcmdr_service_apply_profiles	(FCmdrService *service);
+gboolean	fcmdr_service_cache_profiles	(FCmdrService *service,
+						 GError **error);
 
 G_END_DECLS
 
