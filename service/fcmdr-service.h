@@ -58,11 +58,6 @@ FCmdrService *	fcmdr_service_new		(GDBusConnection *connection,
 						 GError **error);
 GDBusConnection *
 		fcmdr_service_get_connection	(FCmdrService *service);
-void		fcmdr_service_user_session_hold	(FCmdrService *service,
-						 uid_t uid);
-void		fcmdr_service_user_session_release
-						(FCmdrService *service,
-						 uid_t uid);
 FCmdrServiceBackend *
 		fcmdr_service_ref_backend	(FCmdrService *service,
 						 const gchar *backend_name);

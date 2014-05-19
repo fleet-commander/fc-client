@@ -42,10 +42,6 @@ fcmdr_service_SOURCES = \
 	fcmdr-extensions.h \
 	fcmdr-http-profile-source.c \
 	fcmdr-http-profile-source.h \
-	fcmdr-login-monitor.c \
-	fcmdr-login-monitor.h \
-	fcmdr-logind-monitor.c \
-	fcmdr-logind-monitor.h \
 	fcmdr-profile.c \
 	fcmdr-profile.h \
 	fcmdr-profile-source.c \

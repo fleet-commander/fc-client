@@ -23,7 +23,6 @@
 
 #include "fcmdr-extensions.h"
 #include "fcmdr-generated.h"
-#include "fcmdr-logind-monitor.h"
 
 #define FCMDR_SERVICE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
@@ -42,7 +41,6 @@ typedef struct _AsyncContext AsyncContext;
 struct _FCmdrServicePrivate {
 	GDBusConnection *connection;
 	FCmdrProfiles *profiles_interface;
-	FCmdrLoginMonitor *login_monitor;
 
 	/* Name -> FCmdrServiceBackend */
 	GHashTable *backends;
@@ -678,7 +676,6 @@ fcmdr_service_dispose (GObject *object)
 
 	g_clear_object (&priv->connection);
 	g_clear_object (&priv->profiles_interface);
-	g_clear_object (&priv->login_monitor);
 
 	g_hash_table_remove_all (priv->backends);
 	g_hash_table_remove_all (priv->profiles);
@@ -719,8 +716,6 @@ fcmdr_service_constructed (GObject *object)
 	FCmdrService *service;
 
 	service = FCMDR_SERVICE (object);
-
-	service->priv->login_monitor = fcmdr_logind_monitor_new (service);
 
 	/* Profile sources must be initialized before profiles. */
 	fcmdr_service_init_backends (service);
@@ -855,26 +850,6 @@ fcmdr_service_get_connection (FCmdrService *service)
 	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
 
 	return service->priv->connection;
-}
-
-void
-fcmdr_service_user_session_hold (FCmdrService *service,
-                                 uid_t uid)
-{
-	g_return_if_fail (FCMDR_IS_SERVICE (service));
-	g_return_if_fail (uid > 0);
-
-	g_print ("%s(%u)\n", G_STRFUNC, uid);
-}
-
-void
-fcmdr_service_user_session_release (FCmdrService *service,
-                                    uid_t uid)
-{
-	g_return_if_fail (FCMDR_IS_SERVICE (service));
-	g_return_if_fail (uid > 0);
-
-	g_print ("%s(%u)\n", G_STRFUNC, uid);
 }
 
 FCmdrServiceBackend *
