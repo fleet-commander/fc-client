@@ -29,13 +29,13 @@
 	(G_TYPE_INSTANCE_GET_PRIVATE \
 	((obj), FCMDR_TYPE_SERVICE, FCmdrServicePrivate))
 
-#define PROFILE_CACHE_DIR \
+#define FCMDR_SERVICE_CACHE_DIR \
 	LOCALSTATEDIR \
 	G_DIR_SEPARATOR_S "cache" \
 	G_DIR_SEPARATOR_S "fleet-commander"
 
-#define PROFILE_CACHE_FILE \
-	PROFILE_CACHE_DIR G_DIR_SEPARATOR_S "profiles.json"
+#define FCMDR_PROFILE_CACHE_FILE \
+	FCMDR_SERVICE_CACHE_DIR G_DIR_SEPARATOR_S "profiles.json"
 
 typedef struct _AsyncContext AsyncContext;
 
@@ -1284,10 +1284,10 @@ fcmdr_service_cache_profiles (FCmdrService *service,
 	json_generator_set_root (generator, json_node);
 	json_node_free (json_node);
 
-	g_mkdir_with_parents (PROFILE_CACHE_DIR, 0755);
+	g_mkdir_with_parents (FCMDR_SERVICE_CACHE_DIR, 0755);
 
 	success = json_generator_to_file (
-		generator, PROFILE_CACHE_FILE, error);
+		generator, FCMDR_PROFILE_CACHE_FILE, error);
 
 	g_object_unref (generator);
 
