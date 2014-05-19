@@ -199,7 +199,7 @@ fcmdr_service_read_config_line (FCmdrService *service,
 }
 
 static void
-fcmdr_service_read_config (FCmdrService *service)
+fcmdr_service_init_profile_sources (FCmdrService *service)
 {
 	GDataInputStream *input_stream;
 	gchar *line;
@@ -600,7 +600,7 @@ fcmdr_service_constructed (GObject *object)
 	service->priv->login_monitor = fcmdr_logind_monitor_new (service);
 
 	fcmdr_service_init_backends (service);
-	fcmdr_service_read_config (service);
+	fcmdr_service_init_profile_sources (service);
 
 	/* Chain up to parent's constructed() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->constructed (object);
