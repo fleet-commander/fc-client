@@ -227,6 +227,129 @@ fcmdr_service_init_profile_sources (FCmdrService *service)
 }
 
 static void
+fcmdr_service_init_profiles (FCmdrService *service)
+{
+	JsonNode *json_node;
+	JsonArray *json_array;
+	JsonParser *json_parser;
+	GList *list, *link;
+	GError *local_error = NULL;
+
+	json_parser = json_parser_new ();
+
+	json_parser_load_from_file (
+		json_parser, FCMDR_PROFILE_CACHE_FILE, &local_error);
+
+	/* Silently ignore "file not found" errors. */
+	if (g_error_matches (local_error, G_FILE_ERROR, G_FILE_ERROR_NOENT)) {
+		g_clear_error (&local_error);
+		goto exit;
+	}
+
+	if (local_error != NULL)
+		goto exit;
+
+	json_node = json_parser_get_root (json_parser);
+
+	if (!JSON_NODE_HOLDS_ARRAY (json_node)) {
+		local_error = g_error_new (
+			JSON_PARSER_ERROR,
+			JSON_PARSER_ERROR_PARSE,
+			"Expecting a JSON array, "
+			"but the root node is of type '%s'",
+			json_node_type_name (json_node));
+		goto exit;
+	}
+
+	json_array = json_node_get_array (json_node);
+	list = json_array_get_elements (json_array);
+
+	for (link = list; link != NULL; link = g_list_next (link)) {
+		JsonObject *json_object;
+		FCmdrProfileSource *source;
+		FCmdrProfile *profile;
+		const gchar *uri_string;
+		SoupURI *source_uri;
+
+		json_node = link->data;
+
+		if (!JSON_NODE_HOLDS_OBJECT (json_node)) {
+			g_warning (
+				"Expecting a JSON array of objects, "
+				"but encountered element of type '%s'",
+				json_node_type_name (json_node));
+			continue;
+		}
+
+		json_object = json_node_get_object (json_node);
+		uri_string = json_object_get_string_member (json_object, "source");
+
+		if (uri_string == NULL) {
+			g_warning (
+				"Skipping object with no 'source' member "
+				"in JSON array");
+			continue;
+		}
+
+		source_uri = soup_uri_new (uri_string);
+
+		if (source_uri == NULL) {
+			g_warning (
+				"Skipping object with invalid 'source' "
+				"value (%s) in JSON array", uri_string);
+			continue;
+		}
+
+		source = fcmdr_service_ref_profile_source (service, source_uri);
+
+		soup_uri_free (source_uri);
+
+		if (source == NULL) {
+			g_warning (
+				"Skipping object with unusable 'source' "
+				"value (%s) in JSON array", uri_string);
+			continue;
+		}
+
+		/* Remove the 'source' member to avoid a runtime warning from
+		 * json_gobject_deserialize().  We already deserialized it. */
+		json_object_remove_member (json_object, "source");
+
+		profile = fcmdr_profile_new_from_node (json_node, &local_error);
+
+		/* Sanity check */
+		g_warn_if_fail (
+			((profile != NULL) && (local_error == NULL)) ||
+			((profile == NULL) && (local_error != NULL)));
+
+		if (profile != NULL) {
+			fcmdr_profile_set_source (profile, source);
+			fcmdr_service_add_profile (service, profile);
+			g_object_unref (profile);
+		}
+
+		if (local_error != NULL) {
+			g_warning (
+				"Skipping invalid profile object in "
+				"JSON array: %s", local_error->message);
+			g_clear_error (&local_error);
+		}
+
+		g_object_unref (source);
+	}
+
+	g_list_free (list);
+
+exit:
+	if (local_error != NULL) {
+		g_warning ("%s: %s", G_STRFUNC, local_error->message);
+		g_error_free (local_error);
+	}
+
+	g_object_unref (json_parser);
+}
+
+static void
 fcmdr_service_refresh_profiles_done_cb (GObject *source_object,
                                         GAsyncResult *result,
                                         gpointer user_data)
@@ -599,8 +722,10 @@ fcmdr_service_constructed (GObject *object)
 
 	service->priv->login_monitor = fcmdr_logind_monitor_new (service);
 
+	/* Profile sources must be initialized before profiles. */
 	fcmdr_service_init_backends (service);
 	fcmdr_service_init_profile_sources (service);
+	fcmdr_service_init_profiles (service);
 
 	/* Chain up to parent's constructed() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->constructed (object);
