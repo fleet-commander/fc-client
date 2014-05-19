@@ -478,6 +478,24 @@ fcmdr_profile_new (const gchar *data,
 }
 
 FCmdrProfile *
+fcmdr_profile_new_from_node (JsonNode *node,
+                             GError **error)
+{
+	FCmdrProfile *profile;
+
+	g_return_val_if_fail (node != NULL, NULL);
+	g_return_val_if_fail (JSON_NODE_HOLDS_OBJECT (node), NULL);
+
+	profile = (FCmdrProfile *) json_gobject_deserialize (
+		FCMDR_TYPE_PROFILE, node);
+
+	if (!g_initable_init (G_INITABLE (profile), NULL, error))
+		g_clear_object (&profile);
+
+	return profile;
+}
+
+FCmdrProfile *
 fcmdr_profile_new_from_stream (GInputStream *stream,
                                GCancellable *cancellable,
                                GError **error)
