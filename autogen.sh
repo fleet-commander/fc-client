@@ -7,14 +7,14 @@ test -n "$srcdir" || srcdir=.
 olddir=`pwd`
 cd "$srcdir"
 
-mkdir -p m4
-
 AUTORECONF=`which autoreconf`
 if test -z $AUTORECONF; then
 	echo "*** No autoreconf found, please install it ***"
 	exit 1
 fi
 
+mkdir -p m4
+gtkdocize --docdir docs --flavour no-tmpl
 autoreconf --force --install --verbose || exit $?
 
 cd "$olddir"

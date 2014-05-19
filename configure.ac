@@ -28,6 +28,9 @@ PKG_CHECK_MODULES(GIO, gio-unix-2.0)
 PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0)
 PKG_CHECK_MODULES(LIBSOUP, libsoup-2.4 >= 2.42)  # Just a guess
 
+# Documentation
+GTK_DOC_CHECK([1.14])
+
 # systemd
 AC_ARG_WITH([systemdsystemunitdir],
             AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
@@ -41,6 +44,7 @@ AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$systemdsystemunitdir"])
 
 AC_CONFIG_FILES([
   data/Makefile
+  docs/Makefile
   service/Makefile
   Makefile
 ])
