@@ -17,6 +17,17 @@
  * Author: Matthew Barnes <mbarnes@redhat.com>
  */
 
+/**
+ * SECTION: fcmdr-profile-source
+ * @short_description: A source for settings profiles
+ *
+ * A #FCmdrProfileSource describes a location from which to obtain profile
+ * data that can be deserialized into #FCmdrProfile instances.
+ *
+ * The #FCmdrProfileSource class itself is abstract.  Each subclass handles
+ * profile loading for a particular URI scheme, like "http".
+ **/
+
 #include "config.h"
 
 #include "fcmdr-profile-source.h"
@@ -167,7 +178,7 @@ fcmdr_profile_source_class_init (FCmdrProfileSourceClass *class)
 		g_param_spec_boxed (
 			"uri",
 			"URI",
-			"The URI of this profile source",
+			"The URI for this profile source",
 			SOUP_TYPE_URI,
 			G_PARAM_READWRITE |
 			G_PARAM_CONSTRUCT_ONLY |
@@ -180,6 +191,16 @@ fcmdr_profile_source_init (FCmdrProfileSource *source)
 	source->priv = FCMDR_PROFILE_SOURCE_GET_PRIVATE (source);
 }
 
+/**
+ * fcmdr_profile_source_try_new:
+ * @service: a #FCmdrService
+ * @uri: a #SoupURI
+ *
+ * Instantiates a #FCmdrProfileSource subclass to handle the given @uri.
+ * If no suitable subclass is available, the function returns %NULL.
+ *
+ * Returns: a new #FCmdrProfileSource, or %NULL
+ **/
 FCmdrProfileSource *
 fcmdr_profile_source_try_new (FCmdrService *service,
                               SoupURI *uri)
@@ -208,6 +229,17 @@ fcmdr_profile_source_try_new (FCmdrService *service,
 	return source;
 }
 
+/**
+ * fcmdr_profile_source_ref_service:
+ * @source: a #FCmdrProfileSource
+ *
+ * Returns the #FCmdrService passed to fcmdr_profile_source_try_new().
+ *
+ * The returned #FCmdrService is referenced for thread-safety and must be
+ * unreferenced with g_object_unref() when finished with it.
+ *
+ * Returns: a referenced #FCmdrService
+ **/
 FCmdrService *
 fcmdr_profile_source_ref_service (FCmdrProfileSource *source)
 {
@@ -216,6 +248,15 @@ fcmdr_profile_source_ref_service (FCmdrProfileSource *source)
 	return g_weak_ref_get (&source->priv->service);
 }
 
+/**
+ * fcmdr_profile_source_dup_uri:
+ * @source: a #FCmdrProfileSource
+ *
+ * Returns a copy of the #SoupURI passed to fcmdr_profile_source_try_new().
+ * Free the returned #SoupURI with soup_uri_free().
+ *
+ * Returns: a duplicated #SoupURI
+ **/
 SoupURI *
 fcmdr_profile_source_dup_uri (FCmdrProfileSource *source)
 {
@@ -224,6 +265,20 @@ fcmdr_profile_source_dup_uri (FCmdrProfileSource *source)
 	return soup_uri_copy (source->priv->uri);
 }
 
+/**
+ * fcmdr_profile_source_load_remote:
+ * @source: a #FCmdrProfileSource
+ * @cancellable: optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when the request is satisfied
+ * @user_data: data to pass to the callback function
+ *
+ * Asynchronously loads remote profile data from the @source's
+ * #FCmdrProfileSource:uri.
+ *
+ * When the operation is finished, @callback will be called.  You can then
+ * call fcmdr_profile_source_load_remote_finish() to get the result of the
+ * operation.
+ **/
 void
 fcmdr_profile_source_load_remote (FCmdrProfileSource *source,
                                   GCancellable *cancellable,
@@ -240,6 +295,21 @@ fcmdr_profile_source_load_remote (FCmdrProfileSource *source,
 	class->load_remote (source, cancellable, callback, user_data);
 }
 
+/**
+ * fcmdr_profile_source_load_remote_finish:
+ * @source: a #FCmdrProfileSource
+ * @out_profiles: a #GQueue in which to deposit profiles
+ * @result: a #GAsyncResult
+ * @error: return location for a #GError, or %NULL
+ *
+ * Finishes the operation started with fcmdr_profile_source_load_remote().
+ *
+ * The @out_profiles queue will be populated with freshly loaded #FCmdrProfile
+ * instances.  If an error occurred, the @out_profiles queue will remain empty
+ * and the function will set @error and return %FALSE.
+ *
+ * Returns: %TRUE on success, %FALSE on failure
+ **/
 gboolean
 fcmdr_profile_source_load_remote_finish (FCmdrProfileSource *source,
                                          GQueue *out_profiles,

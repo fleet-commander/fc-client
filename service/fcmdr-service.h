@@ -36,6 +36,11 @@
 	(G_TYPE_CHECK_INSTANCE_TYPE \
 	((obj), FCMDR_TYPE_SERVICE))
 
+/**
+ * FCMDR_SERVICE_DBUS_OBJECT_PATH:
+ *
+ * The D-Bus object path on which the #FCmdrService is exported.
+ **/
 #define FCMDR_SERVICE_DBUS_OBJECT_PATH "/org/gnome/FleetCommander"
 
 G_BEGIN_DECLS
@@ -44,6 +49,12 @@ typedef struct _FCmdrService FCmdrService;
 typedef struct _FCmdrServiceClass FCmdrServiceClass;
 typedef struct _FCmdrServicePrivate FCmdrServicePrivate;
 
+/**
+ * FCmdrService:
+ *
+ * Contains only private data that should be read and manipulated using the
+ * functions below.
+ **/
 struct _FCmdrService {
 	GObject parent;
 	FCmdrServicePrivate *priv;

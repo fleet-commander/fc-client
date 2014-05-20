@@ -17,6 +17,21 @@
  * Author: Matthew Barnes <mbarnes@redhat.com>
  */
 
+/**
+ * SECTION: fcmdr-service
+ * @short_description: System service to manage settings profiles
+ *
+ * The #FCmdrService implements a service on the system message bus
+ * responsible for fetching and managing settings profiles from any
+ * number of remote sources.  A single profile may contain settings
+ * for a variety of desktop configuration systems or applications.
+ *
+ * The service is extensible by way of GLib's #GIOExtensionPoint system.
+ * Relevant extension point names are
+ * #FCMDR_SERVICE_BACKEND_EXTENSION_POINT_NAME and
+ * #FCMDR_PROFILE_SOURCE_EXTENSION_POINT_NAME.
+ **/
+
 #include "config.h"
 
 #include "fcmdr-service.h"
@@ -77,8 +92,7 @@ enum {
 /* Forward Declarations */
 static void	fcmdr_service_initable_interface_init
 						(GInitableIface *interface);
-static gboolean
-		fcmdr_service_refresh_profiles_start_cb
+static gboolean	fcmdr_service_refresh_profiles_start_cb
 						(gpointer user_data);
 
 G_DEFINE_TYPE_WITH_CODE (
@@ -833,6 +847,18 @@ fcmdr_service_init (FCmdrService *service)
 		service);
 }
 
+/**
+ * fcmdr_service_new:
+ * @connection: a #GDBusConnection to the system-wide message bus
+ * @error: return location for a #GError, or %NULL
+ *
+ * Creates a new #FCmdrService and attempts to export its interfaces
+ * on @connection at #FCMDR_SERVICE_DBUS_OBJECT_PATH.  If the #FCmdrService
+ * is unable to export its interfaces, the function sets @error and returns
+ * %NULL.
+ *
+ * Returns: a new #FCmdrService, or %NULL
+ **/
 FCmdrService *
 fcmdr_service_new (GDBusConnection *connection,
                    GError **error)
@@ -844,6 +870,14 @@ fcmdr_service_new (GDBusConnection *connection,
 		"connection", connection, NULL);
 }
 
+/**
+ * fcmdr_service_get_connection:
+ * @service: a #FCmdrService
+ *
+ * Returns the #GDBusConnection passed to fcmdr_service_new().
+ *
+ * Returns: a #GDBusConnection
+ **/
 GDBusConnection *
 fcmdr_service_get_connection (FCmdrService *service)
 {
@@ -852,6 +886,18 @@ fcmdr_service_get_connection (FCmdrService *service)
 	return service->priv->connection;
 }
 
+/**
+ * fcmdr_service_ref_backend:
+ * @service: a #FCmdrService
+ * @backend_name: backend extension name
+ *
+ * Looks up a #FCmdrServiceBackend instance by its extension name.
+ *
+ * The returned #FCmdrServiceBackend is referenced for thread-safety and
+ * must be unreferenced with g_object_unref() when finished with it.
+ *
+ * Returns: a referenced #FCmdrServiceBackend, or %NULL if no match was found
+ **/
 FCmdrServiceBackend *
 fcmdr_service_ref_backend (FCmdrService *service,
                            const gchar *backend_name)
@@ -873,6 +919,24 @@ fcmdr_service_ref_backend (FCmdrService *service,
 	return backend;
 }
 
+/**
+ * fcmdr_service_list_backends:
+ * @service: a #FCmdrService
+ *
+ * Returns an unsorted list of available #FCmdrServiceBackend instances.
+ *
+ * The backends returned in the list are referenced for thread-safety.
+ * They must each be unreferenced with g_object_unref() when finished
+ * with them.  Free the returned list itself with g_list_free().
+ *
+ * An easy way to free the list properly in one step is as follows:
+ *
+ * |[
+ *   g_list_free_full (list, g_object_unref);
+ * ]|
+ *
+ * Returns: a list of referenced backends
+ **/
 GList *
 fcmdr_service_list_backends (FCmdrService *service)
 {
@@ -891,6 +955,14 @@ fcmdr_service_list_backends (FCmdrService *service)
 	return list;
 }
 
+/**
+ * fcmdr_service_add_profile:
+ * @service: a #FCmdrService
+ * @profile: a #FCmdrProfile
+ *
+ * Adds @profile to @service, replacing any existing #FCmdrProfile with the
+ * same #FCmdrProfile:uid value.
+ **/
 void
 fcmdr_service_add_profile (FCmdrService *service,
                            FCmdrProfile *profile)
@@ -915,6 +987,18 @@ fcmdr_service_add_profile (FCmdrService *service,
 	fcmdr_service_apply_profiles (service);
 }
 
+/**
+ * fcmdr_service_ref_profile:
+ * @service: a #FCmdrService
+ * @profile_uid: a unique identifier string
+ *
+ * Looks up a #FCmdrProfile in @service by its #FCmdrProfile:uid value.
+ *
+ * The returned #FCmdrProfile is referenced for thread-safety and must be
+ * unreferenced with g_object_unref() when finished with it.
+ *
+ * Returns: a referenced #FCmdrProfile, or %NULL if no match was found
+ **/
 FCmdrProfile *
 fcmdr_service_ref_profile (FCmdrService *service,
                            const gchar *profile_uid)
@@ -936,6 +1020,24 @@ fcmdr_service_ref_profile (FCmdrService *service,
 	return profile;
 }
 
+/**
+ * fcmdr_service_list_profiles:
+ * @service: a #FCmdrService
+ *
+ * Returns an unsorted list of available #FCmdrProfile instances.
+ *
+ * The profiles returned in the list are referenced for thread-safety.
+ * They must each be unreferenced with g_object_unref() when finished
+ * with them.  Free the returned list itself with g_list_free().
+ *
+ * An easy way to free the list properly in one step is as follows:
+ *
+ * |[
+ *   g_list_free_full (list, g_object_unref);
+ * ]|
+ *
+ * Returns: a list of referenced profiles
+ **/
 GList *
 fcmdr_service_list_profiles (FCmdrService *service)
 {
@@ -954,6 +1056,26 @@ fcmdr_service_list_profiles (FCmdrService *service)
 	return list;
 }
 
+/**
+ * fcmdr_service_list_profiles_for_user:
+ * @service: a #FCmdrService
+ * @uid: a user ID
+ *
+ * Returns a list of #FCmdrProfile instances which apply to the user
+ * identified by @uid, sorted from highest priority to lowest priority.
+ *
+ * The profiles returned in the list are referenced for thread-safety.
+ * They must each be unreferenced with g_object_unref() when finished
+ * with them.  Free the returned list itself with g_list_free().
+ *
+ * An easy way to free the list properly in one step is as follows:
+ *
+ * |[
+ *   g_list_free_full (list, g_object_unref);
+ * ]|
+ *
+ * Returns: a list of referenced profiles
+ **/
 GList *
 fcmdr_service_list_profiles_for_user (FCmdrService *service,
                                       uid_t uid)
@@ -967,6 +1089,19 @@ fcmdr_service_list_profiles_for_user (FCmdrService *service,
 	return fcmdr_service_list_profiles (service);
 }
 
+/**
+ * fcmdr_service_ref_profile_source:
+ * @service: a #FCmdrService
+ * @source_uri: a #SoupURI for a profile source
+ *
+ * Looks up a #FCmdrProfileSource in @service by its #FCmdrProfileSource:uri
+ * value.
+ *
+ * The returned #FCmdrProfileSource is referenced for thready-safety and
+ * must be unreferenced with g_object_unref() when finished with it.
+ *
+ * Returns: a referenced #FCmdrProfileSource, or %NULL if no match was found
+ **/
 FCmdrProfileSource *
 fcmdr_service_ref_profile_source (FCmdrService *service,
                                   SoupURI *source_uri)
@@ -1003,6 +1138,24 @@ fcmdr_service_ref_profile_source (FCmdrService *service,
 	return match;
 }
 
+/**
+ * fcmdr_service_list_profile_sources:
+ * @service: a #FCmdrService
+ *
+ * Returns an unsorted list of available #FCmdrProfileSource instances.
+ *
+ * The sources returned in the list are referenced for thread-safety.
+ * They must each be unreferenced with g_object_unref() when finished
+ * with them.  Free the returned list itself with g_list_free().
+ *
+ * An easy way to free the list properly in one step is as follows:
+ *
+ * |[
+ *   g_list_free_full (list, g_object_unref);
+ * ]|
+ *
+ * Returns: a list of referenced profiles
+ **/
 GList *
 fcmdr_service_list_profile_sources (FCmdrService *service)
 {
@@ -1152,6 +1305,23 @@ fcmdr_service_load_remote_profiles_subtask (gpointer data,
 	g_clear_object (&cancellable);
 }
 
+/**
+ * fcmdr_service_load_remote_profiles:
+ * @service: a #FCmdrService
+ * @profile_sources: a #GList of #FCmdrProfileSource instances
+ * @cancellable: optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when the request is satisfied
+ * @user_data: data to pass to the callback function
+ *
+ * Asynchronously loads remote profile data for the given @profile_sources.
+ * Updated profiles are added to the @service as each #FCmdrProfileSource
+ * finishes loading.  When all profile sources are finished loading, all
+ * profiles in @service are cached and (if necessary) applied.
+ *
+ * When the operation is finished, @callback will be called.  You can then
+ * call fcmdr_service_load_remote_profiles_finish() to get the result of the
+ * operation.
+ **/
 void
 fcmdr_service_load_remote_profiles (FCmdrService *service,
                                     GList *profile_sources,
@@ -1195,6 +1365,22 @@ fcmdr_service_load_remote_profiles (FCmdrService *service,
 	g_object_unref (task);
 }
 
+/**
+ * fcmdr_service_load_remote_profiles_finish:
+ * @service: a #FCmdrService
+ * @result: a #GAsyncResult
+ *
+ * Finishes the operation started with fcmdr_service_load_remote_profiles().
+ *
+ * Instead of propagating a single #GError when multiple failures are
+ * possible, the function returns a hash table of profile sources (as keys)
+ * which failed to load remote profile data, along with a #GError (as values)
+ * for each failure.  An empty hash table indicates all profile sources
+ * completed successfully.  Free the returned #GHashTable with
+ * g_hash_table_destroy().
+ *
+ * Returns: a #GHashTable of loading errors
+ **/
 GHashTable *
 fcmdr_service_load_remote_profiles_finish (FCmdrService *service,
                                            GAsyncResult *result)
@@ -1215,6 +1401,28 @@ fcmdr_service_load_remote_profiles_finish (FCmdrService *service,
 	return g_task_propagate_pointer (G_TASK (result), NULL);
 }
 
+/**
+ * fcmdr_service_update_profiles:
+ * @service: a #FCmdrService
+ * @source: a #FCmdrProfileSource
+ * @new_profiles: a #GList of #FCmdrProfile instances
+ *
+ * Adds a set of freshly-loaded profiles from @source to @service and
+ * determines whether there are any actual profile changes which need
+ * to be applied.
+ *
+ * The function assumes @new_profiles to be a complete set of profiles
+ * for @source.  Existing profiles with a matching #FCmdrProfile:source
+ * value that do not appear in @new_profiles are removed.
+ *
+ * If any new profiles are added, or old profiles removed, or existing
+ * profiles updated with different #FCmdrProfile:etag values, the function
+ * returns %TRUE to indicate fcmdr_service_apply_profiles() should be called.
+ *
+ * This function is called as part of fcmdr_service_load_remote_profiles().
+ *
+ * Returns: whether any profile changes need to be applied
+ **/
 gboolean
 fcmdr_service_update_profiles (FCmdrService *service,
                                FCmdrProfileSource *source,
@@ -1325,6 +1533,15 @@ fcmdr_service_update_profiles (FCmdrService *service,
 	return apply_profiles;
 }
 
+/**
+ * fcmdr_service_apply_profiles:
+ * @service: a #FCmdrService
+ *
+ * Invokes fcmdr_service_backend_apply_profiles() on all backends in
+ * @service for all profiles in @service.
+ *
+ * This function is called as part of fcmdr_service_load_remote_profiles().
+ **/
 void
 fcmdr_service_apply_profiles (FCmdrService *service)
 {
@@ -1348,6 +1565,19 @@ fcmdr_service_apply_profiles (FCmdrService *service)
 	g_list_free_full (profiles, (GDestroyNotify) g_object_unref);
 }
 
+/**
+ * fcmdr_service_cache_profiles:
+ * @service: a #FCmdrService
+ * @error: return location for a #GError, or %NULL
+ *
+ * Serializes all #FCmdrProfile instances in @service and writes the
+ * contents to disk.  If the write operation fails, the function sets
+ * @error and returns %FALSE.
+ *
+ * This function is called as part of fcmdr_service_load_remote_profiles().
+ *
+ * Returns: %TRUE on success, %FALSE on failure
+ **/
 gboolean
 fcmdr_service_cache_profiles (FCmdrService *service,
                               GError **error)

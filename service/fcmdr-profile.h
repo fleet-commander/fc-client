@@ -50,6 +50,12 @@ typedef struct _FCmdrProfile FCmdrProfile;
 typedef struct _FCmdrProfileClass FCmdrProfileClass;
 typedef struct _FCmdrProfilePrivate FCmdrProfilePrivate;
 
+/**
+ * FCmdrProfile:
+ *
+ * Contains only private data that should be read and manipulated using the
+ * functions below.
+ **/
 struct _FCmdrProfile {
 	GObject parent;
 	FCmdrProfilePrivate *priv;

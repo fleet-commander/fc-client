@@ -17,6 +17,26 @@
  * Author: Matthew Barnes <mbarnes@redhat.com>
  */
 
+/**
+ * SECTION: fcmdr-profile
+ * @short_description: A settings profile
+ *
+ * A #FCmdrProfile instance holds settings to be locked for some combination
+ * of users, groups, and hosts.  Profiles are typically loaded from a remote
+ * source as described by a #FCmdrProfileSource.
+ *
+ * A #FCmdrProfile consists of a unique identifier or #FCmdrProfile:uid
+ * field, an entity tag or #FCmdrProfile:etag field for fast comparisons,
+ * human-readable #FCmdrProfile:name and #FCmdrProfile:description fields,
+ * and an assortment of #FCmdrProfile:settings grouped by context.
+ *
+ * Each #FCmdrProfile:settings context in a profile is handled by a custom
+ * #FCmdrServiceBackend.  For example the "org.gnome.gsettings" context is
+ * handled by a custom #FCmdrServiceBackend that knows how to parse and
+ * apply those settings by interacting with
+ * <ulink url="https://wiki.gnome.org/Projects/dconf">dconf</ulink>.
+ **/
+
 #include "config.h"
 
 #include "fcmdr-profile.h"
@@ -456,6 +476,21 @@ fcmdr_profile_init (FCmdrProfile *profile)
 	profile->priv = FCMDR_PROFILE_GET_PRIVATE (profile);
 }
 
+/**
+ * fcmdr_profile_new:
+ * @data: JSON data describing a profile
+ * @length: length of @data, or -1 if it is NUL-terminated
+ * @error: return location for a #GError, or %NULL
+ *
+ * Deserializes the JSON @data into a new #FCmdrProfile instance and checks
+ * the contents for validity.  If an error occurs during deserialization or
+ * validation, the function sets @error and returns %NULL.
+ *
+ * A validated profile is guaranteed to have non-empty #FCmdrProfile:uid,
+ * #FCmdrProfile:etag, and #FCmdrProfile:settings values.
+ *
+ * Returns: a new #FCmdrProfile, or %NULL
+ **/
 FCmdrProfile *
 fcmdr_profile_new (const gchar *data,
                    gssize length,
@@ -477,6 +512,20 @@ fcmdr_profile_new (const gchar *data,
 	return profile;
 }
 
+/**
+ * fcmdr_profile_new_from_node:
+ * @node: a #JsonNode of type #JSON_NODE_OBJECT describing a profile
+ * @error: return location for a #GError, or %NULL
+ *
+ * Deserializes @node into a new #FCmdrProfile instance and checks the
+ * contents for validity.  If an error occurs during deserialization or
+ * validation, the function sets @error and returns %NULL.
+ *
+ * A validated profile is guaranteed to have non-empty #FCmdrProfile:uid,
+ * #FCmdrProfile:etag, and #FCmdrProfile:settings values.
+ *
+ * Returns: a new #FCmdrProfile, or %NULL
+ **/
 FCmdrProfile *
 fcmdr_profile_new_from_node (JsonNode *node,
                              GError **error)
@@ -495,6 +544,21 @@ fcmdr_profile_new_from_node (JsonNode *node,
 	return profile;
 }
 
+/**
+ * fcmdr_profile_new_from_stream:
+ * @stream: an open #GInputStream
+ * @cancellable: optional #GCancellable object, or %NULL
+ * @error: return location for a #GError, or %NULL
+ *
+ * Deserializes the @stream contents into a new #FCmdrProfile instance
+ * and checks the contents for validity.  If an error occurs during
+ * deserialization or validation, the function sets @error and returns %NULL.
+ *
+ * A validated profile is guaranteed to have non-empty #FCmdrProfile:uid,
+ * #FCmdrProfile:etag, and #FCmdrProfile:settings values.
+ *
+ * Returns: a new #FCmdrProfile, or %NULL
+ **/
 FCmdrProfile *
 fcmdr_profile_new_from_stream (GInputStream *stream,
                                GCancellable *cancellable,
@@ -534,6 +598,16 @@ fcmdr_profile_new_from_stream (GInputStream *stream,
 	return profile;
 }
 
+/**
+ * fcmdr_profile_hash:
+ * @profile: a #FCmdrProfile
+ *
+ * Generates a hash value for @profile.  This function is intended for
+ * easily hashing a #FCmdrProfile to add to a #GHashTable or similar data
+ * structure.
+ *
+ * Returns: a hash value for @profile
+ **/
 guint
 fcmdr_profile_hash (FCmdrProfile *profile)
 {
@@ -546,6 +620,16 @@ fcmdr_profile_hash (FCmdrProfile *profile)
 	return g_str_hash (uid);
 }
 
+/**
+ * fcmdr_profile_equal:
+ * @profile1: the first #FCmdrProfile
+ * @profile2: the second #FCmdrProfile
+ *
+ * Checks two #FCmdrProfile instances for equality.  Two #FCmdrProfile
+ * instances are equal if their #FCmdrProfile:uid values are equal.
+ *
+ * Returns: %TRUE if @profile1 and @profile2 are equal
+ **/
 gboolean
 fcmdr_profile_equal (FCmdrProfile *profile1,
                      FCmdrProfile *profile2)
@@ -564,6 +648,14 @@ fcmdr_profile_equal (FCmdrProfile *profile1,
 	return g_str_equal (uid1, uid2);
 }
 
+/**
+ * fcmdr_profile_get_uid:
+ * @profile: a #FCmdrProfile
+ *
+ * Returns the @profile's unique identifier.
+ *
+ * Returns: the @profile's #FCmdrProfile:uid
+ **/
 const gchar *
 fcmdr_profile_get_uid (FCmdrProfile *profile)
 {
@@ -572,6 +664,14 @@ fcmdr_profile_get_uid (FCmdrProfile *profile)
 	return profile->priv->uid;
 }
 
+/**
+ * fcmdr_profile_get_etag:
+ * @profile: a #FCmdrProfile
+ *
+ * Returns the @profile's entity tag.
+ *
+ * Returns: the @profile's #FCmdrProfile:etag
+ **/
 const gchar *
 fcmdr_profile_get_etag (FCmdrProfile *profile)
 {
@@ -580,6 +680,14 @@ fcmdr_profile_get_etag (FCmdrProfile *profile)
 	return profile->priv->etag;
 }
 
+/**
+ * fcmdr_profile_get_name:
+ * @profile: a #FCmdrProfile
+ *
+ * Returns the @profile's display name.
+ *
+ * Returns: the @profile's #FCmdrProfile:name
+ **/
 const gchar *
 fcmdr_profile_get_name (FCmdrProfile *profile)
 {
@@ -588,6 +696,14 @@ fcmdr_profile_get_name (FCmdrProfile *profile)
 	return profile->priv->name;
 }
 
+/**
+ * fcmdr_profile_get_description:
+ * @profile: a #FCmdrProfile
+ *
+ * Returns a brief description of the @profile.
+ *
+ * Returns: the profile's #FCmdrProfile:description
+ **/
 const gchar *
 fcmdr_profile_get_description (FCmdrProfile *profile)
 {
@@ -596,6 +712,18 @@ fcmdr_profile_get_description (FCmdrProfile *profile)
 	return profile->priv->description;
 }
 
+/**
+ * fcmdr_profile_ref_settings:
+ * @profile: a #FCmdrProfile
+ *
+ * Returns the raw settings data as a JSON object, grouped by context with
+ * member names denoting the context.
+ *
+ * The returned #JsonObject is referenced for thread-safety and must be
+ * unreferenced with json_object_unref() when finished with it.
+ *
+ * Returns: a referenced #JsonObject
+ **/
 JsonObject *
 fcmdr_profile_ref_settings (FCmdrProfile *profile)
 {
@@ -604,6 +732,18 @@ fcmdr_profile_ref_settings (FCmdrProfile *profile)
 	return json_object_ref (profile->priv->settings);
 }
 
+/**
+ * fcmdr_profile_ref_source:
+ * @profile: a #FCmdrProfile
+ *
+ * Returns the #FCmdrProfileSource from which the @profile originated, or
+ * %NULL if the @profile was added interactively or by some other means.
+ *
+ * The returned #FCmdrProfileSource is referenced for thread-safety and must
+ * be unreferenced with g_object_unref() when finished with it.
+ *
+ * Returns: a referenced #FCmdrProfileSource, or %NULL
+ **/
 FCmdrProfileSource *
 fcmdr_profile_ref_source (FCmdrProfile *profile)
 {
@@ -612,6 +752,15 @@ fcmdr_profile_ref_source (FCmdrProfile *profile)
 	return g_weak_ref_get (&profile->priv->source);
 }
 
+/**
+ * fcmdr_profile_set_source:
+ * @profile: a #FCmdrProfile
+ * @source: a #FCmdrProfileSource, or %NULL
+ *
+ * Sets the #FCmdrProfileSource from which the @profile originated.
+ * Typically this is called once, immediately after a #FCmdrProfile
+ * is instantiated.
+ **/
 void
 fcmdr_profile_set_source (FCmdrProfile *profile,
                           FCmdrProfileSource *source)

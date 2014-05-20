@@ -2,7 +2,6 @@
 <FILE>fcmdr-profile</FILE>
 <TITLE>FCmdrProfile</TITLE>
 FCmdrProfile
-FCmdrProfileClass
 fcmdr_profile_new
 fcmdr_profile_new_from_node
 fcmdr_profile_new_from_stream
@@ -22,8 +21,10 @@ FCMDR_TYPE_PROFILE
 FCMDR_PROFILE_CLASS
 FCMDR_IS_PROFILE_CLASS
 FCMDR_PROFILE_GET_CLASS
-FCmdrProfilePrivate
+FCmdrProfileClass
 fcmdr_profile_get_type
+<SUBSECTION Private>
+FCmdrProfilePrivate
 </SECTION>
 
 <SECTION>
@@ -31,11 +32,9 @@ fcmdr_profile_get_type
 <TITLE>FCmdrProfileSource</TITLE>
 FCMDR_PROFILE_SOURCE_EXTENSION_POINT_NAME
 FCmdrProfileSource
-FCmdrProfileSourceClass
 fcmdr_profile_source_try_new
 fcmdr_profile_source_ref_service
 fcmdr_profile_source_dup_uri
-fcmdr_profile_source_load_cached
 fcmdr_profile_source_load_remote
 fcmdr_profile_source_load_remote_finish
 <SUBSECTION Standard>
@@ -45,8 +44,10 @@ FCMDR_TYPE_PROFILE_SOURCE
 FCMDR_PROFILE_SOURCE_CLASS
 FCMDR_IS_PROFILE_SOURCE_CLASS
 FCMDR_PROFILE_SOURCE_GET_CLASS
-FCmdrProfileSourcePrivate
+FCmdrProfileSourceClass
 fcmdr_profile_source_get_type
+<SUBSECTION Private>
+FCmdrProfileSourcePrivate
 </SECTION>
 
 <SECTION>
@@ -54,7 +55,6 @@ fcmdr_profile_source_get_type
 <TITLE>FCmdrService</TITLE>
 FCMDR_SERVICE_DBUS_OBJECT_PATH
 FCmdrService
-FCmdrServiceClass
 fcmdr_service_new
 fcmdr_service_get_connection
 fcmdr_service_ref_backend
@@ -74,8 +74,10 @@ fcmdr_service_cache_profiles
 FCMDR_SERVICE
 FCMDR_IS_SERVICE
 FCMDR_TYPE_SERVICE
-FCmdrServicePrivate
+FCmdrServiceClass
 fcmdr_service_get_type
+<SUBSECTION Private>
+FCmdrServicePrivate
 </SECTION>
 
 <SECTION>
@@ -83,7 +85,6 @@ fcmdr_service_get_type
 <TITLE>FCmdrServiceBackend</TITLE>
 FCMDR_SERVICE_BACKEND_EXTENSION_POINT_NAME
 FCmdrServiceBackend
-FCmdrServiceBackendClass
 fcmdr_service_backend_ref_service
 fcmdr_service_backend_dup_settings
 fcmdr_service_backend_apply_profiles
@@ -94,12 +95,15 @@ FCMDR_TYPE_SERVICE_BACKEND
 FCMDR_SERVICE_BACKEND_CLASS
 FCMDR_IS_SERVICE_BACKEND_CLASS
 FCMDR_SERVICE_BACKEND_GET_CLASS
-FCmdrServiceBackendPrivate
+FCmdrServiceBackendClass
 fcmdr_service_backend_get_type
+<SUBSECTION Private>
+FCmdrServiceBackendPrivate
 </SECTION>
 
 <SECTION>
 <FILE>fcmdr-utils</FILE>
+<TITLE>Miscellaneous Utilities</TITLE>
 fcmdr_json_value_to_variant
 </SECTION>
 

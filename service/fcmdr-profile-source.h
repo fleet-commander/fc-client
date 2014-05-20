@@ -42,6 +42,14 @@
 	(G_TYPE_INSTANCE_GET_CLASS \
 	((obj), FCMDR_TYPE_PROFILE_SOURCE, FCmdrProfileSourceClass))
 
+/**
+ * FCMDR_PROFILE_SOURCE_EXTENSION_POINT_NAME:
+ *
+ * Extension point for methods of obtaining profile data.
+ *
+ * When registering extensions for this extension point, the extension
+ * name should match the URI scheme to be handled, like "http".
+ **/
 #define FCMDR_PROFILE_SOURCE_EXTENSION_POINT_NAME "fcmdr-profile-source"
 
 G_BEGIN_DECLS
@@ -53,6 +61,12 @@ typedef struct _FCmdrProfileSource FCmdrProfileSource;
 typedef struct _FCmdrProfileSourceClass FCmdrProfileSourceClass;
 typedef struct _FCmdrProfileSourcePrivate FCmdrProfileSourcePrivate;
 
+/**
+ * FCmdrProfileSource:
+ *
+ * Contains only private data that should be read and manipulated using the
+ * functions below.
+ **/
 struct _FCmdrProfileSource {
 	GObject parent;
 	FCmdrProfileSourcePrivate *priv;

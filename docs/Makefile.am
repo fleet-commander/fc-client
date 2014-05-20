@@ -10,7 +10,7 @@ DOC_SOURCE_DIR = $(top_srcdir)/service
 HFILE_GLOB = $(top_srcdir)/service/*.h
 CFILE_GLOB = $(top_srcdir)/service/*.c
 
-MKDB_OPTIONS = --output-format=xml
+MKDB_OPTIONS = --output-format=xml --sgml-mode
 
 # Skip generated code and extensions.
 # Just document the core API for now.

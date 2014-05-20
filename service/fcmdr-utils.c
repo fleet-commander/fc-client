@@ -17,10 +17,27 @@
  * Author: Matthew Barnes <mbarnes@redhat.com>
  */
 
+/**
+ * SECTION: fcmdr-utils
+ * @short_description: Miscellaneous utilities
+ *
+ * An assortment of simple utility functions.
+ **/
+
 #include "config.h"
 
 #include "fcmdr-utils.h"
 
+/**
+ * fcmdr_json_value_to_variant:
+ * @json_node: a #JsonNode
+ *
+ * Converts a #JsonNode containing a fundamental type to a #GVariant.
+ * The resulting #GVariantType will be one of #G_VARIANT_TYPE_INT64,
+ * #G_VARIANT_TYPE_DOUBLE, #G_VARIANT_TYPE_BOOLEAN or #G_VARIANT_TYPE_STRING.
+ *
+ * Returns: a floating reference to a new #GVariant instance
+ **/
 GVariant *
 fcmdr_json_value_to_variant (JsonNode *json_node)
 {

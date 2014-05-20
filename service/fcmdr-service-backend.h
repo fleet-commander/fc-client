@@ -43,6 +43,15 @@
 	(G_TYPE_INSTANCE_GET_CLASS \
 	((obj), FCMDR_TYPE_SERVICE_BACKEND, FCmdrServiceBackendClass))
 
+/**
+ * FCMDR_SERVICE_BACKEND_EXTENSION_POINT_NAME:
+ *
+ * Extension point for handling different types of settings.
+ *
+ * When registering extensions for this extension point, the extension
+ * name should match a member name that occurs in the #FCmdrProfile:settings
+ * data of a #FCmdrProfile, like "org.gnome.gsettings".
+ **/
 #define FCMDR_SERVICE_BACKEND_EXTENSION_POINT_NAME "fcmdr-service-backend"
 
 G_BEGIN_DECLS
@@ -54,6 +63,12 @@ typedef struct _FCmdrServiceBackend FCmdrServiceBackend;
 typedef struct _FCmdrServiceBackendClass FCmdrServiceBackendClass;
 typedef struct _FCmdrServiceBackendPrivate FCmdrServiceBackendPrivate;
 
+/**
+ * FCmdrServiceBackend:
+ *
+ * Contains only private data that should be read and manipulated using the
+ * functions below.
+ **/
 struct _FCmdrServiceBackend {
 	GObject parent;
 	FCmdrServiceBackendPrivate *priv;

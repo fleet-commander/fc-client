@@ -17,6 +17,14 @@
  * Author: Matthew Barnes <mbarnes@redhat.com>
  */
 
+/**
+ * SECTION: fcmdr-service-backend
+ * @short_description: Backend to parse and apply settings
+ *
+ * A #FCmdrServiceBackend parses and applies a section of
+ * #FCmdrProfile:settings data from a #FCmdrProfile for a specific
+ * desktop configuration system or application.
+ **/
 #include "config.h"
 
 #include "fcmdr-service-backend.h"
@@ -153,6 +161,17 @@ fcmdr_service_backend_init (FCmdrServiceBackend *backend)
 	backend->priv = FCMDR_SERVICE_BACKEND_GET_PRIVATE (backend);
 }
 
+/**
+ * fcmdr_service_backend_ref_service:
+ * @backend: a #FCmdrServiceBackend
+ *
+ * Returns the #FCmdrService that instantiated the @backend.
+ *
+ * The returned #FCmdrService is referenced for thread-safety and must be
+ * unreferenced with g_object_unref() when finished with it.
+ *
+ * Returns: a referenced #FCmdrService
+ **/
 FCmdrService *
 fcmdr_service_backend_ref_service (FCmdrServiceBackend *backend)
 {
@@ -161,6 +180,18 @@ fcmdr_service_backend_ref_service (FCmdrServiceBackend *backend)
 	return g_weak_ref_get (&backend->priv->service);
 }
 
+/**
+ * fcmdr_service_backend_dup_settings:
+ * @backend: a #FCmdrServiceBackend
+ * @profile: a #FCmdrProfile
+ *
+ * Convenience function extracts raw JSON data for @backend from @profile.
+ * It does this by matching the @backend's extension name to a member name
+ * in the @profile's #FCmdrProfile:settings data.  If no match is found, the
+ * function returns %NULL.  Free the returned #JsonNode with json_node_free().
+ *
+ * Returns: a #JsonNode containing settings data, or %NULL
+ **/
 JsonNode *
 fcmdr_service_backend_dup_settings (FCmdrServiceBackend *backend,
                                     FCmdrProfile *profile)
@@ -186,6 +217,15 @@ fcmdr_service_backend_dup_settings (FCmdrServiceBackend *backend,
 	return our_settings;
 }
 
+/**
+ * fcmdr_service_backend_apply_profiles:
+ * @backend: a #FCmdrServiceBackend
+ * @profiles: a #GList of #FCmdrProfile instances
+ *
+ * Applies settings specific to @backend from the list of profiles so
+ * they take effect.  This operation can be expensive, so it's typically
+ * only called once after all profiles from all profile sources are loaded.
+ **/
 void
 fcmdr_service_backend_apply_profiles (FCmdrServiceBackend *backend,
                                       GList *profiles)

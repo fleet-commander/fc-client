@@ -15,9 +15,9 @@ MAINTAINERCLEANFILES = \
 	$(srcdir)/aclocal.m4 \
 	$(srcdir)/config.h.in \
 	$(srcdir)/depcomp \
-	$(srcdir)/gtk-doc.make \
 	$(srcdir)/install-sh \
 	$(srcdir)/missing \
+	$(srcdir)/docs/gtk-doc.make \
 	$(srcdir)/m4/gtk-doc.m4 \
 	$(NULL)
 
