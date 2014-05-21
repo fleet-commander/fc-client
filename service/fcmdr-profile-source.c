@@ -225,21 +225,6 @@ fcmdr_profile_source_dup_uri (FCmdrProfileSource *source)
 }
 
 void
-fcmdr_profile_source_load_cached (FCmdrProfileSource *source,
-                                  const gchar *path)
-{
-	FCmdrProfileSourceClass *class;
-
-	g_return_if_fail (FCMDR_IS_PROFILE_SOURCE (source));
-	g_return_if_fail (path != NULL);
-
-	class = FCMDR_PROFILE_SOURCE_GET_CLASS (source);
-
-	if (class->load_cached != NULL)
-		class->load_cached (source, path);
-}
-
-void
 fcmdr_profile_source_load_remote (FCmdrProfileSource *source,
                                   GCancellable *cancellable,
                                   GAsyncReadyCallback callback,

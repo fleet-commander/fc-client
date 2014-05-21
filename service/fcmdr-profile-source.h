@@ -62,8 +62,6 @@ struct _FCmdrProfileSourceClass {
 	GObjectClass parent_class;
 
 	/* Methods */
-	void		(*load_cached)		(FCmdrProfileSource *source,
-						 const gchar *path);
 	void		(*load_remote)		(FCmdrProfileSource *source,
 						 GCancellable *cancellable,
 						 GAsyncReadyCallback callback,
@@ -82,9 +80,6 @@ struct _FCmdrService *
 		fcmdr_profile_source_ref_service
 						(FCmdrProfileSource *source);
 SoupURI *	fcmdr_profile_source_dup_uri	(FCmdrProfileSource *source);
-void		fcmdr_profile_source_load_cached
-						(FCmdrProfileSource *source,
-						 const gchar *path);
 void		fcmdr_profile_source_load_remote
 						(FCmdrProfileSource *source,
 						 GCancellable *cancellable,

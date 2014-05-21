@@ -260,12 +260,6 @@ fcmdr_http_profile_source_dispose (GObject *object)
 }
 
 static void
-fcmdr_http_profile_source_load_cached (FCmdrProfileSource *source,
-                                       const gchar *path)
-{
-}
-
-static void
 fcmdr_http_profile_source_load_remote (FCmdrProfileSource *source,
                                        GCancellable *cancellable,
                                        GAsyncReadyCallback callback,
@@ -340,7 +334,6 @@ fcmdr_http_profile_source_class_init (FCmdrHttpProfileSourceClass *class)
 	object_class->dispose = fcmdr_http_profile_source_dispose;
 
 	source_class = FCMDR_PROFILE_SOURCE_CLASS (class);
-	source_class->load_cached = fcmdr_http_profile_source_load_cached;
 	source_class->load_remote = fcmdr_http_profile_source_load_remote;
 	source_class->load_remote_finish = fcmdr_http_profile_source_load_remote_finish;
 }
