@@ -42,6 +42,7 @@
 #include "fcmdr-profile.h"
 
 #include "fcmdr-extensions.h"
+#include "fcmdr-utils.h"
 
 #define FCMDR_PROFILE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
@@ -53,6 +54,7 @@ struct _FCmdrProfilePrivate {
 	gchar *name;
 	gchar *description;
 
+	FCmdrProfileApplies *applies_to;
 	JsonObject *settings;
 
 	GWeakRef source;
@@ -60,6 +62,7 @@ struct _FCmdrProfilePrivate {
 
 enum {
 	PROP_0,
+	PROP_APPLIES_TO,
 	PROP_DESCRIPTION,
 	PROP_ETAG,
 	PROP_NAME,
@@ -102,6 +105,72 @@ fcmdr_profile_deserialize_json_object (JsonNode *json_node)
 	return json_node_dup_object (json_node);
 }
 
+static JsonNode *
+fcmdr_profile_serialize_profile_applies (gconstpointer boxed)
+{
+	const FCmdrProfileApplies *applies = boxed;
+	JsonNode *json_node;
+	JsonArray *json_array;
+	JsonObject *json_object;
+
+	g_return_val_if_fail (applies != NULL, NULL);
+
+	json_object = json_object_new ();
+
+	if (applies->users != NULL) {
+		/* This takes ownership of the JsonArray. */
+		json_object_set_array_member (
+			json_object, "users",
+			fcmdr_strv_to_json_array (applies->users));
+	}
+
+	if (applies->groups != NULL) {
+		/* This takes ownership of the JsonArray. */
+		json_object_set_array_member (
+			json_object, "groups",
+			fcmdr_strv_to_json_array (applies->groups));
+	}
+
+	if (applies->hosts != NULL) {
+		/* This takes ownership of the JsonArray. */
+		json_object_set_array_member (
+			json_object, "hosts",
+			fcmdr_strv_to_json_array (applies->hosts));
+	}
+
+	json_node = json_node_alloc ();
+	json_node_init_object (json_node, json_object);
+
+	json_object_unref (json_object);
+
+	return json_node;
+}
+
+static gpointer
+fcmdr_profile_deserialize_profile_applies (JsonNode *json_node)
+{
+	FCmdrProfileApplies *applies;
+	JsonObject *json_object;
+	JsonArray *json_array;
+
+	applies = fcmdr_profile_applies_new ();
+	json_object = json_node_get_object (json_node);
+
+	json_array = json_object_get_array_member (json_object, "users");
+	if (json_array != NULL)
+		applies->users = fcmdr_json_array_to_strv (json_array);
+
+	json_array = json_object_get_array_member (json_object, "groups");
+	if (json_array != NULL)
+		applies->groups = fcmdr_json_array_to_strv (json_array);
+
+	json_array = json_object_get_array_member (json_object, "hosts");
+	if (json_array != NULL)
+		applies->hosts = fcmdr_json_array_to_strv (json_array);
+
+	return applies;
+}
+
 static gboolean
 fcmdr_profile_validate (FCmdrProfile *profile,
                         GError **error)
@@ -131,6 +200,18 @@ fcmdr_profile_validate (FCmdrProfile *profile,
 	}
 
 	return TRUE;
+}
+
+static void
+fcmdr_profile_set_applies_to (FCmdrProfile *profile,
+                              FCmdrProfileApplies *applies_to)
+{
+	g_return_if_fail (profile->priv->applies_to == NULL);
+
+	if (applies_to != NULL) {
+		profile->priv->applies_to =
+			fcmdr_profile_applies_copy (applies_to);
+	}
 }
 
 static void
@@ -186,6 +267,12 @@ fcmdr_profile_set_property (GObject *object,
                             GParamSpec *pspec)
 {
 	switch (property_id) {
+		case PROP_APPLIES_TO:
+			fcmdr_profile_set_applies_to (
+				FCMDR_PROFILE (object),
+				g_value_get_boxed (value));
+			return;
+
 		case PROP_DESCRIPTION:
 			fcmdr_profile_set_description (
 				FCMDR_PROFILE (object),
@@ -233,6 +320,13 @@ fcmdr_profile_get_property (GObject *object,
                             GParamSpec *pspec)
 {
 	switch (property_id) {
+		case PROP_APPLIES_TO:
+			g_value_set_boxed (
+				value,
+				fcmdr_profile_get_applies_to (
+				FCMDR_PROFILE (object)));
+			return;
+
 		case PROP_DESCRIPTION:
 			g_value_set_string (
 				value,
@@ -309,6 +403,8 @@ fcmdr_profile_finalize (GObject *object)
 	g_free (priv->name);
 	g_free (priv->description);
 
+	fcmdr_profile_applies_free (priv->applies_to);
+
 	/* Chain up to parent's finalize() method. */
 	G_OBJECT_CLASS (fcmdr_profile_parent_class)->finalize (object);
 }
@@ -368,6 +464,19 @@ fcmdr_profile_class_init (FCmdrProfileClass *class)
 	object_class->get_property = fcmdr_profile_get_property;
 	object_class->dispose = fcmdr_profile_dispose;
 	object_class->finalize = fcmdr_profile_finalize;
+
+	g_object_class_install_property (
+		object_class,
+		PROP_APPLIES_TO,
+		g_param_spec_boxed (
+			"applies-to",
+			"Applies To",
+			"Set of users, groups and hosts "
+			"to which the profile applies",
+			FCMDR_TYPE_PROFILE_APPLIES,
+			G_PARAM_READWRITE |
+			G_PARAM_CONSTRUCT_ONLY |
+			G_PARAM_STATIC_STRINGS));
 
 	g_object_class_install_property (
 		object_class,
@@ -456,6 +565,19 @@ fcmdr_profile_class_init (FCmdrProfileClass *class)
 	json_boxed_register_deserialize_func (
 		JSON_TYPE_OBJECT, JSON_NODE_OBJECT,
 		fcmdr_profile_deserialize_json_object);
+
+	/* XXX Because the "applies-to" property is construct-only,
+	 *     json-glib cannot use the JsonSerializable interface for
+	 *     technical reasons.  So instead register custom serialize
+	 *     and deserialize functions. */
+
+	json_boxed_register_serialize_func (
+		FCMDR_TYPE_PROFILE_APPLIES, JSON_NODE_OBJECT,
+		fcmdr_profile_serialize_profile_applies);
+
+	json_boxed_register_deserialize_func (
+		FCMDR_TYPE_PROFILE_APPLIES, JSON_NODE_OBJECT,
+		fcmdr_profile_deserialize_profile_applies);
 }
 
 static void
@@ -710,6 +832,27 @@ fcmdr_profile_get_description (FCmdrProfile *profile)
 	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), NULL);
 
 	return profile->priv->description;
+}
+
+/**
+ * fcmdr_profile_get_applies_to:
+ * @profile: a #FCmdrProfile
+ *
+ * Returns the #FCmdrProfileApplies describing which users, groups and/or
+ * hosts @profile applies to.  A %NULL return value indicates the @profile
+ * applies unconditionally.
+ *
+ * The returned #FCmdrProfileApplies is owned by @profile and should not be
+ * modified or freed.
+ *
+ * Returns: a #FCmdrProfileApplies, or %NULL
+ **/
+FCmdrProfileApplies *
+fcmdr_profile_get_applies_to (FCmdrProfile *profile)
+{
+	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), NULL);
+
+	return profile->priv->applies_to;
 }
 
 /**

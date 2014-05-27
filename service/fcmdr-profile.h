@@ -23,6 +23,7 @@
 #include <gio/gio.h>
 #include <json-glib/json-glib.h>
 
+#include "fcmdr-profile-applies.h"
 #include "fcmdr-profile-source.h"
 
 /* Standard GObject macros */
@@ -81,6 +82,8 @@ const gchar *	fcmdr_profile_get_uid		(FCmdrProfile *profile);
 const gchar *	fcmdr_profile_get_etag		(FCmdrProfile *profile);
 const gchar *	fcmdr_profile_get_name		(FCmdrProfile *profile);
 const gchar *	fcmdr_profile_get_description	(FCmdrProfile *profile);
+FCmdrProfileApplies *
+		fcmdr_profile_get_applies_to	(FCmdrProfile *profile);
 JsonObject *	fcmdr_profile_ref_settings	(FCmdrProfile *profile);
 FCmdrProfileSource *
 		fcmdr_profile_ref_source	(FCmdrProfile *profile);

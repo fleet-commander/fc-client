@@ -26,6 +26,8 @@
 G_BEGIN_DECLS
 
 GVariant *	fcmdr_json_value_to_variant	(JsonNode *json_node);
+gchar **	fcmdr_json_array_to_strv	(JsonArray *json_array);
+JsonArray *	fcmdr_strv_to_json_array	(gchar **strv);
 
 G_END_DECLS
 

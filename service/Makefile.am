@@ -44,6 +44,8 @@ fcmdr_service_SOURCES = \
 	fcmdr-http-profile-source.h \
 	fcmdr-profile.c \
 	fcmdr-profile.h \
+	fcmdr-profile-applies.c \
+	fcmdr-profile-applies.h \
 	fcmdr-profile-source.c \
 	fcmdr-profile-source.h \
 	fcmdr-service.c \

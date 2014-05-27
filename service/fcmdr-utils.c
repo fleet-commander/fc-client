@@ -75,3 +75,63 @@ fcmdr_json_value_to_variant (JsonNode *json_node)
 	return variant;
 }
 
+/**
+ * fcmdr_json_array_to_strv:
+ * @json_array: a #JsonArray
+ *
+ * Builds a %NULL-terminated string array from the string elements in
+ * @json_array.  Free the returned string array with g_strfreev().
+ *
+ * Returns: a new %NULL-terminated string array
+ **/
+gchar **
+fcmdr_json_array_to_strv (JsonArray *json_array)
+{
+	gchar **strv;
+	guint ii, length;
+	guint strv_index = 0;
+
+	g_return_val_if_fail (json_array != NULL, NULL);
+
+	length = json_array_get_length (json_array);
+	strv = g_new0 (gchar *, length + 1);
+
+	for (ii = 0; ii < length; ii++) {
+		const gchar *element;
+
+		element = json_array_get_string_element (json_array, ii);
+
+		if (element != NULL)
+			strv[strv_index++] = g_strdup (element);
+	}
+
+	return strv;
+}
+
+/**
+ * fcmdr_strv_to_json_array:
+ * @strv: a %NULL-terminated string array, or %NULL
+ *
+ * Converts a %NULL-terminated string array to a #JsonArray with
+ * equivalent string elements.  If @strv is %NULL, the function
+ * returns an empty #JsonArray.
+ *
+ * Returns: a new #JsonArray
+ **/
+JsonArray *
+fcmdr_strv_to_json_array (gchar **strv)
+{
+	JsonArray *json_array;
+	guint ii, length = 0;
+
+	json_array = json_array_new ();
+
+	if (strv != NULL)
+		length = g_strv_length (strv);
+
+	for (ii = 0; ii < length; ii++)
+		json_array_add_string_element (json_array, strv[ii]);
+
+	return json_array;
+}
+

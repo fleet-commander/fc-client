@@ -11,9 +11,14 @@ fcmdr_profile_get_uid
 fcmdr_profile_get_etag
 fcmdr_profile_get_name
 fcmdr_profile_get_description
+fcmdr_profile_get_applies_to
 fcmdr_profile_ref_settings
 fcmdr_profile_ref_source
 fcmdr_profile_set_source
+FCmdrProfileApplies
+fcmdr_profile_applies_new
+fcmdr_profile_applies_copy
+fcmdr_profile_applies_free
 <SUBSECTION Standard>
 FCMDR_PROFILE
 FCMDR_IS_PROFILE
@@ -21,8 +26,10 @@ FCMDR_TYPE_PROFILE
 FCMDR_PROFILE_CLASS
 FCMDR_IS_PROFILE_CLASS
 FCMDR_PROFILE_GET_CLASS
+FCMDR_TYPE_PROFILE_APPLIES
 FCmdrProfileClass
 fcmdr_profile_get_type
+fcmdr_profile_applies_get_type
 <SUBSECTION Private>
 FCmdrProfilePrivate
 </SECTION>
@@ -105,5 +112,7 @@ FCmdrServiceBackendPrivate
 <FILE>fcmdr-utils</FILE>
 <TITLE>Miscellaneous Utilities</TITLE>
 fcmdr_json_value_to_variant
+fcmdr_json_array_to_strv
+fcmdr_strv_to_json_array
 </SECTION>
 
