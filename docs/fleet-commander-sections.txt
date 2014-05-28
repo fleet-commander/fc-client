@@ -114,5 +114,6 @@ FCmdrServiceBackendPrivate
 fcmdr_json_value_to_variant
 fcmdr_json_array_to_strv
 fcmdr_strv_to_json_array
+fcmdr_strv_find
 </SECTION>
 

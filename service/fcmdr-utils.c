@@ -135,3 +135,32 @@ fcmdr_strv_to_json_array (gchar **strv)
 	return json_array;
 }
 
+/**
+ * fcmdr_strv_find:
+ * @haystack: a %NULL-terminated string array to search, or %NULL
+ * @needle: a string to search for
+ *
+ * Returns the array index of @needle in @haystack, or -1 if not found.
+ * As a convenience, @haystack may be %NULL, in which case the function
+ * returns -1.
+ *
+ * Returns: an array index in @haystack, or -1
+ **/
+gint
+fcmdr_strv_find (gchar **haystack,
+                 const gchar *needle)
+{
+	g_return_val_if_fail (needle != NULL, -1);
+
+	if (haystack != NULL) {
+		gint ii;
+
+		for (ii = 0; haystack[ii] != NULL; ii++) {
+			if (g_str_equal (haystack[ii], needle))
+				return ii;
+		}
+	}
+
+	return -1;
+}
+
