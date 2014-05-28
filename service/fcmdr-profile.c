@@ -41,6 +41,10 @@
 
 #include "fcmdr-profile.h"
 
+#include <grp.h>
+#include <pwd.h>
+#include <unistd.h>
+
 #include "fcmdr-extensions.h"
 #include "fcmdr-utils.h"
 
@@ -912,5 +916,87 @@ fcmdr_profile_set_source (FCmdrProfile *profile,
 	g_return_if_fail (source == NULL || FCMDR_IS_PROFILE_SOURCE (source));
 
 	g_weak_ref_set (&profile->priv->source, source);
+}
+
+/**
+ * fcmdr_profile_applies_to_user:
+ * @profile: a #FCmdrProfile
+ * @uid: a user ID
+ * @out_score: return location for a match score, or %NULL
+ *
+ * Returns whether @profile applies to the user identified by @uid by
+ * examining the #FCmdrProfile:applies-to data.
+ *
+ * If @profile applies, the function returns %TRUE and assigns a positive
+ * score to @out_score.  The score is meant to help rank a set of applicable
+ * profiles.  Profiles with higher scores should be given higher priority.
+ *
+ * If @profile does NOT apply, the function returns %FALSE and assigns zero
+ * to @out_score.
+ *
+ * Note the score value is based on heuristics which are subject to change.
+ *
+ * Returns: whether @profile applies to @uid
+ **/
+gboolean
+fcmdr_profile_applies_to_user (FCmdrProfile *profile,
+                               uid_t uid,
+                               guint *out_score)
+{
+	FCmdrProfileApplies *applies;
+	gchar hostname[256];
+	struct passwd *pw;
+	guint score = 0;
+	gboolean match = FALSE;
+
+	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), FALSE);
+
+	applies = fcmdr_profile_get_applies_to (profile);
+
+	/* No "applies-to" means the profile applies to everyone.
+	 * XXX The appropriate score here is subject to debate. */
+	if (applies == NULL) {
+		score = 10;
+		match = TRUE;
+		goto exit;
+	}
+
+	if (gethostname (hostname, sizeof (hostname)) == 0) {
+		if (fcmdr_strv_find (applies->hosts, hostname) >= 0) {
+			score += 100;
+			match = TRUE;
+		}
+	}
+
+	if ((pw = getpwuid (uid)) == NULL || pw->pw_name == NULL)
+		goto exit;
+
+	if (fcmdr_strv_find (applies->users, pw->pw_name) >= 0) {
+		score += 50;
+		match = TRUE;
+	}
+
+	if (applies->groups != NULL) {
+		guint ii;
+
+		for (ii = 0; applies->groups[ii] != NULL; ii++) {
+			struct group *gr;
+
+			if ((gr = getgrnam (applies->groups[ii])) == NULL)
+				continue;
+
+			if (fcmdr_strv_find (gr->gr_mem, pw->pw_name) >= 0) {
+				score += 20;
+				match = TRUE;
+				break;
+			}
+		}
+	}
+
+exit:
+	if (out_score != NULL)
+		*out_score = score;
+
+	return match;
 }
 

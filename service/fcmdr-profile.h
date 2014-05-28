@@ -89,6 +89,9 @@ FCmdrProfileSource *
 		fcmdr_profile_ref_source	(FCmdrProfile *profile);
 void		fcmdr_profile_set_source	(FCmdrProfile *profile,
 						 FCmdrProfileSource *source);
+gboolean	fcmdr_profile_applies_to_user	(FCmdrProfile *profile,
+						 uid_t uid,
+						 guint *out_score);
 
 G_END_DECLS
 

@@ -15,6 +15,7 @@ fcmdr_profile_get_applies_to
 fcmdr_profile_ref_settings
 fcmdr_profile_ref_source
 fcmdr_profile_set_source
+fcmdr_profile_applies_to_user
 FCmdrProfileApplies
 fcmdr_profile_applies_new
 fcmdr_profile_applies_copy
