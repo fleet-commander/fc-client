@@ -38,6 +38,7 @@
 
 #include "fcmdr-extensions.h"
 #include "fcmdr-generated.h"
+#include "fcmdr-utils.h"
 
 #define FCMDR_SERVICE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
@@ -1056,6 +1057,21 @@ fcmdr_service_list_profiles (FCmdrService *service)
 	return list;
 }
 
+/* Helper for fcmdr_srevice_list_profiles_for_user() */
+static gboolean
+fcmdr_service_tree_foreach (gpointer key,
+                            gpointer value,
+                            gpointer user_data)
+{
+	GQueue *matches = user_data;
+
+	g_return_if_fail (FCMDR_IS_PROFILE (value));
+
+	g_queue_push_tail (matches, g_object_ref (value));
+
+	return FALSE;  /* don't stop */
+}
+
 /**
  * fcmdr_service_list_profiles_for_user:
  * @service: a #FCmdrService
@@ -1080,13 +1096,44 @@ GList *
 fcmdr_service_list_profiles_for_user (FCmdrService *service,
                                       uid_t uid)
 {
+	GQueue matches = G_QUEUE_INIT;
+	GList *list, *link;
+	GTree *tree;
+
 	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
 
-	/* FIXME Eventually this will return an ordered list of
-	 *       profile objects applicable to 'uid', but for now
-	 *       we just return all the profiles. */
+	/* Assemble a GTree of applicable profiles.  The GTree will
+	 * order profiles by their applicability score.  Then just
+	 * traverse the GTree to produce a sorted profile list. */
 
-	return fcmdr_service_list_profiles (service);
+	tree = g_tree_new (fcmdr_compare_uints);
+
+	list = fcmdr_service_list_profiles (service);
+
+	for (link = list; link != NULL; link = g_list_next (link)) {
+		FCmdrProfile *profile;
+		guint score = 0;
+
+		profile = FCMDR_PROFILE (link->data);
+
+		if (fcmdr_profile_applies_to_user (profile, uid, &score)) {
+			gpointer key = GUINT_TO_POINTER (score);
+			g_tree_replace (tree, key, profile);
+		}
+	}
+
+	/* XXX GLib could do with a g_tree_get_values(), like
+	 *     g_hash_table_get_values().  But GTree is not as
+	 *     well-loved as GHashTable. */
+	g_tree_foreach (tree, fcmdr_service_tree_foreach, &matches);
+
+	/* The tree does not hold its own profile references,
+	 * so free it before the profile list just to be safe. */
+	g_tree_destroy (tree);
+
+	g_list_free_full (list, (GDestroyNotify) g_object_unref);
+
+	return g_queue_peek_head_link (&matches);
 }
 
 /**
