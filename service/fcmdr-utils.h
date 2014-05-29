@@ -30,6 +30,8 @@ gchar **	fcmdr_json_array_to_strv	(JsonArray *json_array);
 JsonArray *	fcmdr_strv_to_json_array	(gchar **strv);
 gint		fcmdr_strv_find			(gchar **haystack,
 						 const gchar *needle);
+gint		fcmdr_compare_uints		(gconstpointer a,
+						 gconstpointer b);
 
 G_END_DECLS
 

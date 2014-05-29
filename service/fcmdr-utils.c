@@ -164,3 +164,24 @@ fcmdr_strv_find (gchar **haystack,
 	return -1;
 }
 
+/**
+ * fcmdr_compare_uints:
+ * @a: an unsigned integer stuffed in a pointer
+ * @b: an unsigned integer stuffed in a pointer
+ *
+ * Compares two unsigned integers stuffed into pointers with
+ * #GUINT_TO_POINTER.  For use with functions that take a #GCompareFunc.
+ *
+ * Returns: negative value if @a < @b; zero if @a = @b;
+ *          positive value if @a > @b
+ **/
+gint
+fcmdr_compare_uints (gconstpointer a,
+                     gconstpointer b)
+{
+	guint int_a = GPOINTER_TO_UINT (a);
+	guint int_b = GPOINTER_TO_UINT (b);
+
+	return (int_a < int_b) ? -1 : (int_a == int_b) ? 0 : 1;
+}
+
