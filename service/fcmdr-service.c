@@ -37,6 +37,7 @@
 #include "fcmdr-service.h"
 
 #include <errno.h>
+#include <stdlib.h>
 
 #include "fcmdr-extensions.h"
 #include "fcmdr-generated.h"
@@ -134,7 +135,7 @@ fcmdr_service_open_config (FCmdrService *service)
 	guint ii;
 
 	system_config_dirs = g_get_system_config_dirs ();
-	g_return_if_fail (system_config_dirs != NULL);
+	g_return_val_if_fail (system_config_dirs != NULL, NULL);
 
 	for (ii = 0; !stop && system_config_dirs[ii] != NULL; ii++) {
 		GFileInputStream *file_input_stream;
@@ -1079,7 +1080,7 @@ fcmdr_service_list_profiles (FCmdrService *service)
 	return list;
 }
 
-/* Helper for fcmdr_srevice_list_profiles_for_user() */
+/* Helper for fcmdr_service_list_profiles_for_user() */
 static gboolean
 fcmdr_service_tree_foreach (gpointer key,
                             gpointer value,
@@ -1087,7 +1088,7 @@ fcmdr_service_tree_foreach (gpointer key,
 {
 	GQueue *matches = user_data;
 
-	g_return_if_fail (FCMDR_IS_PROFILE (value));
+	g_return_val_if_fail (FCMDR_IS_PROFILE (value), FALSE);
 
 	g_queue_push_tail (matches, g_object_ref (value));
 
@@ -1657,7 +1658,7 @@ fcmdr_service_cache_profiles (FCmdrService *service,
 	GList *list, *link;
 	gboolean success;
 
-	g_return_if_fail (FCMDR_IS_SERVICE (service));
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), FALSE);
 
 	json_array = json_array_new ();
 

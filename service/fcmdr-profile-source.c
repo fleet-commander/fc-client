@@ -159,6 +159,7 @@ fcmdr_profile_source_class_init (FCmdrProfileSourceClass *class)
 	object_class->set_property = fcmdr_profile_source_set_property;
 	object_class->get_property = fcmdr_profile_source_get_property;
 	object_class->dispose = fcmdr_profile_source_dispose;
+	object_class->finalize = fcmdr_profile_source_finalize;
 
 	g_object_class_install_property (
 		object_class,

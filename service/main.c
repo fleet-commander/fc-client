@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <glib-unix.h>
 
 #include "fcmdr-service.h"
 

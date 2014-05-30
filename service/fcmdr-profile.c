@@ -114,7 +114,6 @@ fcmdr_profile_serialize_profile_applies (gconstpointer boxed)
 {
 	const FCmdrProfileApplies *applies = boxed;
 	JsonNode *json_node;
-	JsonArray *json_array;
 	JsonObject *json_object;
 
 	g_return_val_if_fail (applies != NULL, NULL);
