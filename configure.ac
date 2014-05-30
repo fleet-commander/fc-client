@@ -1,6 +1,6 @@
-AC_INIT([fleet-commander],
+AC_INIT([fleet-commander-client],
         [0.1],,
-        [fleet-commander])
+        [fleet-commander-client])
 
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIR([m4])
