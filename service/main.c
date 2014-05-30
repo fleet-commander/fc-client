@@ -25,6 +25,7 @@
 
 static GMainLoop *main_loop = NULL;
 static FCmdrService *service = NULL;
+static gboolean restart_service;
 
 static void
 on_bus_acquired (GDBusConnection *connection,
@@ -69,6 +70,18 @@ on_name_lost (GDBusConnection *connection,
 }
 
 static gboolean
+on_sighup (gpointer user_data)
+{
+	g_debug ("Caught SIGHUP - restarting");
+
+	restart_service = TRUE;
+
+	g_main_loop_quit (main_loop);
+
+	return G_SOURCE_CONTINUE;
+}
+
+static gboolean
 on_sigint (gpointer user_data)
 {
 	g_debug ("Caught SIGINT - shutting down");
@@ -82,11 +95,16 @@ gint
 main (gint argc,
       gchar **argv)
 {
+	guint sighup_id;
 	guint sigint_id;
 	guint name_owner_id;
 
+restart:
+	restart_service = FALSE;
+
 	main_loop = g_main_loop_new (NULL, FALSE);
 
+	sighup_id = g_unix_signal_add (SIGHUP, on_sighup, NULL);
 	sigint_id = g_unix_signal_add (SIGINT, on_sigint, NULL);
 
 	name_owner_id = g_bus_own_name (
@@ -100,11 +118,15 @@ main (gint argc,
 
 	g_main_loop_run (main_loop);
 
+	g_source_remove (sighup_id);
 	g_source_remove (sigint_id);
 	g_bus_unown_name (name_owner_id);
 
 	g_main_loop_unref (main_loop);
 	g_clear_object (&service);
+
+	if (restart_service)
+		goto restart;
 
 	return EXIT_SUCCESS;
 }
