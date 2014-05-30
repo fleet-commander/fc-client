@@ -416,9 +416,12 @@ fcmdr_service_refresh_profiles_done_cb (GObject *source_object,
 
 	g_hash_table_destroy (errors);
 
-	service->priv->polling_timeout_id = g_timeout_add_seconds (
-		service->priv->polling_interval,
-		fcmdr_service_refresh_profiles_start_cb, service);
+	/* A polling interval of zero disables polling. */
+	if (service->priv->polling_interval > 0) {
+		service->priv->polling_timeout_id = g_timeout_add_seconds (
+			service->priv->polling_interval,
+			fcmdr_service_refresh_profiles_start_cb, service);
+	}
 }
 
 static gboolean
