@@ -36,6 +36,8 @@
 
 #include "fcmdr-service.h"
 
+#include <errno.h>
+
 #include "fcmdr-extensions.h"
 #include "fcmdr-generated.h"
 #include "fcmdr-utils.h"
@@ -51,6 +53,8 @@
 
 #define FCMDR_PROFILE_CACHE_FILE \
 	FCMDR_SERVICE_CACHE_DIR G_DIR_SEPARATOR_S "profiles.json"
+
+#define FCMDR_POLLING_INTERVAL_DEFAULT (60 * 60)  /* 1 hour */
 
 typedef struct _AsyncContext AsyncContext;
 
@@ -69,7 +73,8 @@ struct _FCmdrServicePrivate {
 	GQueue sources;
 	GMutex sources_lock;
 
-	guint refresh_timeout_id;
+	guint polling_interval;
+	guint polling_timeout_id;
 };
 
 struct _AsyncContext {
@@ -208,6 +213,17 @@ fcmdr_service_read_config_line (FCmdrService *service,
 		g_mutex_unlock (&service->priv->sources_lock);
 
 		g_object_unref (source);
+	}
+
+	if (g_ascii_strncasecmp (line, "polling-interval:", 17) == 0) {
+		gulong value;
+
+		errno = 0;
+		value = strtoul (line + 17, NULL, 10);
+		if (errno == 0) {
+			service->priv->polling_interval =
+				(guint) CLAMP (value, 0, G_MAXUINT);
+		}
 	}
 }
 
@@ -400,8 +416,9 @@ fcmdr_service_refresh_profiles_done_cb (GObject *source_object,
 
 	g_hash_table_destroy (errors);
 
-	service->priv->refresh_timeout_id = g_timeout_add_seconds (
-		60 * 60, fcmdr_service_refresh_profiles_start_cb, service);
+	service->priv->polling_timeout_id = g_timeout_add_seconds (
+		service->priv->polling_interval,
+		fcmdr_service_refresh_profiles_start_cb, service);
 }
 
 static gboolean
@@ -420,7 +437,7 @@ fcmdr_service_refresh_profiles_start_cb (gpointer user_data)
 
 	g_list_free_full (profile_sources, (GDestroyNotify) g_object_unref);
 
-	service->priv->refresh_timeout_id = 0;
+	service->priv->polling_timeout_id = 0;
 
 	return G_SOURCE_REMOVE;
 }
@@ -698,9 +715,9 @@ fcmdr_service_dispose (GObject *object)
 	while (!g_queue_is_empty (&priv->sources))
 		g_object_unref (g_queue_pop_head (&priv->sources));
 
-	if (priv->refresh_timeout_id > 0) {
-		g_source_remove (priv->refresh_timeout_id);
-		priv->refresh_timeout_id = 0;
+	if (priv->polling_timeout_id > 0) {
+		g_source_remove (priv->polling_timeout_id);
+		priv->polling_timeout_id = 0;
 	}
 
 	/* Chain up to parent's dispose() method. */
@@ -754,8 +771,8 @@ fcmdr_service_initable_init (GInitable *initable,
 	 *     consideration before attempting to load remote profiles.
 	 *     But that can wait until our requirements become clearer.
 	 *     For now we just use a simple timeout -- a short delay
-	 *     for the initial load, then refresh every hour. */
-	priv->refresh_timeout_id = g_timeout_add_seconds (
+	 *     for the initial load, then poll at regular intervals. */
+	priv->polling_timeout_id = g_timeout_add_seconds (
 		3, fcmdr_service_refresh_profiles_start_cb, initable);
 
 	return g_dbus_interface_skeleton_export (
@@ -822,6 +839,8 @@ fcmdr_service_init (FCmdrService *service)
 	g_mutex_init (&service->priv->backends_lock);
 	g_mutex_init (&service->priv->profiles_lock);
 	g_mutex_init (&service->priv->sources_lock);
+
+	service->priv->polling_interval = FCMDR_POLLING_INTERVAL_DEFAULT;
 
 	g_signal_connect (
 		service->priv->profiles_interface,
