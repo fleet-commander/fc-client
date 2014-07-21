@@ -26,6 +26,7 @@
 
 extern GType fcmdr_gsettings_backend_get_type (void);
 extern GType fcmdr_http_profile_source_get_type (void);
+extern GType fcmdr_yum_backend_get_type (void);
 
 /* Helper for fcmdr_ensure_extension_points_registered() */
 static gpointer
@@ -61,4 +62,5 @@ fcmdr_ensure_extensions_registered (void)
 
 	g_type_ensure (fcmdr_gsettings_backend_get_type ());
 	g_type_ensure (fcmdr_http_profile_source_get_type ());
+	g_type_ensure (fcmdr_yum_backend_get_type ());
 }
