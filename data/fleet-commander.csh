@@ -1,3 +1,14 @@
+if ( ! $?XDG_RUNTIME_DIR ) then
+  # Fall back in the same manner as GLib.
+  if ( $?XDG_CACHE_HOME ) then
+    set XDG_RUNTIME_DIR=$XDG_CACHE_HOME
+  else
+    set XDG_RUNTIME_DIR=$HOME/.cache
+  endif
+endif
+
+echo "CSH is weird!"
+
 set dconf_profile=$XDG_RUNTIME_DIR/fleet-commander/dconf_profile
 
 mkdir -p `dirname $dconf_profile`
