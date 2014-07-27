@@ -7,8 +7,6 @@ if ( ! $?XDG_RUNTIME_DIR ) then
   endif
 endif
 
-echo "CSH is weird!"
-
 set dconf_profile=$XDG_RUNTIME_DIR/fleet-commander/dconf_profile
 
 mkdir -p `dirname $dconf_profile`
