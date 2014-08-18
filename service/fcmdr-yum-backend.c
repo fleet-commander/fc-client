@@ -81,6 +81,14 @@ fcmdr_yum_backend_purge_old_profiles (GHashTable *profiles_table,
 	while ((basename = g_dir_read_name (dir)) != NULL) {
 		gchar *filename;
 
+		/* Make sure we only delete our own files! */
+
+		if (!g_str_has_suffix (basename, ".repo"))
+			continue;
+
+		if (!g_str_has_prefix (basename, "fleet-commander-"))
+			continue;
+
 		filename = g_build_filename (dirname, basename, NULL);
 
 		if (!g_hash_table_contains (profiles_table, filename))
