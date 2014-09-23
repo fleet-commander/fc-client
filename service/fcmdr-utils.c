@@ -273,3 +273,59 @@ fcmdr_recursive_delete_sync (GFile *file,
 	return g_file_delete (file, cancellable, error);
 }
 
+/**
+ * fcmdr_get_connection_unix_user_sync:
+ * @connection: a #GDBusConnection
+ * @bus_name: a name owned by @connection
+ * @out_uid: return location for a user ID
+ * @cancellable: optional #GCancellable object, or %NULL
+ * @error: return location for a #GError, or %NULL
+ *
+ * Returns the UNIX user ID of the process owning the given @bus_name.
+ * If unable to determine it, the function sets @error and returns %FALSE.
+ *
+ * This function synchronously invokes the "GetConnectionUnixUser" method
+ * of the "org.freedesktop.DBus" interface on the message bus represented
+ * by @connection.
+ *
+ * Returns: %TRUE if the method call succeeded, %FALSE if @error is set
+ **/
+gboolean
+fcmdr_get_connection_unix_user_sync (GDBusConnection *connection,
+                                     const gchar *bus_name,
+                                     uid_t *out_uid,
+                                     GCancellable *cancellable,
+                                     GError **error)
+{
+	GVariant *result;
+	guint32 uid;
+
+	g_return_val_if_fail (G_IS_DBUS_CONNECTION (connection), FALSE);
+	g_return_val_if_fail (g_dbus_is_name (bus_name), FALSE);
+
+	result = g_dbus_connection_call_sync (
+		connection,
+		"org.freedesktop.DBus",
+		"/",
+		"org.freedesktop.DBus",
+		"GetConnectionUnixUser",
+		g_variant_new ("(s)", bus_name),
+		NULL,
+		G_DBUS_CALL_FLAGS_NONE,
+		-1,
+		cancellable,
+		error);
+
+	if (result == NULL)
+		return FALSE;
+
+	if (out_uid != NULL) {
+		g_variant_get (result, "(u)", &uid);
+		*out_uid = (uid_t) uid;
+	}
+
+	g_variant_unref (result);
+
+	return TRUE;
+}
+

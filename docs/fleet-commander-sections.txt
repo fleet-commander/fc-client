@@ -122,5 +122,6 @@ fcmdr_strv_to_json_array
 fcmdr_strv_find
 fcmdr_compare_uints
 fcmdr_recursive_delete_sync
+fcmdr_get_connection_unix_user_sync
 </SECTION>
 

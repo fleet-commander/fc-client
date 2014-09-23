@@ -35,6 +35,12 @@ gint		fcmdr_compare_uints		(gconstpointer a,
 gboolean	fcmdr_recursive_delete_sync	(GFile *file,
 						 GCancellable *cancellable,
 						 GError **error);
+gboolean	fcmdr_get_connection_unix_user_sync
+						(GDBusConnection *connection,
+						 const gchar *bus_name,
+						 uid_t *out_uid,
+						 GCancellable *cancellable,
+						 GError **error);
 
 G_END_DECLS
 

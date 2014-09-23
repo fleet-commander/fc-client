@@ -71,9 +71,8 @@ fcmdr_gsettings_backend_handle_write_profile_cb (FCmdrDConf *interface,
 	FCmdrService *service;
 	const gchar *sender;
 	GString *contents;
-	GVariant *result;
 	GList *list, *link;
-	guint32 uid = 0;
+	uid_t uid = 0;
 	struct passwd *pw;
 	GError *local_error = NULL;
 
@@ -85,34 +84,15 @@ fcmdr_gsettings_backend_handle_write_profile_cb (FCmdrDConf *interface,
 	connection = fcmdr_service_get_connection (service);
 	sender = g_dbus_method_invocation_get_sender (invocation);
 
-	result = g_dbus_connection_call_sync (
-		connection,
-		"org.freedesktop.DBus",
-		"/",
-		"org.freedesktop.DBus",
-		"GetConnectionUnixUser",
-		g_variant_new ("(s)", sender),
-		NULL,
-		G_DBUS_CALL_FLAGS_NONE,
-		-1,
-		NULL,
-		&local_error);
+	fcmdr_get_connection_unix_user_sync (
+		connection, sender, &uid, NULL, &local_error);
 
-	/* Sanity check */
-	g_warn_if_fail (
-		((result != NULL) && (local_error == NULL)) ||
-		((result == NULL) && (local_error != NULL)));
-
-	if (result == NULL)
+	if (local_error != NULL)
 		goto exit;
-
-	g_variant_get (result, "(u)", &uid);
-
-	g_variant_unref (result);
 
 	contents = g_string_new ("user-db:user\n");
 
-	list = fcmdr_service_list_profiles_for_user (service, (uid_t) uid);
+	list = fcmdr_service_list_profiles_for_user (service, uid);
 
 	for (link = list; link != NULL; link = g_list_next (link)) {
 		FCmdrProfile *profile;
@@ -130,7 +110,7 @@ fcmdr_gsettings_backend_handle_write_profile_cb (FCmdrDConf *interface,
 
 	/* Transfer ownership of the written file to the caller.
 	 * Failure here is not fatal to the WriteProfile method. */
-	if ((pw = getpwuid ((uid_t) uid)) != NULL)
+	if ((pw = getpwuid (uid)) != NULL)
 		chown (filename, pw->pw_uid, pw->pw_gid);
 
 	g_list_free_full (list, (GDestroyNotify) g_object_unref);
