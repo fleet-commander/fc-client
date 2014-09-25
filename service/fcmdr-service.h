@@ -62,6 +62,11 @@ struct _FCmdrService {
 
 struct _FCmdrServiceClass {
 	GObjectClass parent_class;
+
+	/* Signals */
+	void	(*session_added)		(FCmdrService *service,
+						 guint uid,
+						 const gchar *bus_address);
 };
 
 GType		fcmdr_service_get_type		(void) G_GNUC_CONST;

@@ -392,7 +392,6 @@ fcmdr_gsettings_backend_apply_one_profile (const gchar *sysdb_path,
 			locks_path, g_strerror (errno));
 	}
 
-exit:
 	json_node_free (json_node);
 
 	g_key_file_free (key_file);
@@ -423,7 +422,6 @@ fcmdr_gsettings_backend_apply_profiles (FCmdrServiceBackend *backend,
 {
 	if (g_mkdir_with_parents (FCMDR_DCONF_DB_DIR, 0755) == 0) {
 		GHashTable *profiles_table;
-		GList *link;
 		GError *local_error = NULL;
 
 		profiles_table = g_hash_table_new_full (

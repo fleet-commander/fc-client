@@ -111,11 +111,18 @@ enum {
 	PROP_CONNECTION
 };
 
+enum {
+	SESSION_ADDED,
+	LAST_SIGNAL
+};
+
 /* Forward Declarations */
 static void	fcmdr_service_initable_interface_init
 						(GInitableIface *interface);
 static gboolean	fcmdr_service_refresh_profiles_start_cb
 						(gpointer user_data);
+
+static guint signals[LAST_SIGNAL];
 
 G_DEFINE_TYPE_WITH_CODE (
 	FCmdrService,
@@ -947,6 +954,24 @@ fcmdr_service_class_init (FCmdrServiceClass *class)
 			G_PARAM_READWRITE |
 			G_PARAM_CONSTRUCT_ONLY |
 			G_PARAM_STATIC_STRINGS));
+
+	/**
+	 * FCmdrService::session-added:
+	 * @service: the #FCmdrService which emitted the signal
+	 * @uid: the user ID of the newly-added session
+	 * @bus_address: the bus address of the newly-added session
+	 *
+	 * Emitted when a new bus address is added to the @service.
+	 **/
+	signals[SESSION_ADDED] = g_signal_new (
+		"session-added",
+		G_OBJECT_CLASS_TYPE (object_class),
+		G_SIGNAL_RUN_LAST,
+		G_STRUCT_OFFSET (FCmdrServiceClass, session_added),
+		NULL, NULL, NULL,
+		G_TYPE_NONE, 2,
+		G_TYPE_UINT,
+		G_TYPE_STRING);
 }
 
 static void
@@ -961,7 +986,6 @@ fcmdr_service_init (FCmdrService *service)
 	GHashTable *backends;
 	GHashTable *profiles;
 	GHashTable *sessions;
-	SoupURI *uri;
 
 	backends = g_hash_table_new_full (
 		(GHashFunc) g_str_hash,
@@ -1882,6 +1906,7 @@ fcmdr_service_add_bus_address (FCmdrService *service,
                                const gchar *bus_address)
 {
 	Session *session;
+	gboolean session_added;
 
 	g_return_if_fail (FCMDR_IS_SERVICE (service));
 	g_return_if_fail (uid > 0);
@@ -1900,11 +1925,21 @@ fcmdr_service_add_bus_address (FCmdrService *service,
 		fcmdr_service_remove_closed_session,
 		NULL);
 
+	session_added = !g_hash_table_contains (
+		service->priv->sessions, bus_address);
+
 	g_hash_table_replace (
 		service->priv->sessions,
 		session->bus_address, session);
 
 	g_mutex_unlock (&service->priv->sessions_lock);
+
+	if (session_added) {
+		g_signal_emit (
+			service,
+			signals[SESSION_ADDED], 0,
+			uid, bus_address);
+	}
 }
 
 /**
