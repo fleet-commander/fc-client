@@ -78,6 +78,7 @@ fcmdr_service_load_remote_profiles_finish
 fcmdr_service_update_profiles
 fcmdr_service_apply_profiles
 fcmdr_service_cache_profiles
+fcmdr_service_add_bus_address
 <SUBSECTION Standard>
 FCMDR_SERVICE
 FCMDR_IS_SERVICE

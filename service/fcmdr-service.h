@@ -102,6 +102,9 @@ gboolean	fcmdr_service_update_profiles	(FCmdrService *service,
 void		fcmdr_service_apply_profiles	(FCmdrService *service);
 gboolean	fcmdr_service_cache_profiles	(FCmdrService *service,
 						 GError **error);
+void		fcmdr_service_add_bus_address	(FCmdrService *service,
+						 uid_t uid,
+						 const gchar *bus_address);
 
 G_END_DECLS
 

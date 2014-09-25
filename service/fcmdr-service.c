@@ -58,6 +58,7 @@
 #define FCMDR_POLLING_INTERVAL_DEFAULT (60 * 60)  /* 1 hour */
 
 typedef struct _AsyncContext AsyncContext;
+typedef struct _Session Session;
 
 struct _FCmdrServicePrivate {
 	GDBusConnection *connection;
@@ -70,6 +71,10 @@ struct _FCmdrServicePrivate {
 	/* Profile UID -> FCmdrProfile */
 	GHashTable *profiles;
 	GMutex profiles_lock;
+
+	/* Bus address -> Session */
+	GHashTable *sessions;
+	GMutex sessions_lock;
 
 	GQueue sources;
 	GMutex sources_lock;
@@ -89,6 +94,15 @@ struct _AsyncContext {
 	gboolean apply_profiles;
 	GArray *cancel_ids;
 	GHashTable *errors;
+};
+
+struct _Session {
+	uid_t uid;
+	gchar *bus_address;
+
+	/* Unregistered connection, can't send messages. */
+	GDBusConnection *connection;
+	gulong closed_handler_id;
 };
 
 enum {
@@ -124,6 +138,82 @@ async_context_free (AsyncContext *async_context)
 		g_hash_table_destroy (async_context->errors);
 
 	g_slice_free (AsyncContext, async_context);
+}
+
+static void
+session_closed_cb (GDBusConnection *connection,
+                   gboolean remote_peer_vanished,
+                   GError *error,
+                   Session *session)
+{
+	g_signal_handler_disconnect (
+		session->connection,
+		session->closed_handler_id);
+	session->closed_handler_id = 0;
+
+	g_clear_object (&session->connection);
+}
+
+static Session *
+session_try_new (uid_t uid,
+                 const gchar *bus_address)
+{
+	Session *session;
+	GDBusConnection *connection;
+	GError *local_error = NULL;
+
+	/* Although we're connecting to a message bus, do not pass
+	 * G_DBUS_CONNECTION_FLAGS_MESSAGE_BUS_CONNECTION because the
+	 * Hello() method will reject us for being a different user.
+	 * This means we can't send messages on the connection, but
+	 * we're only listening for "closed" events anyway. */
+	connection = g_dbus_connection_new_for_address_sync (
+		bus_address,
+		G_DBUS_CONNECTION_FLAGS_NONE,
+		NULL, NULL, &local_error);
+
+	/* Sanity check. */
+	g_return_val_if_fail (
+		((connection != NULL) && (local_error == NULL)) ||
+		((connection == NULL) && (local_error != NULL)), NULL);
+
+	if (local_error != NULL) {
+		g_warning (
+			"Unable to connect to bus <%s>: %s",
+			bus_address, local_error->message);
+		g_error_free (local_error);
+		return NULL;
+	}
+
+	session = g_slice_new0 (Session);
+	session->uid = uid;
+	session->bus_address = g_strdup (bus_address);
+	session->connection = g_object_ref (connection);
+
+	session->closed_handler_id = g_signal_connect (
+		session->connection, "closed",
+		G_CALLBACK (session_closed_cb), session);
+
+	g_object_unref (connection);
+
+	return session;
+}
+
+static void
+session_free (Session *session)
+{
+	g_return_if_fail (session != NULL);
+
+	if (session->closed_handler_id > 0) {
+		g_signal_handler_disconnect (
+			session->connection,
+			session->closed_handler_id);
+	}
+
+	g_free (session->bus_address);
+	g_clear_object (&session->connection);
+
+	g_slice_free (Session, session);
 }
 
 static GDataInputStream *
@@ -715,6 +805,7 @@ fcmdr_service_dispose (GObject *object)
 
 	g_hash_table_remove_all (priv->backends);
 	g_hash_table_remove_all (priv->profiles);
+	g_hash_table_remove_all (priv->sessions);
 
 	while (!g_queue_is_empty (&priv->sources))
 		g_object_unref (g_queue_pop_head (&priv->sources));
@@ -737,9 +828,11 @@ fcmdr_service_finalize (GObject *object)
 
 	g_hash_table_destroy (priv->backends);
 	g_hash_table_destroy (priv->profiles);
+	g_hash_table_destroy (priv->sessions);
 
 	g_mutex_clear (&priv->backends_lock);
 	g_mutex_clear (&priv->profiles_lock);
+	g_mutex_clear (&priv->sessions_lock);
 	g_mutex_clear (&priv->sources_lock);
 
 	/* Chain up to parent's finalize() method. */
@@ -821,6 +914,7 @@ fcmdr_service_init (FCmdrService *service)
 {
 	GHashTable *backends;
 	GHashTable *profiles;
+	GHashTable *sessions;
 	SoupURI *uri;
 
 	backends = g_hash_table_new_full (
@@ -835,13 +929,21 @@ fcmdr_service_init (FCmdrService *service)
 		(GDestroyNotify) g_free,
 		(GDestroyNotify) g_object_unref);
 
+	sessions = g_hash_table_new_full (
+		(GHashFunc) g_str_hash,
+		(GEqualFunc) g_str_equal,
+		(GDestroyNotify) NULL,
+		(GDestroyNotify) session_free);
+
 	service->priv = FCMDR_SERVICE_GET_PRIVATE (service);
 	service->priv->profiles_interface = fcmdr_profiles_skeleton_new ();
 	service->priv->backends = backends;
 	service->priv->profiles = profiles;
+	service->priv->sessions = sessions;
 
 	g_mutex_init (&service->priv->backends_lock);
 	g_mutex_init (&service->priv->profiles_lock);
+	g_mutex_init (&service->priv->sessions_lock);
 	g_mutex_init (&service->priv->sources_lock);
 
 	service->priv->polling_interval = FCMDR_POLLING_INTERVAL_DEFAULT;
@@ -1692,5 +1794,63 @@ fcmdr_service_cache_profiles (FCmdrService *service,
 	g_object_unref (generator);
 
 	return success;
+}
+
+/* Helper for fcmdr_service_add_bus_address() */
+static gboolean
+fcmdr_service_remove_closed_session (gpointer key,
+                                     gpointer value,
+                                     gpointer user_data)
+{
+	Session *session = value;
+
+	return (session->connection == NULL) ||
+		g_dbus_connection_is_closed (session->connection);
+}
+
+/**
+ * fcmdr_service_add_bus_address:
+ * @service: a #FCmdrService
+ * @uid: the user ID associated with @bus_address
+ * @bus_address: a D-Bus session bus address
+ *
+ * Associates a user-session message bus address with a user ID.  The
+ * @service opens a #GDBusConnection to the message bus, but only for
+ * the purpose of listening for #GDBusConnection::closed events.
+ *
+ * To send messages to the message bus, a service backend must fork() itself
+ * and set the effective user ID of the child process to @uid with setuid().
+ * Then the child process can call g_dbus_connection_new_for_address() with
+ * @bus_address and #G_DBUS_CONNECTION_FLAGS_MESSAGE_BUS_CONNECTION.
+ **/
+void
+fcmdr_service_add_bus_address (FCmdrService *service,
+                               uid_t uid,
+                               const gchar *bus_address)
+{
+	Session *session;
+
+	g_return_if_fail (FCMDR_IS_SERVICE (service));
+	g_return_if_fail (uid > 0);
+	g_return_if_fail (bus_address != NULL);
+
+	session = session_try_new (uid, bus_address);
+
+	if (session == NULL)
+		return;
+
+	g_mutex_lock (&service->priv->sessions_lock);
+
+	/* Remove closed sessions. */
+	g_hash_table_foreach_remove (
+		service->priv->sessions,
+		fcmdr_service_remove_closed_session,
+		NULL);
+
+	g_hash_table_replace (
+		service->priv->sessions,
+		session->bus_address, session);
+
+	g_mutex_unlock (&service->priv->sessions_lock);
 }
 
