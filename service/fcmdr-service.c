@@ -1854,3 +1854,50 @@ fcmdr_service_add_bus_address (FCmdrService *service,
 	g_mutex_unlock (&service->priv->sessions_lock);
 }
 
+/**
+ * fcmdr_service_dup_bus_address:
+ * @service: a #FCmdrService
+ * @uid: a user ID associated with a session bus
+ *
+ * Returns the address of a user-session message bus associated with the
+ * given user ID, or %NULL if there is currently no message bus for @uid
+ * (the user-session may have closed).
+ *
+ * Free the returned bus address with g_free().
+ *
+ * Returns: a bus address for @uid, or %NULL if no match was found
+ **/
+gchar *
+fcmdr_service_dup_bus_address (FCmdrService *service,
+                               uid_t uid)
+{
+	GHashTableIter iter;
+	gpointer value;
+	gchar *bus_address = NULL;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+
+	g_mutex_lock (&service->priv->sessions_lock);
+
+	/* Remove closed sessions. */
+	g_hash_table_foreach_remove (
+		service->priv->sessions,
+		fcmdr_service_remove_closed_session,
+		NULL);
+
+	g_hash_table_iter_init (&iter, service->priv->sessions);
+
+	while (g_hash_table_iter_next (&iter, NULL, &value)) {
+		Session *session = value;
+
+		if (uid == session->uid) {
+			bus_address = g_strdup (session->bus_address);
+			break;
+		}
+	}
+
+	g_mutex_unlock (&service->priv->sessions_lock);
+
+	return bus_address;
+}
+

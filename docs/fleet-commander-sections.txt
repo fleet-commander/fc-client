@@ -79,6 +79,7 @@ fcmdr_service_update_profiles
 fcmdr_service_apply_profiles
 fcmdr_service_cache_profiles
 fcmdr_service_add_bus_address
+fcmdr_service_dup_bus_address
 <SUBSECTION Standard>
 FCMDR_SERVICE
 FCMDR_IS_SERVICE

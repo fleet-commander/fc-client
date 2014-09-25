@@ -105,6 +105,8 @@ gboolean	fcmdr_service_cache_profiles	(FCmdrService *service,
 void		fcmdr_service_add_bus_address	(FCmdrService *service,
 						 uid_t uid,
 						 const gchar *bus_address);
+gchar *		fcmdr_service_dup_bus_address	(FCmdrService *service,
+						 uid_t uid);
 
 G_END_DECLS
 
