@@ -32,4 +32,12 @@
 
   </interface>
 
+  <interface name="org.gnome.FleetCommander.Sessions">
+
+    <method name="Add">
+      <arg name="bus_address" direction="in" type="s"/>
+    </method>
+
+  </interface>
+
 </node>

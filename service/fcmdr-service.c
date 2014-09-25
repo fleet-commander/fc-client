@@ -63,6 +63,7 @@ typedef struct _Session Session;
 struct _FCmdrServicePrivate {
 	GDBusConnection *connection;
 	FCmdrProfiles *profiles_interface;
+	FCmdrSessions *sessions_interface;
 
 	/* Name -> FCmdrServiceBackend */
 	GHashTable *backends;
@@ -694,6 +695,35 @@ fcmdr_service_handle_profiles_list_cb (FCmdrProfiles *interface,
 	return TRUE;
 }
 
+static gboolean
+fcmdr_service_handle_sessions_add_cb (FCmdrSessions *interface,
+                                      GDBusMethodInvocation *invocation,
+                                      const gchar *bus_address,
+                                      FCmdrService *service)
+{
+	GDBusConnection *connection;
+	const gchar *sender;
+	uid_t uid = 0;
+	GError *local_error = NULL;
+
+	/* Find out the user ID of the sender. */
+
+	connection = fcmdr_service_get_connection (service);
+	sender = g_dbus_method_invocation_get_sender (invocation);
+
+	fcmdr_get_connection_unix_user_sync (
+		connection, sender, &uid, NULL, &local_error);
+
+	if (local_error == NULL) {
+		fcmdr_service_add_bus_address (service, uid, bus_address);
+		fcmdr_sessions_complete_add (interface, invocation);
+	} else {
+		g_dbus_method_invocation_take_error (invocation, local_error);
+	}
+
+	return TRUE;
+}
+
 static void
 fcmdr_service_init_backends (FCmdrService *service)
 {
@@ -802,6 +832,7 @@ fcmdr_service_dispose (GObject *object)
 
 	g_clear_object (&priv->connection);
 	g_clear_object (&priv->profiles_interface);
+	g_clear_object (&priv->sessions_interface);
 
 	g_hash_table_remove_all (priv->backends);
 	g_hash_table_remove_all (priv->profiles);
@@ -861,6 +892,7 @@ fcmdr_service_initable_init (GInitable *initable,
                              GError **error)
 {
 	FCmdrServicePrivate *priv;
+	gboolean success = TRUE;
 
 	priv = FCMDR_SERVICE_GET_PRIVATE (initable);
 
@@ -872,9 +904,23 @@ fcmdr_service_initable_init (GInitable *initable,
 	priv->polling_timeout_id = g_timeout_add_seconds (
 		3, fcmdr_service_refresh_profiles_start_cb, initable);
 
-	return g_dbus_interface_skeleton_export (
-		G_DBUS_INTERFACE_SKELETON (priv->profiles_interface),
-		priv->connection, FCMDR_SERVICE_DBUS_OBJECT_PATH, error);
+	if (success) {
+		success = g_dbus_interface_skeleton_export (
+			G_DBUS_INTERFACE_SKELETON (priv->profiles_interface),
+			priv->connection,
+			FCMDR_SERVICE_DBUS_OBJECT_PATH,
+			error);
+	}
+
+	if (success) {
+		success = g_dbus_interface_skeleton_export (
+			G_DBUS_INTERFACE_SKELETON (priv->sessions_interface),
+			priv->connection,
+			FCMDR_SERVICE_DBUS_OBJECT_PATH,
+			error);
+	}
+
+	return error;
 }
 
 static void
@@ -937,6 +983,7 @@ fcmdr_service_init (FCmdrService *service)
 
 	service->priv = FCMDR_SERVICE_GET_PRIVATE (service);
 	service->priv->profiles_interface = fcmdr_profiles_skeleton_new ();
+	service->priv->sessions_interface = fcmdr_sessions_skeleton_new ();
 	service->priv->backends = backends;
 	service->priv->profiles = profiles;
 	service->priv->sessions = sessions;
@@ -970,6 +1017,12 @@ fcmdr_service_init (FCmdrService *service)
 		service->priv->profiles_interface,
 		"handle-list",
 		G_CALLBACK (fcmdr_service_handle_profiles_list_cb),
+		service);
+
+	g_signal_connect (
+		service->priv->sessions_interface,
+		"handle-add",
+		G_CALLBACK (fcmdr_service_handle_sessions_add_cb),
 		service);
 }
 

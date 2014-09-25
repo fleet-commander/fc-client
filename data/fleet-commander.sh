@@ -13,6 +13,11 @@ mkdir -p `dirname $dconf_profile`
 
 # Use --print-reply to wait for a reply message.
 # This ensures the service can lookup the user ID.
+
+if [ -n "$DBUS_SESSION_BUS_ADDRESS" ]; then
+  dbus-send --system --print-reply --dest=org.gnome.FleetCommander --type=method_call /org/gnome/FleetCommander org.gnome.FleetCommander.Sessions.Add "string:$DBUS_SESSION_BUS_ADDRESS" > /dev/null
+fi
+
 dbus-send --system --print-reply --dest=org.gnome.FleetCommander --type=method_call /org/gnome/FleetCommander org.gnome.FleetCommander.DConf.WriteProfile "string:$dconf_profile" > /dev/null
 
 if [ $? -eq 0 ]; then

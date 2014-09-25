@@ -16,6 +16,7 @@ dbus_built_sources = \
 	fcmdr-generated.h \
 	fcmdr-generated-doc-org.gnome.FleetCommander.DConf.xml \
 	fcmdr-generated-doc-org.gnome.FleetCommander.Profiles.xml \
+	fcmdr-generated-doc-org.gnome.FleetCommander.Sessions.xml \
 	$(NULL)
 
 BUILT_SOURCES = \
