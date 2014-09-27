@@ -58,6 +58,8 @@ fcmdr_service_SOURCES = \
 	fcmdr-gsettings-backend.h \
 	fcmdr-utils.c \
 	fcmdr-utils.h \
+	fcmdr-user-resolver.c \
+	fcmdr-user-resolver.h \
 	fcmdr-yum-backend.c \
 	fcmdr-yum-backend.h \
 	main.c \

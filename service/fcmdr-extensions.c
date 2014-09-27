@@ -23,6 +23,7 @@
 
 #include "fcmdr-profile-source.h"
 #include "fcmdr-service-backend.h"
+#include "fcmdr-user-resolver.h"
 
 extern GType fcmdr_gsettings_backend_get_type (void);
 extern GType fcmdr_http_profile_source_get_type (void);
@@ -43,6 +44,11 @@ register_extension_points (gpointer unused)
 		FCMDR_SERVICE_BACKEND_EXTENSION_POINT_NAME);
 	g_io_extension_point_set_required_type (
 		extension_point, FCMDR_TYPE_SERVICE_BACKEND);
+
+	extension_point = g_io_extension_point_register (
+		FCMDR_USER_RESOLVER_EXTENSION_POINT_NAME);
+	g_io_extension_point_set_required_type (
+		extension_point, FCMDR_TYPE_USER_RESOLVER);
 
 	return NULL;
 }

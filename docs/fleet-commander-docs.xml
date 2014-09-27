@@ -20,6 +20,7 @@
     <xi:include href="xml/fcmdr-profile-source.xml"/>
     <xi:include href="xml/fcmdr-service.xml"/>
     <xi:include href="xml/fcmdr-service-backend.xml"/>
+    <xi:include href="xml/fcmdr-user-resolver.xml"/>
     <xi:include href="xml/fcmdr-utils.xml"/>
 
   </chapter>
