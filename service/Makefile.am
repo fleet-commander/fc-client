@@ -1,6 +1,9 @@
 NULL =
 
-libexec_PROGRAMS = fcmdr-service
+libexec_PROGRAMS = \
+	fcmdr-service \
+	fcmdr-update-goa \
+	$(NULL)
 
 $(dbus_built_sources) : Makefile.am org.gnome.FleetCommander.xml
 	$(AM_V_GEN) gdbus-codegen \
@@ -26,6 +29,7 @@ BUILT_SOURCES = \
 fcmdr_service_CFLAGS = \
 	-DG_LOG_DOMAIN=\"fcmdr-service\" \
 	-DLOCALSTATEDIR=\""$(localstatedir)"\" \
+	-DFCMDR_UPDATE_GOA=\""$(libexecdir)/fcmdr-update-goa"\" \
 	$(WARN_CFLAGS) \
 	$(JSON_GLIB_CFLAGS) \
 	$(LIBSOUP_CFLAGS) \
@@ -58,6 +62,8 @@ fcmdr_service_SOURCES = \
 	fcmdr-service-backend.h \
 	fcmdr-gsettings-backend.c \
 	fcmdr-gsettings-backend.h \
+	fcmdr-goa-backend.c \
+	fcmdr-goa-backend.h \
 	fcmdr-utils.c \
 	fcmdr-utils.h \
 	fcmdr-user-resolver.c \
@@ -66,6 +72,22 @@ fcmdr_service_SOURCES = \
 	fcmdr-yum-backend.h \
 	main.c \
 	$(NULL)
+
+fcmdr_update_goa_CFLAGS = \
+	-DG_LOG_DOMAIN=\"fcmdr-service\" \
+	$(WARN_CFLAGS) \
+	$(JSON_GLIB_CFLAGS) \
+	$(GOA_CFLAGS) \
+	$(GIO_CFLAGS) \
+	$(NULL)
+
+fcmdr_update_goa_LDADD = \
+	$(JSON_GLIB_LIBS) \
+	$(GOA_LIBS) \
+	$(GIO_LIBS) \
+	$(NULL)
+
+fcmdr_update_goa_SOURCES = fcmdr-update-goa.c
 
 CLEANFILES = $(BUILT_SOURCES)
 

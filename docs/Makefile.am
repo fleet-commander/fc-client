@@ -17,6 +17,7 @@ MKDB_OPTIONS = --output-format=xml --sgml-mode
 IGNORE_HFILES = \
 	fcmdr-extensions.h \
 	fcmdr-generated.h \
+	fcmdr-goa-backend.h \
 	fcmdr-gsettings-backend.h \
 	fcmdr-http-profile-source.h \
 	fcmdr-local-user-resolver.h \
@@ -26,6 +27,7 @@ IGNORE_HFILES = \
 GTKDOC_CFLAGS = \
 	$(JSON_GLIB_CFLAGS) \
 	$(LIBSOUP_CFLAGS) \
+	$(GOA_CFLAGS) \
 	$(GIO_CFLAGS) \
 	$(NULL)
 
@@ -33,6 +35,7 @@ GTKDOC_LIBS = \
 	$(top_builddir)/service/fcmdr_service-fcmdr-*.o \
 	$(JSON_GLIB_LIBS) \
 	$(LIBSOUP_LIBS) \
+	$(GOA_LIBS) \
 	$(GIO_LIBS) \
 	$(NULL)
 

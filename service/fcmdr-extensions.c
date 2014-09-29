@@ -26,6 +26,7 @@
 #include "fcmdr-user-resolver.h"
 
 extern GType fcmdr_gsettings_backend_get_type (void);
+extern GType fcmdr_goa_backend_get_type (void);
 extern GType fcmdr_http_profile_source_get_type (void);
 extern GType fcmdr_local_user_resolver_get_type (void);
 extern GType fcmdr_yum_backend_get_type (void);
@@ -68,6 +69,7 @@ fcmdr_ensure_extensions_registered (void)
 	/* Register GTypes for built-in extensions. */
 
 	g_type_ensure (fcmdr_gsettings_backend_get_type ());
+	g_type_ensure (fcmdr_goa_backend_get_type ());
 	g_type_ensure (fcmdr_http_profile_source_get_type ());
 	g_type_ensure (fcmdr_local_user_resolver_get_type ());
 	g_type_ensure (fcmdr_yum_backend_get_type ());
