@@ -89,6 +89,9 @@ struct _FCmdrService *
 JsonNode *	fcmdr_service_backend_dup_settings
 						(FCmdrServiceBackend *backend,
 						 FCmdrProfile *profile);
+gboolean	fcmdr_service_backend_has_settings
+						(FCmdrServiceBackend *backend,
+						 FCmdrProfile *profile);
 void		fcmdr_service_backend_apply_profiles
 						(FCmdrServiceBackend *backend,
 						 GList *profiles);

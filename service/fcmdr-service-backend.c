@@ -218,6 +218,40 @@ fcmdr_service_backend_dup_settings (FCmdrServiceBackend *backend,
 }
 
 /**
+ * fcmdr_service_backend_has_settings:
+ * @backend: a #FCmdrServiceBackend
+ * @profile: a #FCmdrProfile
+ *
+ * Convenience function checks whether @profile has settings for @backend.
+ * It does this by matching the @backend's extension name to a member name
+ * in the @profile's #FCmdrProfile:settings data.  If a match is found the
+ * function returns %TRUE.
+ *
+ * Returns: whether @profile has settings for @backend
+ **/
+gboolean
+fcmdr_service_backend_has_settings (FCmdrServiceBackend *backend,
+                                    FCmdrProfile *profile)
+{
+	GIOExtension *extension;
+	JsonObject *all_settings;
+	gboolean has_settings;
+	const gchar *name;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE_BACKEND (backend), FALSE);
+	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), FALSE);
+
+	all_settings = fcmdr_profile_ref_settings (profile);
+
+	name = g_io_extension_get_name (extension);
+	has_settings = json_object_has_member (all_settings, name);
+
+	json_object_unref (all_settings);
+
+	return has_settings;
+}
+
+/**
  * fcmdr_service_backend_apply_profiles:
  * @backend: a #FCmdrServiceBackend
  * @profiles: a #GList of #FCmdrProfile instances
