@@ -97,6 +97,7 @@ fcmdr_service_backend_ref_service
 fcmdr_service_backend_dup_settings
 fcmdr_service_backend_has_settings
 fcmdr_service_backend_apply_profiles
+fcmdr_service_backend_filter_profiles
 <SUBSECTION Standard>
 FCMDR_SERVICE_BACKEND
 FCMDR_IS_SERVICE_BACKEND

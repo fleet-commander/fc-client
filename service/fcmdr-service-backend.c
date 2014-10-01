@@ -270,7 +270,57 @@ fcmdr_service_backend_apply_profiles (FCmdrServiceBackend *backend,
 
 	class = FCMDR_SERVICE_BACKEND_GET_CLASS (backend);
 
-	if (class->apply_profiles != NULL)
-		class->apply_profiles (backend, profiles);
+	if (class->apply_profiles != NULL) {
+		GList *filtered;
+
+		/* Copy and filter the list so the backend
+		 * only has to deal with relevant profiles. */
+
+		filtered = g_list_copy_deep (
+			profiles, (GCopyFunc) g_object_ref, NULL);
+		filtered = fcmdr_service_backend_filter_profiles (
+			backend, filtered);
+
+		class->apply_profiles (backend, filtered);
+
+		g_list_free_full (filtered, (GDestroyNotify) g_object_unref);
+	}
+}
+
+/**
+ * fcmdr_service_backend_filter_profiles:
+ * @backend: a #FCmdrServiceBackend
+ * @profiles: a #GList of #FCmdrProfile instances
+ *
+ * Filters the @profiles list, keeping only #FCmdrProfile instances that
+ * have settings for @backend.  Discarded #FCmdrProfile instances in the
+ * list are unreferenced with g_object_unref().
+ *
+ * Returns: the (possibly changed) start of the @profiles list
+ **/
+GList *
+fcmdr_service_backend_filter_profiles (FCmdrServiceBackend *backend,
+                                       GList *profiles)
+{
+	GQueue trash = G_QUEUE_INIT;
+	GList *link;
+
+	g_return_val_if_fail (FCMDR_IS_SERVICE_BACKEND (backend), NULL);
+
+	for (link = profiles; link != NULL; link = g_list_next (link)) {
+		FCmdrProfile *profile = FCMDR_PROFILE (link->data);
+
+		if (!fcmdr_service_backend_has_settings (backend, profile)) {
+			g_clear_object (&link->data);
+			g_queue_push_tail (&trash, link);
+		}
+	}
+
+	while (!g_queue_is_empty (&trash)) {
+		link = g_queue_pop_head (&trash);
+		profiles = g_list_delete_link (profiles, link);
+	}
+
+	return profiles;
 }
 

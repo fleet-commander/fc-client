@@ -95,6 +95,9 @@ gboolean	fcmdr_service_backend_has_settings
 void		fcmdr_service_backend_apply_profiles
 						(FCmdrServiceBackend *backend,
 						 GList *profiles);
+GList *		fcmdr_service_backend_filter_profiles
+						(FCmdrServiceBackend *backend,
+						 GList *profiles);
 
 G_END_DECLS
 
