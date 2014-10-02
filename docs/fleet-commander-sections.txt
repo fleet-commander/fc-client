@@ -65,6 +65,7 @@ FCMDR_SERVICE_DBUS_OBJECT_PATH
 FCmdrService
 fcmdr_service_new
 fcmdr_service_get_connection
+fcmdr_service_get_user_resolver
 fcmdr_service_ref_backend
 fcmdr_service_list_backends
 fcmdr_service_add_profile

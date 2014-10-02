@@ -64,6 +64,7 @@ struct _FCmdrServicePrivate {
 	GDBusConnection *connection;
 	FCmdrProfiles *profiles_interface;
 	FCmdrSessions *sessions_interface;
+	FCmdrUserResolver *user_resolver;
 
 	/* Name -> FCmdrServiceBackend */
 	GHashTable *backends;
@@ -323,6 +324,30 @@ fcmdr_service_read_config_line (FCmdrService *service,
 			service->priv->polling_interval =
 				(guint) CLAMP (value, 0, G_MAXUINT);
 		}
+	}
+
+	if (g_ascii_strncasecmp (line, "user-resolver:", 14) == 0) {
+		FCmdrUserResolver *user_resolver = NULL;
+		const gchar *cp = line + 14;
+
+		while (g_ascii_isspace (*cp))
+			cp++;
+
+		if (*cp == '\0')
+			return;
+
+		user_resolver = fcmdr_user_resolver_try_new (service, cp);
+
+		if (user_resolver == NULL) {
+			g_warning ("Unsupported user resolver: %s", cp);
+			return;
+		}
+
+		g_debug ("Using %s", G_OBJECT_TYPE_NAME (user_resolver));
+
+		/* The service takes ownership. */
+		g_clear_object (&service->priv->user_resolver);
+		service->priv->user_resolver = user_resolver;
 	}
 }
 
@@ -840,6 +865,7 @@ fcmdr_service_dispose (GObject *object)
 	g_clear_object (&priv->connection);
 	g_clear_object (&priv->profiles_interface);
 	g_clear_object (&priv->sessions_interface);
+	g_clear_object (&priv->user_resolver);
 
 	g_hash_table_remove_all (priv->backends);
 	g_hash_table_remove_all (priv->profiles);
@@ -888,6 +914,12 @@ fcmdr_service_constructed (GObject *object)
 	fcmdr_service_init_backends (service);
 	fcmdr_service_init_profile_sources (service);
 	fcmdr_service_init_profiles (service);
+
+	/* Fallback resolver when not specified in configuration. */
+	if (service->priv->user_resolver == NULL) {
+		service->priv->user_resolver =
+			fcmdr_user_resolver_try_new (service, "local");
+	}
 
 	/* Chain up to parent's constructed() method. */
 	G_OBJECT_CLASS (fcmdr_service_parent_class)->constructed (object);
@@ -1087,6 +1119,22 @@ fcmdr_service_get_connection (FCmdrService *service)
 	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
 
 	return service->priv->connection;
+}
+
+/**
+ * fcmdr_service_get_user_resolver:
+ * @service: a #FCmdrService
+ *
+ * Returns the @service's #FCmdrUserResolver.
+ *
+ * Returns: a #FCmdrUserResolver
+ **/
+FCmdrUserResolver *
+fcmdr_service_get_user_resolver (FCmdrService *service)
+{
+	g_return_val_if_fail (FCMDR_IS_SERVICE (service), NULL);
+
+	return service->priv->user_resolver;
 }
 
 /**

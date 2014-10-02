@@ -25,6 +25,7 @@
 #include "fcmdr-profile.h"
 #include "fcmdr-profile-source.h"
 #include "fcmdr-service-backend.h"
+#include "fcmdr-user-resolver.h"
 
 /* Standard GObject macros */
 #define FCMDR_TYPE_SERVICE \
@@ -74,6 +75,8 @@ FCmdrService *	fcmdr_service_new		(GDBusConnection *connection,
 						 GError **error);
 GDBusConnection *
 		fcmdr_service_get_connection	(FCmdrService *service);
+FCmdrUserResolver *
+		fcmdr_service_get_user_resolver	(FCmdrService *service);
 FCmdrServiceBackend *
 		fcmdr_service_ref_backend	(FCmdrService *service,
 						 const gchar *backend_name);
