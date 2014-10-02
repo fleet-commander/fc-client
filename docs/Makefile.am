@@ -19,6 +19,7 @@ IGNORE_HFILES = \
 	fcmdr-generated.h \
 	fcmdr-gsettings-backend.h \
 	fcmdr-http-profile-source.h \
+	fcmdr-local-user-resolver.h \
 	fcmdr-yum-backend.h \
 	$(NULL)
 
