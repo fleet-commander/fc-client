@@ -32,6 +32,8 @@ gint		fcmdr_strv_find			(gchar **haystack,
 						 const gchar *needle);
 gint		fcmdr_compare_uints		(gconstpointer a,
 						 gconstpointer b);
+gchar *		fcmdr_replace_variables		(const gchar *string,
+						 GHashTable *symbol_table);
 gboolean	fcmdr_recursive_delete_sync	(GFile *file,
 						 GCancellable *cancellable,
 						 GError **error);

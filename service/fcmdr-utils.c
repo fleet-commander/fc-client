@@ -185,6 +185,66 @@ fcmdr_compare_uints (gconstpointer a,
 	return (int_a < int_b) ? -1 : (int_a == int_b) ? 0 : 1;
 }
 
+/* Helper for fcmdr_replace_variables() */
+static gpointer
+fcmdr_replace_variables_init_cb (gpointer unused)
+{
+	return g_regex_new ("\\$\\{(\\w+)\\}", G_REGEX_OPTIMIZE, 0, NULL);
+}
+
+/* Helper for fcmdr_replace_variables() */
+static gboolean
+fcmdr_replace_variables_eval_cb (const GMatchInfo *match_info,
+                                 GString *result,
+                                 gpointer user_data)
+{
+	GHashTable *symbol_table = user_data;
+	gchar *key, *value = NULL;
+
+	key = g_match_info_fetch (match_info, 1);
+
+	if (key != NULL)
+		value = g_strdup (g_hash_table_lookup (symbol_table, key));
+
+	if (value == NULL)
+		value = g_match_info_fetch (match_info, 0);
+
+	g_string_append (result, value);
+
+	g_free (key);
+	g_free (value);
+
+	return FALSE;  /* continue */
+}
+
+/**
+ * fcmdr_replace_variables:
+ * @string: a string which may have variables
+ * @symbol_table: a table of variable names and string values
+ *
+ * Scans @string for occurrences of the pattern "${SYMBOL}" and replaces them
+ * with the string value for "SYMBOL" in @symbol_table (if it exists).  Free
+ * the returned string with g_free().
+ *
+ * Returns: a newly-allocated copy of @string with variables replaced
+ **/
+gchar *
+fcmdr_replace_variables (const gchar *string,
+                         GHashTable *symbol_table)
+{
+	static GOnce regex = G_ONCE_INIT;
+
+	g_return_val_if_fail (string != NULL, NULL);
+	g_return_val_if_fail (symbol_table != NULL, NULL);
+
+	g_once (&regex, fcmdr_replace_variables_init_cb, NULL);
+
+	return g_regex_replace_eval (
+		regex.retval, string, -1, 0, 0,
+		fcmdr_replace_variables_eval_cb,
+		symbol_table, NULL);
+}
+
 /**
  * fcmdr_recursive_delete_sync:
  * @file: a #GFile to delete
