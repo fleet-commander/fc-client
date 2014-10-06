@@ -154,22 +154,28 @@ fcmdr_profile_deserialize_profile_applies (JsonNode *json_node)
 {
 	FCmdrProfileApplies *applies;
 	JsonObject *json_object;
-	JsonArray *json_array;
+	JsonNode *member_node;
 
 	applies = fcmdr_profile_applies_new ();
 	json_object = json_node_get_object (json_node);
 
-	json_array = json_object_get_array_member (json_object, "users");
-	if (json_array != NULL)
+	member_node = json_object_get_member (json_object, "users");
+	if (member_node != NULL && JSON_NODE_HOLDS_ARRAY (member_node)) {
+		JsonArray *json_array = json_node_get_array (member_node);
 		applies->users = fcmdr_json_array_to_strv (json_array);
+	}
 
-	json_array = json_object_get_array_member (json_object, "groups");
-	if (json_array != NULL)
+	member_node = json_object_get_member (json_object, "groups");
+	if (member_node != NULL && JSON_NODE_HOLDS_ARRAY (member_node)) {
+		JsonArray *json_array = json_node_get_array (member_node);
 		applies->groups = fcmdr_json_array_to_strv (json_array);
+	}
 
-	json_array = json_object_get_array_member (json_object, "hosts");
-	if (json_array != NULL)
+	member_node = json_object_get_member (json_object, "hosts");
+	if (member_node != NULL && JSON_NODE_HOLDS_ARRAY (member_node)) {
+		JsonArray *json_array = json_node_get_array (member_node);
 		applies->hosts = fcmdr_json_array_to_strv (json_array);
+	}
 
 	return applies;
 }
