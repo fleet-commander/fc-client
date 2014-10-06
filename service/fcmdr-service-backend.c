@@ -241,6 +241,9 @@ fcmdr_service_backend_has_settings (FCmdrServiceBackend *backend,
 	g_return_val_if_fail (FCMDR_IS_SERVICE_BACKEND (backend), FALSE);
 	g_return_val_if_fail (FCMDR_IS_PROFILE (profile), FALSE);
 
+	extension = fcmdr_service_backend_lookup_extension (backend);
+	g_return_val_if_fail (extension != NULL, FALSE);
+
 	all_settings = fcmdr_profile_ref_settings (profile);
 
 	name = g_io_extension_get_name (extension);
