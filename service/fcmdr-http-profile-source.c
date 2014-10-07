@@ -161,12 +161,26 @@ fcmdr_http_profile_source_get_profile (SoupSession *session,
 
 	if (request != NULL) {
 		GInputStream *stream;
+		SoupMessage *message;
+		SoupRequestHTTP *http_request;
 
 		stream = soup_request_send (request, NULL, error);
 
+		http_request = SOUP_REQUEST_HTTP (request);
+		message = soup_request_http_get_message (http_request);
+
 		if (stream != NULL) {
-			profile = fcmdr_profile_new_from_stream (
-				stream, NULL, error);
+			if (SOUP_STATUS_IS_SUCCESSFUL (message->status_code)) {
+				profile = fcmdr_profile_new_from_stream (
+					stream, NULL, error);
+			} else {
+				g_set_error (
+					error, SOUP_HTTP_ERROR,
+					message->status_code,
+					"GET request failed: %u %s",
+					message->status_code,
+					message->reason_phrase);
+			}
 			g_object_unref (stream);
 		}
 
