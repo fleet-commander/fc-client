@@ -22,6 +22,7 @@
 #include "fcmdr-yum-backend.h"
 
 #include <errno.h>
+#include <glib/gstdio.h>
 
 #include "fcmdr-extensions.h"
 

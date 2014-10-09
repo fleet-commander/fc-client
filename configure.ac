@@ -31,6 +31,9 @@ PKG_CHECK_MODULES(LIBSOUP, libsoup-2.4 >= 2.42)  # Just a guess
 # Documentation
 GTK_DOC_CHECK([1.14])
 
+# Compiler Warnings
+GNOME_COMPILE_WARNINGS
+
 # systemd
 AC_ARG_WITH([systemdsystemunitdir],
             AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
