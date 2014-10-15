@@ -24,6 +24,12 @@
  * An #FCmdrUserResolver maps a UNIX user ID to the user's login name and,
  * if possible, the user's real name.  This helps resolve "${username}" and
  * "${realname}" variables in settings profiles.
+ *
+ * Unless overridden in the fleet-commander.conf file, the default user
+ * resolver simply consults the local UNIX password database.  But profile
+ * user names may not always match 1:1 with local UNIX user names, and so
+ * the lookup API is asynchronous in anticipation of custom user resolvers
+ * needing to consult some remote service like an LDAP directory.
  **/
 
 #include "config.h"
@@ -200,6 +206,21 @@ fcmdr_user_resolver_ref_service (FCmdrUserResolver *resolver)
 	return g_weak_ref_get (&resolver->priv->service);
 }
 
+/**
+ * fcmdr_user_resolver_lookup:
+ * @resolver: a #FCmdrUserResolver
+ * @uid: a UNIX user ID
+ * @cancellable: optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when the request is satisfied
+ * @user_data: data to pass to the callback function
+ *
+ * Asychronously tries to obtain a user's login name and, if possible, real
+ * name from the given numeric @uid.  This may be as simple as consulting
+ * the local UNIX password database or it may involve a network request.
+ *
+ * When the operation is finished, @callback will be called.  You can then
+ * call fcmdr_user_resolver_lookup_finish() to get the result of the operation.
+ **/
 void
 fcmdr_user_resolver_lookup (FCmdrUserResolver *resolver,
                             uid_t uid,
@@ -217,6 +238,23 @@ fcmdr_user_resolver_lookup (FCmdrUserResolver *resolver,
 	class->lookup (resolver, uid, cancellable, callback, user_data);
 }
 
+/**
+ * fcmdr_user_resolver_lookup_finish:
+ * @resolver: a #FCmdrUserResolver
+ * @result: a #GAsyncResult
+ * @out_user_name: return location for the user's login name, or %NULL
+ * @out_real_name: return location for the user's real name, or %NULL
+ * @error: return location for a #GError, or %NULL
+ *
+ * Finishes the operation started with fcmdr_user_resolver_lookup().
+ *
+ * On a successful lookup, the function sets @out_user_name to the user's
+ * login name, @out_real_name to either the user's real name or else %NULL
+ * if that information was not available, and returns %TRUE.  If the lookup
+ * operation failed, the function sets @error and returns %FALSE.
+ *
+ * Returns: %TRUE on success, %FALSE on failure
+ **/
 gboolean
 fcmdr_user_resolver_lookup_finish (FCmdrUserResolver *resolver,
                                    GAsyncResult *result,
