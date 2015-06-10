@@ -118,8 +118,10 @@ foreach_member_cb (JsonObject *json_object,
 	g_return_if_fail (arg_identity != NULL);
 	g_return_if_fail (arg_presentation_identity != NULL);
 
+#if GOA_CHECK_VERSION(3,15,1)
 	/* Lock the account so it can't be removed by the user. */
 	g_variant_builder_add (&arg_details, "{ss}", "IsLocked", "true");
+#endif
 
 	/* Specify our own account ID so it can be recognized later. */
 	g_variant_builder_add (&arg_details, "{ss}", "Id", member_name);

@@ -27,7 +27,7 @@ PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.36)  # Just a guess
 PKG_CHECK_MODULES(GIO, gio-unix-2.0)
 PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0)
 PKG_CHECK_MODULES(LIBSOUP, libsoup-2.4 >= 2.42)  # Just a guess
-PKG_CHECK_MODULES(GOA, goa-1.0 >= 3.15.1)
+PKG_CHECK_MODULES(GOA, goa-1.0)
 
 # Documentation
 GTK_DOC_CHECK([1.14])
