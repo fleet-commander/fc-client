@@ -1,4 +1,5 @@
 using Soup;
+using Json;
 
 namespace Logind {
 
@@ -9,7 +10,7 @@ namespace Logind {
   }
 
   [DBus (name = "org.freedesktop.login1.Manager")]
-  interface Manager : Object {
+  interface Manager : GLib.Object {
     public abstract User[] list_users () throws IOError;
     public abstract signal void user_new     (uint32 uid, ObjectPath path);
     public abstract signal void user_removed (uint32 uid, ObjectPath path);
@@ -22,9 +23,12 @@ namespace FleetCommander {
 
   internal class SourceManager {
     private Soup.Session http_session;
+    private Json.Parser  parser;
 
     internal SourceManager() {
       http_session = new Soup.Session();
+      parser = new Json.Parser();
+
       update_profiles();
 
       Timeout.add(config.polling_interval * 1000, () => {
@@ -59,7 +63,17 @@ namespace FleetCommander {
     }
 
     private void build_profile_cache(string index) {
+      try {
+        parser.load_from_data(index);
+      } catch (Error e) {
+        warning ("There was an error trying to parse index: %s", e.message);
+        return;
+      }
 
+      var root = parser.get_root ();
+      if (root.get_node_type () == Json.NodeType.NULL) {
+        warning("No root element at index");
+      }
     }
 
     private string[] list_cached_profiles () {
