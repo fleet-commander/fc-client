@@ -1,8 +1,8 @@
 using Soup;
 using Json;
 
+/*
 namespace Logind {
-
   internal struct User {
     uint32 uid;
     string name;
@@ -16,18 +16,89 @@ namespace Logind {
     public abstract signal void user_removed (uint32 uid, ObjectPath path);
   }
 }
+*/
 
 namespace FleetCommander {
   internal ConfigReader config;
-  internal Logind.Manager? logind;
+
+  internal class ProfilesManager {
+    private  File        profiles;
+    private  Json.Parser parser;
+
+    internal ProfilesManager() {
+      profiles = File.new_for_path(config.cache_path);
+      parser  = new Parser();
+    }
+
+    internal void add_profile_from_data (string profile_data) {
+      debug ("Building aggregated profiles.json file for local cache");
+      if (parser.load_from_data (profile_data) == false ||
+          parser.get_root() == null                     ||
+          parser.get_root().get_object() == null) {
+        warning("Profile request data was not a valid JSON object: %s", profile_data);
+        return;
+      }
+
+      var profile = parser.get_root();
+      var cache = get_cache_root();
+      if (cache == null)
+        return;
+
+      cache.get_array().add_element(profile);
+
+      var generator = new Json.Generator();
+      generator.pretty = true;
+      generator.set_root(cache);
+      write(generator.to_data(null));
+    }
+
+    public Json.Node? get_cache_root () {
+      try {
+        parser.load_from_stream (profiles.read(null), null);
+      } catch (Error e) {
+        warning ("There was an error trying to load the profile cache: %s", e.message);
+        return null;
+      }
+
+      var root = parser.get_root();
+
+      /* If for some reason the file ends up corrupted we try to restore it */
+      if (root == null || root.get_array() == null) {
+        warning ("The root element of the cache is not an array: flushing");
+        return null;
+      }
+
+      return root;
+    }
+
+    internal bool flush () {
+      parser.load_from_data("");
+      return write("[]");
+    }
+
+    private bool write (string payload) {
+      try {
+        var w = profiles.replace(null, false, FileCreateFlags.PRIVATE, null);
+        var d = new DataOutputStream(w);
+        d.put_string(payload);
+      } catch (Error e) {
+        warning("Could not rewrite %s: %s", profiles.get_path(), e.message);
+        return false;
+      }
+
+      return true;
+    }
+  }
 
   internal class SourceManager {
-    private Soup.Session http_session;
-    private Json.Parser  parser;
+    private Soup.Session    http_session;
+    private Json.Parser     parser;
+    internal ProfilesManager profiles;
 
-    internal SourceManager() {
+    internal SourceManager(ProfilesManager profiles) {
       http_session = new Soup.Session();
       parser = new Json.Parser();
+      this.profiles = profiles;
 
       update_profiles();
 
@@ -44,7 +115,7 @@ namespace FleetCommander {
       var msg = new Soup.Message("GET", config.source);
       debug("Queueing request to %s", config.source);
       http_session.queue_message(msg, (s,m) => {
-        if (process_json_rquest(m) == false)
+        if (process_json_request(m) == false)
           return;
 
         var index = (string) m.response_body.data;
@@ -53,7 +124,7 @@ namespace FleetCommander {
       });
     }
 
-    private static bool process_json_rquest(Soup.Message msg) {
+    private static bool process_json_request(Soup.Message msg) {
       var uri = msg.uri.to_string(true);
       debug("Request to %s finished with status %u", uri, msg.status_code);
       if (msg.response_body == null || msg.response_body.data == null) {
@@ -118,20 +189,26 @@ namespace FleetCommander {
       });
 
       debug ("Sending requests for URLs in the index");
+      profiles.flush();
       foreach (var url in urls) {
         var msg = new Soup.Message("GET", config.source + url);
-        http_session.queue_message(msg, (s,m) => {
-          if (process_json_rquest(m) == false)
-            return;
-        });
+        http_session.queue_message(msg, profile_response_cb);
       }
+    }
+
+    private void profile_response_cb (Soup.Session s, Soup.Message m) {
+      if (process_json_request(m) == false)
+        return;
+      profiles.add_profile_from_data ((string)m.response_body.data);
     }
   }
 
   internal class ConfigReader
   {
-    internal string source = "";
-    internal uint    polling_interval = 60 * 60;
+    internal string source           = "";
+    internal uint   polling_interval = 60 * 60;
+    internal string cache_path       = "/var/cache/fleet-commander/profiles.json";
+
     internal ConfigReader (string path = "/etc/xdg/fleet-commander.conf") {
       var file = File.new_for_path (path);
       try {
@@ -178,7 +255,8 @@ namespace FleetCommander {
     var ml = new GLib.MainLoop (null, false);
 
     config = new ConfigReader();
-    var srcmgr = new SourceManager();
+    var profmgr = new ProfilesManager();
+    var srcmgr  = new SourceManager(profmgr);
 
 /*    if (config.source == "") {
       debug("Configuration did not provide profile source");
