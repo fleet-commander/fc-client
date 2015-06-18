@@ -21,6 +21,62 @@ namespace Logind {
 namespace FleetCommander {
   internal ConfigReader config;
 
+  internal class Cache {
+    private File        profiles;
+    private FileMonitor monitor;
+    private Json.Node?  root = null;
+    private bool        timeout;
+    private uint        cookie = 0;
+
+    internal Cache() {
+      profiles = File.new_for_path(config.cache_path);
+      monitor = profiles.monitor_file(FileMonitorFlags.NONE);
+      monitor.changed.connect((file, other_file, event) => {
+        switch (event) {
+          case FileMonitorEvent.CREATED:
+          case FileMonitorEvent.CHANGED:
+            debug("%s was changed or created", profiles.get_path());
+            break;
+          case FileMonitorEvent.DELETED:
+            debug("%s was deleted", profiles.get_path());
+            break;
+          default:
+            warning("Unhandled FileMonitor event");
+            return;
+        }
+        parse_async(true);
+      });
+
+      parse();
+    }
+
+    private void parse_async (bool timeout) {
+      this.timeout = timeout;
+      if (cookie != 0) {
+        debug("A timeout to parse %s is already installed", profiles.get_path());
+        return;
+      }
+
+      cookie = Timeout.add (1000, () => {
+        if (this.timeout == true) {
+          debug("Changes just happened, waiting another second without changes");
+          this.timeout = false;
+          return true;
+        }
+
+        parse();
+
+        timeout = false;
+        cookie  = 0;
+        return false;
+      });
+    }
+
+    private void parse () {
+      debug ("Parsing cache file: %s", profiles.get_path());
+    }
+  }
+
   internal class ProfileCacheManager {
     private  File        profiles;
     private  Json.Parser parser;
@@ -258,6 +314,7 @@ namespace FleetCommander {
 
     config = new ConfigReader();
     var profmgr = new ProfileCacheManager();
+    var cache   = new Cache();
     var srcmgr  = new SourceManager(profmgr);
 
 /*    if (config.source == "") {
