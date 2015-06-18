@@ -21,11 +21,11 @@ namespace Logind {
 namespace FleetCommander {
   internal ConfigReader config;
 
-  internal class ProfilesManager {
+  internal class ProfileCacheManager {
     private  File        profiles;
     private  Json.Parser parser;
 
-    internal ProfilesManager() {
+    internal ProfileCacheManager() {
       profiles = File.new_for_path(config.cache_path);
       parser  = new Parser();
     }
@@ -72,11 +72,13 @@ namespace FleetCommander {
     }
 
     internal bool flush () {
+      debug("Flushing profile cache");
       parser.load_from_data("");
       return write("[]");
     }
 
     private bool write (string payload) {
+      debug("Writing to cache");
       try {
         var w = profiles.replace(null, false, FileCreateFlags.PRIVATE, null);
         var d = new DataOutputStream(w);
@@ -93,9 +95,9 @@ namespace FleetCommander {
   internal class SourceManager {
     private Soup.Session    http_session;
     private Json.Parser     parser;
-    internal ProfilesManager profiles;
+    internal ProfileCacheManager profiles;
 
-    internal SourceManager(ProfilesManager profiles) {
+    internal SourceManager(ProfileCacheManager profiles) {
       http_session = new Soup.Session();
       parser = new Json.Parser();
       this.profiles = profiles;
@@ -255,7 +257,7 @@ namespace FleetCommander {
     var ml = new GLib.MainLoop (null, false);
 
     config = new ConfigReader();
-    var profmgr = new ProfilesManager();
+    var profmgr = new ProfileCacheManager();
     var srcmgr  = new SourceManager(profmgr);
 
 /*    if (config.source == "") {
