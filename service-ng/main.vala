@@ -25,6 +25,8 @@ namespace FleetCommander {
 
     internal SourceManager() {
       http_session = new Soup.Session();
+      update_profiles();
+
       Timeout.add(config.polling_interval * 1000, () => {
         if (config.source == null || config.source == "")
           return true;
@@ -39,7 +41,32 @@ namespace FleetCommander {
       debug("Queueing request to %s", config.source);
       http_session.queue_message(msg, (s,m) => {
         debug("Request finished with status %u", m.status_code);
+        if (m.response_body == null || m.response_body.data == null) {
+          warning("%s returned no data", config.source);
+          return;
+        }
+
+        var index = (string) m.response_body.data;
+
+        if (m.status_code != 200) {
+          warning ("ERROR Message %s: %s", config.source, index);
+          return;
+        }
+
+        build_profile_cache(index);
+        debug ("%s: %s:", config.source, index);
       });
+    }
+
+    private void build_profile_cache(string index) {
+
+    }
+
+    private string[] list_cached_profiles () {
+      return {};
+    }
+
+    private void remove_profile_from_cache () {
     }
   }
 
