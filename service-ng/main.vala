@@ -44,22 +44,30 @@ namespace FleetCommander {
       var msg = new Soup.Message("GET", config.source);
       debug("Queueing request to %s", config.source);
       http_session.queue_message(msg, (s,m) => {
-        debug("Request finished with status %u", m.status_code);
-        if (m.response_body == null || m.response_body.data == null) {
-          warning("%s returned no data", config.source);
+        if (process_json_rquest(m) == false)
           return;
-        }
 
         var index = (string) m.response_body.data;
-
-        if (m.status_code != 200) {
-          warning ("ERROR Message %s: %s", config.source, index);
-          return;
-        }
-
         build_profile_cache(index);
-        debug ("%s: %s:", config.source, index);
+        debug ("%s: %s:", m.uri.to_string(true), index);
       });
+    }
+
+    private static bool process_json_rquest(Soup.Message msg) {
+      var uri = msg.uri.to_string(true);
+      debug("Request to %s finished with status %u", uri, msg.status_code);
+      if (msg.response_body == null || msg.response_body.data == null) {
+        warning("%s returned no data", uri);
+        return false;
+      }
+
+      var index = (string) msg.response_body.data;
+      if (msg.status_code != 200) {
+        warning ("ERROR Message %s: %s", uri, index);
+        return false;
+      }
+
+      return true;
     }
 
     private void build_profile_cache(string index) {
@@ -103,18 +111,20 @@ namespace FleetCommander {
           return;
         }
 
-        urls += url_node.get_string();
+        var url = url_node.get_string();
+        urls += url;
+
+        debug("URL for profile found: %s", url_node.get_string());
       });
 
-      foreach (var s in urls) {
+      debug ("Sending requests for URLs in the index");
+      foreach (var url in urls) {
+        var msg = new Soup.Message("GET", config.source + url);
+        http_session.queue_message(msg, (s,m) => {
+          if (process_json_rquest(m) == false)
+            return;
+        });
       }
-    }
-
-    private string[] list_cached_profiles () {
-      return {};
-    }
-
-    private void remove_profile_from_cache (string id) {
     }
   }
 
