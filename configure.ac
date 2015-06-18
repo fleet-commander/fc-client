@@ -11,6 +11,7 @@ AM_SILENT_RULES([yes])
 
 # Check for programs
 AC_PROG_CC
+AM_PROG_VALAC
 
 AC_ARG_VAR([DCONF], [path to dconf(1) tool])
 AC_PATH_PROG([DCONF], [dconf], [no])
@@ -51,6 +52,7 @@ AC_CONFIG_FILES([
   data/fleet-commander-client.spec
   docs/Makefile
   service/Makefile
+  service-ng/Makefile
   Makefile
 ])
 AC_OUTPUT

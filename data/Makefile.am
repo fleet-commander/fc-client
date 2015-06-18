@@ -43,8 +43,8 @@ BUILT_SOURCES = \
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = \
-	$(dbusconf_DATA) \
-	$(profile_DATA) \
+	$(dbusconf_DATA)    \
+	$(profile_DATA)     \
 	$(serviceconf_DATA) \
 	$(NULL)
 

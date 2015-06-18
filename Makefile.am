@@ -2,7 +2,7 @@ NULL =
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = data service docs
+SUBDIRS = data docs service-ng
 
 EXTRA_DIST = m4
 
