@@ -114,9 +114,9 @@ namespace FleetCommander {
     internal void process_key_value (string key, string val) {
       switch (key) {
         case "source":
-          if (val.has_suffix ("/"))
+          if (!val.has_suffix ("/"))
             warning ("%s: source must end with /", val);
-          if (val.has_prefix ("http://"))
+          if (!val.has_prefix ("http://"))
             warning ("%s: source must start with http://", val);
           source = val;
           break;
