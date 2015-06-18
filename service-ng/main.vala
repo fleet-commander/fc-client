@@ -66,7 +66,7 @@ namespace FleetCommander {
       return {};
     }
 
-    private void remove_profile_from_cache () {
+    private void remove_profile_from_cache (string id) {
     }
   }
 
