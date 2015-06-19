@@ -23,7 +23,7 @@ namespace FleetCommander {
 
   internal class DconfDbWriter {
     private Cache cache;
-    private string[] VALIDATED_KEYS = {"uid", "settings", "applies-to"};
+    private string[] VALIDATED_KEYS = {"uid", "settings"};
 
     internal DconfDbWriter(Cache cache) {
       this.cache = cache;
@@ -44,17 +44,101 @@ namespace FleetCommander {
           return;
         }
 
-        var members = profile.get_members();
-        var all = true;
-        foreach (var key in VALIDATED_KEYS) {
-          all = members.find_custom (key, (a,b) => { return (a == b)? 0 : 1; }) != null;
-          if (!all) {
-            warning ("Could not find key %s in cached profile #%u", key, i);
-            break;
-          }
+        if (object_has_members (profile, VALIDATED_KEYS) == false) {
+          warning ("Could not find mandatory keys in cached profile #%u", i);
+          return;
         }
-        if (!all) return;
+
+        commit_profile(profile);
       });
+    }
+
+    private static bool object_has_members (Json.Object object, string[] keys) {
+      bool all = true;
+      var members = object.get_members();
+      foreach (var key in keys) {
+        all = members.find_custom (key, (a,b) => { return (a == b)? 0 : 1; }) != null;
+        if (!all) {
+          debug ("key %s not found", key);
+          break;
+        }
+      }
+      return all;
+    }
+
+    internal void commit_profile (Json.Object profile) {
+      debug("Committing profile");
+      string?      uid;
+      Json.Object? settings;
+      Json.Array?  gsettings;
+
+      if ((uid = profile.get_member("uid").get_string()) == null) {
+        warning ("profile uid JSON member was not a string");
+        return;
+      }
+      if ((settings = profile.get_member("settings").get_object()) == null) {
+        warning ("profile %s: 'settings' JSON member is not a JSON object", uid);
+        return;
+      }
+      var node = settings.get_member("org.gnome.gsettings");
+      if (node == null) {
+        debug("profile %s: does not have any GSettings", uid);
+        return;
+      } else if ((gsettings = node.get_array()) == null) {
+        warning ("profile %s: org.gnome.gsettings member of settings is not a JSON array", uid);
+        return;
+      }
+
+      var generated_keys = string.join("/", config.dconf_db_path, "fleet-commander-" + uid + ".d", "generated");
+      var keyfile = new KeyFile();
+      var schema_source = SettingsSchemaSource.get_default();
+
+      gsettings.foreach_element((a, i, n) => {
+        var change = n.get_object();
+        if (change == null) {
+          warning ("profile %s: gsettings change item #%u should be a JSON object", uid, i);
+          return;
+        }
+
+        if (object_has_members (change, {"key", "value"}) == false) {
+          warning ("profile %s: Could not find mandatory keys in change %u", uid, i);
+          return;
+        }
+
+        var key = change.get_member("key").get_string();
+        if (key == null) {
+          warning ("profile %s: 'key' member of change %u is not a string", uid, i);
+        }
+
+        string? signature = null;
+        var schema_path = GLib.Path.get_dirname  (key);
+        var schema_key  = GLib.Path.get_basename (key);
+        if (change.has_member("schema")) {
+          var schema_id = change.get_member("schema").get_string();
+          if (schema_id == null) {
+            warning("profile %s: 'schema' key is not a string in change %u", uid, i);
+          } else {
+            var schema = schema_source.lookup (schema_id, true);
+            if (schema != null && schema.has_key (schema_key)) {
+              signature = schema.get_key (schema_key).get_value_type ().dup_string ();
+            }
+          }
+        } /* TODO: get the logger to send the signature */
+
+        if (signature == null) {
+          warning ("profile %s: could not find signature for key %s", uid, key);
+          return;
+        }
+
+        var variant = Json.gvariant_deserialize(change.get_member("value"), signature);
+        if (variant == null) {
+          warning ("profile %s: could not deserialize JSON to GVariant for key %u", key, i);
+          return;
+        }
+
+        keyfile.set_string(schema_path, schema_key, variant.print(true));
+      });
+      //TODO: write file
     }
   }
 
@@ -395,4 +479,4 @@ namespace FleetCommander {
     ml.run();
     return 0;
   }
-}
+} 
