@@ -21,12 +21,51 @@ namespace Logind {
 namespace FleetCommander {
   internal ConfigReader config;
 
+  internal class DconfDbWriter {
+    private Cache cache;
+    private string[] VALIDATED_KEYS = {"uid", "settings", "applies-to"};
+
+    internal DconfDbWriter(Cache cache) {
+      this.cache = cache;
+
+      this.cache.parsed.connect(update_databases);
+    }
+
+    internal void update_databases() {
+      debug("Updating dconf databases");
+      var root = cache.get_root();
+      if (root == null)
+        return;
+
+      root.get_array().foreach_element ((a, i, n) => {
+        var profile = n.get_object();
+        if (profile == null) {
+          warning("Cached profile is not a JSON object (element #%u)", i);
+          return;
+        }
+
+        var members = profile.get_members();
+        var all = true;
+        foreach (var key in VALIDATED_KEYS) {
+          all = members.find_custom (key, (a,b) => { return (a == b)? 0 : 1; }) != null;
+          if (!all) {
+            warning ("Could not find key %s in cached profile #%u", key, i);
+            break;
+          }
+        }
+        if (!all) return;
+      });
+    }
+  }
+
   internal class Cache {
     private File        profiles;
     private FileMonitor monitor;
     private Json.Node?  root = null;
     private bool        timeout;
     private uint        cookie = 0;
+
+    internal signal void parsed();
 
     internal Cache() {
       profiles = File.new_for_path(config.cache_path);
@@ -41,13 +80,17 @@ namespace FleetCommander {
             debug("%s was deleted", profiles.get_path());
             break;
           default:
-            warning("Unhandled FileMonitor event");
+            debug("Unhandled FileMonitor event");
             return;
         }
         parse_async(true);
       });
 
       parse();
+    }
+
+    public Json.Node? get_root() {
+      return root;
     }
 
     private void parse_async (bool timeout) {
@@ -83,11 +126,13 @@ namespace FleetCommander {
       }
 
       root = parser.get_root();
-      if (root == null)
+      if (root == null) {
         warning ("Root JSON element of profile cache is empty");
-      if (root.get_array() == null) {
+      } else if (root.get_array() == null) {
         warning ("Root JSON element of profile cache is not an array");
         root = null;
+      } else {
+        parsed();
       }
     }
   }
@@ -281,6 +326,7 @@ namespace FleetCommander {
     internal string source           = "";
     internal uint   polling_interval = 60 * 60;
     internal string cache_path       = "/var/cache/fleet-commander/profiles.json";
+    internal string dconf_db_path    = "/etc/dconf/db";
 
     internal ConfigReader (string path = "/etc/xdg/fleet-commander.conf") {
       var file = File.new_for_path (path);
@@ -330,6 +376,7 @@ namespace FleetCommander {
     config = new ConfigReader();
     var profmgr = new ProfileCacheManager();
     var cache   = new Cache();
+    var dconfdb = new DconfDbWriter(cache);
     var srcmgr  = new SourceManager(profmgr);
 
 /*    if (config.source == "") {
