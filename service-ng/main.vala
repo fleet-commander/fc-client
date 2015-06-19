@@ -74,6 +74,21 @@ namespace FleetCommander {
 
     private void parse () {
       debug ("Parsing cache file: %s", profiles.get_path());
+      var parser = new Json.Parser();
+      try {
+        parser.load_from_stream (profiles.read());
+      } catch (Error e) {
+        warning("There was an error parsing %s: %s", profiles.get_path(), e.message);
+        return;
+      }
+
+      root = parser.get_root();
+      if (root == null)
+        warning ("Root JSON element of profile cache is empty");
+      if (root.get_array() == null) {
+        warning ("Root JSON element of profile cache is not an array");
+        root = null;
+      }
     }
   }
 
