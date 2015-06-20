@@ -1,5 +1,5 @@
 Name:           fleet-commander-client
-Version:        0.1
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
@@ -62,6 +62,7 @@ rm -rf %{buildroot}
 %attr(755, -, -) /usr/libexec/fcmdr-service
 %attr(755, -, -) /usr/libexec/fcmdr-update-goa
 /usr/share/dbus-1/system-services/org.gnome.FleetCommander.service
+/etc/xdg/fleet-commander.conf
 
 %package doc
 Summary: Fleet Commander client daemon documentation

@@ -3,6 +3,9 @@ NULL =
 dbusconfdir = $(sysconfdir)/dbus-1/system.d
 dbusconf_DATA = org.gnome.FleetCommander.conf
 
+serviceconfdir = $(sysconfdir)/xdg
+serviceconf_DATA = fleet-commander.conf
+
 dbusservicedir = $(datadir)/dbus-1/system-services
 dbusservice_DATA = org.gnome.FleetCommander.service
 
@@ -42,6 +45,7 @@ CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = \
 	$(dbusconf_DATA) \
 	$(profile_DATA) \
+	$(serviceconf_DATA) \
 	$(NULL)
 
 -include $(top_srcdir)/git.mk
