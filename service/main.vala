@@ -37,6 +37,15 @@ namespace FleetCommander {
       if (root == null)
         return;
 
+      if (FileUtils.test (config.dconf_db_path, FileTest.EXISTS) == false) {
+        warning ("dconf datbase path %s does not exists", config.dconf_db_path);
+        return;
+      }
+      if (Posix.access(config.dconf_db_path, Posix.W_OK | Posix.X_OK) != 0) {
+        warning ("Cannot write data onto %s", config.dconf_db_path);
+        return;
+      }
+
       root.get_array().foreach_element ((a, i, n) => {
         var profile = n.get_object();
         if (profile == null) {
@@ -66,16 +75,57 @@ namespace FleetCommander {
       return all;
     }
 
+    /* This function makes sure that we can write the keyfile for a profile */
+    internal bool check_filesystem_for_profile (File settings_keyfile) {
+      debug("Checking whether we can write profile data to %s", settings_keyfile.get_path ());
+
+      if (settings_keyfile.query_exists() == true) {
+        var info = settings_keyfile.query_info("access::can-delete", FileQueryInfoFlags.NONE);
+        if (info.get_attribute_boolean("access::can-delete") == false) {
+          warning ("Could not replace file %s", settings_keyfile.get_path ());
+          return false;
+        }
+      }
+
+      var basedir = settings_keyfile.get_parent().get_path();
+      if (FileUtils.test (basedir, FileTest.EXISTS) == false) {
+        if (DirUtils.create_with_parents (basedir, 0755) == -1) {
+          warning ("Could not create directory %s", basedir);
+          return false;
+        }
+      }
+      if (FileUtils.test (basedir, FileTest.IS_DIR) == false) {
+        warning ("%s exists but is not a file", basedir);
+        return false;
+      }
+
+      if (Posix.access(basedir, Posix.W_OK | Posix.X_OK) != 0) {
+        warning ("Cannot write data onto %s", basedir);
+        return false;
+      }
+
+      return true;
+    }
+
     internal void commit_profile (Json.Object profile) {
       debug("Committing profile");
-      string?      uid;
-      Json.Object? settings;
-      Json.Array?  gsettings;
+      string?           uid;
+      Json.Object?      settings;
+      Json.Array?       gsettings;
+      File              generated;
 
       if ((uid = profile.get_member("uid").get_string()) == null) {
         warning ("profile uid JSON member was not a string");
         return;
       }
+
+      /* We make sure we can write this profile and go ahead*/
+      generated = File.new_for_path (string.join("/", config.dconf_db_path, "fleet-commander-" + uid + ".d",
+                                                 "generated"));
+      if (check_filesystem_for_profile (generated) == false)
+        return;
+
+      /* We make sure the JSON object is sane */
       if ((settings = profile.get_member("settings").get_object()) == null) {
         warning ("profile %s: 'settings' JSON member is not a JSON object", uid);
         return;
@@ -89,10 +139,8 @@ namespace FleetCommander {
         return;
       }
 
-      var generated_keys = string.join("/", config.dconf_db_path, "fleet-commander-" + uid + ".d", "generated");
       var keyfile = new KeyFile();
       var schema_source = SettingsSchemaSource.get_default();
-
       gsettings.foreach_element((a, i, n) => {
         var change = n.get_object();
         if (change == null) {
@@ -113,6 +161,7 @@ namespace FleetCommander {
         string? signature = null;
         var schema_path = GLib.Path.get_dirname  (key);
         var schema_key  = GLib.Path.get_basename (key);
+        /* TODO: get the logger to send the signature */
         if (change.has_member("schema")) {
           var schema_id = change.get_member("schema").get_string();
           if (schema_id == null) {
@@ -123,7 +172,7 @@ namespace FleetCommander {
               signature = schema.get_key (schema_key).get_value_type ().dup_string ();
             }
           }
-        } /* TODO: get the logger to send the signature */
+        }
 
         if (signature == null) {
           warning ("profile %s: could not find signature for key %s", uid, key);
@@ -138,7 +187,13 @@ namespace FleetCommander {
 
         keyfile.set_string(schema_path, schema_key, variant.print(true));
       });
-      //TODO: write file
+
+      debug("Saving profile keyfile in %s", generated.get_path());
+      try {
+        keyfile.save_to_file (generated.get_path ());
+      } catch (Error e) {
+        warning ("There was an error saving profile settings in %s", generated.get_path ());
+      }
     }
   }
 
