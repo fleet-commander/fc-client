@@ -1,24 +1,24 @@
 NULL =
 
-dbusconfdir = $(sysconfdir)/dbus-1/system.d
-dbusconf_DATA = org.gnome.FleetCommander.conf
-
-serviceconfdir = $(sysconfdir)/xdg
+serviceconfdir = $(sysconfdir)/xdg/
 serviceconf_DATA = fleet-commander.conf
 
-dbusservicedir = $(datadir)/dbus-1/system-services
-dbusservice_DATA = org.gnome.FleetCommander.service
+#dbusconfdir = $(sysconfdir)/dbus-1/system.d
+#dbusconf_DATA = org.gnome.FleetCommander.conf
 
-profiledir = $(sysconfdir)/profile.d
-profile_DATA = fleet-commander.sh fleet-commander.csh
+#dbusservicedir = $(datadir)/dbus-1/system-services
+#dbusservice_DATA = org.gnome.FleetCommander.service
 
-org.gnome.FleetCommander.service: Makefile
-	$(AM_V_GEN) (echo '[D-BUS Service]'; \
-	             echo 'Name=org.gnome.FleetCommander'; \
-	             echo 'Exec=${libexecdir}/fcmdr-service'; \
-	             echo 'SystemdService=fleet-commander.service'; \
-	             echo 'User=root') > $@.tmp && \
-	            mv $@.tmp $@
+#profiledir = $(sysconfdir)/profile.d
+#profile_DATA = fleet-commander.sh fleet-commander.csh
+
+#org.gnome.FleetCommander.service: Makefile
+#	$(AM_V_GEN) (echo '[D-BUS Service]'; \
+#	             echo 'Name=org.gnome.FleetCommander'; \
+#	             echo 'Exec=${libexecdir}/fcmdr-service'; \
+#	             echo 'SystemdService=fleet-commander.service'; \
+#	             echo 'User=root') > $@.tmp && \
+#	            mv $@.tmp $@
 
 if HAVE_SYSTEMD
 systemdservicedir = $(systemdsystemunitdir)
@@ -31,21 +31,21 @@ fleet-commander.service: Makefile
 	             echo '[Service]'; \
 	             echo 'Type=dbus'; \
 	             echo 'BusName=org.gnome.FleetCommander'; \
-	             echo 'ExecStart=${libexecdir}/fcmdr-service') > $@.tmp && \
+	             echo 'ExecStart=${libexecdir}/fleet-commander-client') > $@.tmp && \
 	            mv $@.tmp $@
 endif
 
-BUILT_SOURCES = \
-	$(dbusservice_DATA) \
-	$(systemdservice_DATA) \
-	$(NULL)
+#BUILT_SOURCES = \
+#	$(dbusservice_DATA) \
+#	$(systemdservice_DATA) \
+#	$(NULL)
 
-CLEANFILES = $(BUILT_SOURCES)
+CLEANFILES = $(systemdservice_DATA)
 
-EXTRA_DIST = \
-	$(dbusconf_DATA)    \
-	$(profile_DATA)     \
-	$(serviceconf_DATA) \
-	$(NULL)
+EXTRA_DIST = $(serviceconf_DATA)
+
+#	$(dbusconf_DATA)    \
+#	$(profile_DATA)     \
+#	$(NULL)
 
 -include $(top_srcdir)/git.mk

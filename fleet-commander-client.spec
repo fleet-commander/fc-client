@@ -55,14 +55,14 @@ rm -rf %{buildroot}
 
 %files
 %defattr(644, root, root)
-/etc/dbus-1/system.d/org.gnome.FleetCommander.conf
-%attr(755, -, -) /etc/profile.d/fleet-commander.csh
-%attr(755, -, -) /etc/profile.d/fleet-commander.sh
-/usr/lib/systemd/system/fleet-commander.service
-%attr(755, -, -) /usr/libexec/fcmdr-service
-%attr(755, -, -) /usr/libexec/fcmdr-update-goa
-/usr/share/dbus-1/system-services/org.gnome.FleetCommander.service
-/etc/xdg/fleet-commander.conf
+%{_sysconfdir}/xdg/fleet-commander.conf
+%{_sysconfdir}/dbus-1/system.d/org.gnome.FleetCommander.conf
+%{_sysconfdir}/profile.d/fleet-commander.csh
+%{_sysconfdir}/profile.d/fleet-commander.sh
+%attr(755, -, -) %{_libexecdir}/fcmdr-service
+%attr(755, -, -) %{_libexecdir}/fcmdr-update-goa
+%{_datadir}/dbus-1/system-services/org.gnome.FleetCommander.service
+%{systemd_dir}/fleet-commander.service
 
 %package doc
 Summary: Fleet Commander client daemon documentation
