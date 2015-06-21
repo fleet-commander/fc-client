@@ -60,6 +60,9 @@ namespace FleetCommander {
 
         commit_profile(profile);
       });
+
+      //TODO: Remove unused profiles
+      call_dconf_update();
     }
 
     private static bool object_has_members (Json.Object object, string[] keys) {
@@ -73,6 +76,21 @@ namespace FleetCommander {
         }
       }
       return all;
+    }
+
+    private void call_dconf_update () {
+      var dconf_update = new Subprocess.newv ({"dconf", "update"}, SubprocessFlags.NONE);
+      dconf_update.wait ();
+
+      if (dconf_update.get_if_exited () == false) {
+        warning ("dconf update process did not exit");
+        dconf_update.force_exit ();
+        return;
+      }
+
+      if (dconf_update.get_exit_status () != 0) {
+        warning ("dconf update failed");
+      }
     }
 
     /* This function makes sure that we can write the keyfile for a profile */
@@ -159,8 +177,9 @@ namespace FleetCommander {
         }
 
         string? signature = null;
-        var schema_path = GLib.Path.get_dirname  (key);
         var schema_key  = GLib.Path.get_basename (key);
+        var schema_path = GLib.Path.get_dirname  (key);
+        schema_path = schema_path.slice(1,schema_path.length);
         /* TODO: get the logger to send the signature */
         if (change.has_member("schema")) {
           var schema_id = change.get_member("schema").get_string();
