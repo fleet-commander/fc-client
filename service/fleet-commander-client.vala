@@ -21,6 +21,118 @@ namespace Logind {
 namespace FleetCommander {
   internal ConfigReader config;
 
+  private static bool object_has_members (Json.Object object, string[] keys) {
+    bool all = true;
+    var members = object.get_members();
+    foreach (var key in keys) {
+      all = members.find_custom (key, (a,b) => { return (a == b)? 0 : 1; }) != null;
+      if (!all) {
+        debug ("key %s not found", key);
+        break;
+      }
+    }
+    return all;
+  }
+
+  internal class UserIndex {
+    private Json.Object user_profiles;
+    private Json.Object group_profiles;
+    private CacheData cache;
+    private bool      index_built;
+
+    internal UserIndex (CacheData cache) {
+      this.cache = cache;
+      index_built = false;
+      cache.parsed.connect(rebuild_index);
+    }
+
+    private void rebuild_index () {
+      debug ("%s: grabbing user/groups", config.cache_path);
+      empty ();
+
+      if (cache.get_root() == null) {
+        warning ("%s is empty or there was some error parsing it", config.cache_path);
+        return;
+      }
+      var profiles = cache.get_root().get_array();
+      if (profiles == null) {
+        warning("%s does not contain a JSON list as root element", config.cache_path);
+        return;
+      }
+
+      profiles.foreach_element ((a,i,n) => {
+        var profile = n.get_object();
+        if (profile == null) {
+          warning ("%s contains an element that is not a profile", config.cache_path);
+          return;
+        }
+
+        var uid = profile.get_string_member("uid");
+        if (uid == null) {
+          warning ("%s #%u profile's uid member is not a string", uid, i);
+          return;
+        }
+
+        var applies_to = profile.get_object_member("applies-to");
+        if (applies_to == null) {
+          warning ("%s profile: 'applies-to' holds no object", uid);
+          return;
+        }
+
+        string[] keys = {"users", "groups"};
+        foreach (string key in keys) {
+          var list = applies_to.get_array_member (key);
+          if (list == null) {
+            warning ("%s profile: '%s' member is not an array", uid, key);
+            continue;
+          }
+
+          var collection = key == "users"? user_profiles : group_profiles;
+
+          list.foreach_element ((a, i, n) => {
+            var user_or_group = n.get_string();
+            if (user_or_group == null) {
+              warning ("%s[applies-to][%s] #%u array element was not a string", uid, key, i);
+              return;
+            }
+
+            var uids = collection.get_array_member (user_or_group);
+            if (uids == null) {
+              uids = new Json.Array ();
+              collection.set_array_member (user_or_group, uids);
+            }
+            uids.add_string_element (uid);
+          });
+        }
+      });
+
+      user_profiles.foreach_member ((o, k, n) => {
+        stdout.printf("%s\n[", k);
+        n.get_array().foreach_element ((a, i, n) => {
+          stdout.printf("%s, ", n.get_string());
+        });
+        stdout.printf("]\n");
+      });
+      group_profiles.foreach_member ((o, k, n) => {
+        stdout.printf("%s\n[", k);
+        n.get_array().foreach_element ((a, i, n) => {
+          stdout.printf("%s, ", n.get_string());
+        });
+        stdout.printf("]\n");
+      });
+
+
+      index_built = true;
+    }
+
+    internal void empty () {
+      user_profiles = new Json.Object ();
+      group_profiles = new Json.Object ();
+
+      index_built = false;
+    }
+  }
+
   internal class DconfDbWriter {
     private CacheData cache;
     private string[] VALIDATED_KEYS = {"uid", "settings"};
@@ -63,19 +175,6 @@ namespace FleetCommander {
 
       //TODO: Remove unused profiles
       call_dconf_update();
-    }
-
-    private static bool object_has_members (Json.Object object, string[] keys) {
-      bool all = true;
-      var members = object.get_members();
-      foreach (var key in keys) {
-        all = members.find_custom (key, (a,b) => { return (a == b)? 0 : 1; }) != null;
-        if (!all) {
-          debug ("key %s not found", key);
-          break;
-        }
-      }
-      return all;
     }
 
     private void call_dconf_update () {
@@ -535,6 +634,7 @@ namespace FleetCommander {
     var profmgr = new ProfileCacheManager();
     var cache   = new CacheData();
     var dconfdb = new DconfDbWriter(cache);
+    var uindex  = new UserIndex(cache);
     var srcmgr  = new SourceManager(profmgr);
 
 /*    if (config.source == "") {
