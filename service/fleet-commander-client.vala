@@ -22,10 +22,10 @@ namespace FleetCommander {
   internal ConfigReader config;
 
   internal class DconfDbWriter {
-    private Cache cache;
+    private CacheData cache;
     private string[] VALIDATED_KEYS = {"uid", "settings"};
 
-    internal DconfDbWriter(Cache cache) {
+    internal DconfDbWriter(CacheData cache) {
       this.cache = cache;
 
       this.cache.parsed.connect(update_databases);
@@ -216,7 +216,7 @@ namespace FleetCommander {
     }
   }
 
-  internal class Cache {
+  internal class CacheData {
     private File        profiles;
     private FileMonitor monitor;
     private Json.Node?  root = null;
@@ -225,7 +225,7 @@ namespace FleetCommander {
 
     internal signal void parsed();
 
-    internal Cache() {
+    internal CacheData () {
       profiles = File.new_for_path(config.cache_path);
       monitor = profiles.monitor_file(FileMonitorFlags.NONE);
       monitor.changed.connect((file, other_file, event) => {
@@ -533,7 +533,7 @@ namespace FleetCommander {
 
     config = new ConfigReader();
     var profmgr = new ProfileCacheManager();
-    var cache   = new Cache();
+    var cache   = new CacheData();
     var dconfdb = new DconfDbWriter(cache);
     var srcmgr  = new SourceManager(profmgr);
 
