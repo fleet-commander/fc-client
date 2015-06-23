@@ -1,12 +1,12 @@
 using Soup;
 using Json;
 
-/*
+
 namespace Logind {
   internal struct User {
     uint32 uid;
     string name;
-    string path;
+    ObjectPath path;
   }
 
   [DBus (name = "org.freedesktop.login1.Manager")]
@@ -16,10 +16,58 @@ namespace Logind {
     public abstract signal void user_removed (uint32 uid, ObjectPath path);
   }
 }
-*/
 
 namespace FleetCommander {
   internal ConfigReader config;
+
+  private class UserSessionHandler {
+    private  UserIndex index;
+    private Logind.Manager? logind;
+
+    internal UserSessionHandler (UserIndex index) {
+      this.index = index;
+      logind = null;
+
+      Bus.watch_name (BusType.SYSTEM,
+                      "org.freedesktop.login1",
+                      BusNameWatcherFlags.AUTO_START,
+                      bus_name_appeared_cb,
+                      (con, name) => {
+                        warning ("org.freedesktop.login1 bus name vanished");
+                        logind = null;
+                      });
+    }
+
+    private void bus_name_appeared_cb (DBusConnection con, string name, string owner) {
+      debug("org.freedesktop.login1 bus name appeared");
+      try {
+        logind = Bus.get_proxy_sync (BusType.SYSTEM,
+                                     "org.freedesktop.login1",
+                                     "/org/freedesktop/login1");
+        logind.user_new.connect (user_logged_cb);
+        logind.user_removed.connect (user_logged_out_cb);
+
+        try {
+          foreach (var user in logind.list_users()) {
+            user_logged_cb (user.uid, user.path);
+          }
+        } catch (IOError e) {
+          warning ("There was an error calling ListUsers in /org/freedesktop/login1");
+        }
+      } catch (Error e) {
+         debug("There was an error trying to connect to /org/freedesktop/logind1 in the system bus: %s", e.message);
+      }
+
+    }
+
+    private void user_logged_cb (uint32 uid, ObjectPath path) {
+      debug ("User logged in with uid: %u", uid);
+    }
+
+    private void user_logged_out_cb (uint32 uid, ObjectPath path) {
+      debug ("User logged out with uid: %u", uid);
+    }
+  }
 
   private static bool object_has_members (Json.Object object, string[] keys) {
     bool all = true;
@@ -43,7 +91,6 @@ namespace FleetCommander {
     internal UserIndex (CacheData cache) {
       this.cache = cache;
       index_built = false;
-      cache.parsed.connect(rebuild_index);
     }
 
     private void rebuild_index () {
@@ -106,6 +153,7 @@ namespace FleetCommander {
         }
       });
 
+      /*
       user_profiles.foreach_member ((o, k, n) => {
         stdout.printf("%s\n[", k);
         n.get_array().foreach_element ((a, i, n) => {
@@ -119,10 +167,21 @@ namespace FleetCommander {
           stdout.printf("%s, ", n.get_string());
         });
         stdout.printf("]\n");
-      });
-
+      });*/
 
       index_built = true;
+    }
+
+    internal Json.Object? get_user_profiles () {
+      if (index_built == false)
+        rebuild_index ();
+      return user_profiles;
+    }
+
+    internal Json.Object? get_group_profiles () {
+      if (index_built == false)
+        rebuild_index ();
+      return user_profiles;
     }
 
     internal void empty () {
@@ -632,23 +691,12 @@ namespace FleetCommander {
 
     config = new ConfigReader();
     var profmgr = new ProfileCacheManager();
+    var srcmgr  = new SourceManager(profmgr);
+
     var cache   = new CacheData();
     var dconfdb = new DconfDbWriter(cache);
     var uindex  = new UserIndex(cache);
-    var srcmgr  = new SourceManager(profmgr);
-
-/*    if (config.source == "") {
-      debug("Configuration did not provide profile source");
-      return 1;
-    }
-
-    try {
-      logind = Bus.get_proxy_sync (BusType.SYSTEM,
-                                   "org.freedesktop.login1",
-                                   "/org/freedesktop/login1");
-    } catch (Error e) {
-      debug("There was an error trying to connect to Logind in the system bus");
-    }*/
+    var usermgr = new UserSessionHandler(uindex);
 
     ml.run();
     return 0;
