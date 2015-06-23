@@ -1,3 +1,4 @@
+bindir = ${libexecdir}
 bin_PROGRAMS = fleet-commander-client
 fleet_commander_client_SOURCES =   \
 	fleet-commander-client.vala \

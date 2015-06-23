@@ -56,42 +56,12 @@ rm -rf %{buildroot}
 %files
 %defattr(644, root, root)
 %{_sysconfdir}/xdg/fleet-commander.conf
-%{_sysconfdir}/dbus-1/system.d/org.gnome.FleetCommander.conf
-%{_sysconfdir}/profile.d/fleet-commander.csh
-%{_sysconfdir}/profile.d/fleet-commander.sh
-%attr(755, -, -) %{_libexecdir}/fcmdr-service
-%attr(755, -, -) %{_libexecdir}/fcmdr-update-goa
-%{_datadir}/dbus-1/system-services/org.gnome.FleetCommander.service
+#%exclude %{_sysconfdir}/profile.d/fleet-commander.csh
+#%exclude %{_sysconfdir}/profile.d/fleet-commander.sh
+#%attr(755, -, -) %{_libexecdir}/fcmdr-service
+#%attr(755, -, -) %{_libexecdir}/fcmdr-update-goa
+%attr(755, -, -) %{_libexecdir}/fleet-commander-client
+#%{_datadir}/dbus-1/system-services/org.gnome.FleetCommander.service
 %{systemd_dir}/fleet-commander.service
-
-%package doc
-Summary: Fleet Commander client daemon documentation
-
-%description doc
-Fleet Commander client daemon documentation
-
-%files doc
-%defattr(644, root, root)
-%{_datarootdir}/gtk-doc/html/fleet-commander/FCmdrProfile.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/FCmdrProfileSource.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/FCmdrService.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/FCmdrServiceBackend.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/FCmdrUserResolver.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/api-index-full.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/ch01.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/deprecated-api-index.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/fleet-commander-Miscellaneous-Utilities.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/fleet-commander.devhelp2
-%{_datarootdir}/gtk-doc/html/fleet-commander/home.png
-%{_datarootdir}/gtk-doc/html/fleet-commander/index.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/index.sgml
-%{_datarootdir}/gtk-doc/html/fleet-commander/left-insensitive.png
-%{_datarootdir}/gtk-doc/html/fleet-commander/left.png
-%{_datarootdir}/gtk-doc/html/fleet-commander/object-tree.html
-%{_datarootdir}/gtk-doc/html/fleet-commander/right-insensitive.png
-%{_datarootdir}/gtk-doc/html/fleet-commander/right.png
-%{_datarootdir}/gtk-doc/html/fleet-commander/style.css
-%{_datarootdir}/gtk-doc/html/fleet-commander/up-insensitive.png
-%{_datarootdir}/gtk-doc/html/fleet-commander/up.png
 
 %changelog

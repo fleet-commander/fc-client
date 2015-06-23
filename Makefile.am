@@ -2,7 +2,7 @@ NULL =
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = data service #docs service-old
+SUBDIRS = data service
 
 EXTRA_DIST = m4
 
