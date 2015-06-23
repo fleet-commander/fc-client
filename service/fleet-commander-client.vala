@@ -1,7 +1,6 @@
 using Soup;
 using Json;
 
-
 namespace Logind {
   internal struct User {
     uint32 uid;
@@ -21,8 +20,9 @@ namespace FleetCommander {
   internal ConfigReader config;
 
   private class UserSessionHandler {
-    private  UserIndex index;
+    private UserIndex index;
     private Logind.Manager? logind;
+    private List<string> merged_profiles = null;
 
     internal UserSessionHandler (UserIndex index) {
       this.index = index;
@@ -36,6 +36,23 @@ namespace FleetCommander {
                         warning ("org.freedesktop.login1 bus name vanished");
                         logind = null;
                       });
+      index.get_cache().parsed.connect (update_dconf_profiles);
+    }
+
+     private void update_dconf_profiles () {
+      if (logind == null)
+        return;
+
+      //FIXME: Check if we can write in config.dconf_db_path
+      try {
+        foreach (var user in logind.list_users()) {
+          create_dconf_profile_for_user (user.uid);
+        }
+      } catch (IOError e) {
+        warning ("There was an error calling ListUsers in /org/freedesktop/login1");
+      }
+
+      index.flush ();
     }
 
     private void bus_name_appeared_cb (DBusConnection con, string name, string owner) {
@@ -45,27 +62,74 @@ namespace FleetCommander {
                                      "org.freedesktop.login1",
                                      "/org/freedesktop/login1");
         logind.user_new.connect (user_logged_cb);
-        logind.user_removed.connect (user_logged_out_cb);
-
-        try {
-          foreach (var user in logind.list_users()) {
-            user_logged_cb (user.uid, user.path);
-          }
-        } catch (IOError e) {
-          warning ("There was an error calling ListUsers in /org/freedesktop/login1");
-        }
       } catch (Error e) {
-         debug("There was an error trying to connect to /org/freedesktop/logind1 in the system bus: %s", e.message);
+        debug ("There was an error trying to connect to /org/freedesktop/logind1 in the system bus: %s", e.message);
+      }
+      update_dconf_profiles ();
+    }
+
+    private void user_logged_cb (uint32 user_id, ObjectPath path) {
+      //FIXME: Check if we can write in config.dconf_db_path
+      debug ("User logged in with uid: %u", user_id);
+      create_dconf_profile_for_user (user_id);
+      index.flush ();
+    }
+
+    private void create_dconf_profile_for_user (uint32 uid) {
+      var dconf_profile_data = "user-db:user";
+
+      var groups = Posix.get_groups_for_user (uid);
+      var user_index  = index.get_user_profiles ();
+      var group_index = index.get_group_profiles ();
+      var name = Posix.uid_to_user_name (uid);
+
+      if (name == null) {
+        warning ("%u user has no user name string", uid);
+        return;
       }
 
+      merged_profiles = new List<string>();
+
+      if (user_index != null         &&
+          user_index.has_member (name)) {
+        var profiles = user_index.get_array_member (name);
+        if (profiles != null) {
+          profiles.foreach_element (add_elements_to_merged_profiles);
+        }
+      }
+
+      /* For each group that the user belongs to we check
+       * if there is are profiles assigned to it. */
+      if (group_index != null      &&
+          group_index.get_size () > 0) {
+        foreach (var group in groups) {
+          if (group_index.has_member(group) == false)
+            continue;
+
+          var profiles = group_index.get_array_member (group);
+          if (profiles == null)
+            continue;
+          profiles.foreach_element (add_elements_to_merged_profiles);
+        }
+      }
+
+      foreach (var profile in merged_profiles) {
+        dconf_profile_data += "\nsystem-db:%s".printf(profile);
+      }
+
+      warning (dconf_profile_data);
     }
 
-    private void user_logged_cb (uint32 uid, ObjectPath path) {
-      debug ("User logged in with uid: %u", uid);
-    }
+    private void add_elements_to_merged_profiles (Json.Array a, uint i, Json.Node n) {
+      var profile = n.get_string();
+      if (profile == null) {
+        warning ("user -> profiles index contained an element that is not a string");
+        return;
+      }
 
-    private void user_logged_out_cb (uint32 uid, ObjectPath path) {
-      debug ("User logged out with uid: %u", uid);
+      if (merged_profiles.find_custom (profile, GLib.strcmp) == null) {
+        merged_profiles.prepend (profile);
+      }
     }
   }
 
@@ -93,9 +157,13 @@ namespace FleetCommander {
       index_built = false;
     }
 
+    internal CacheData get_cache () {
+      return cache;
+    }
+
     private void rebuild_index () {
       debug ("%s: grabbing user/groups", config.cache_path);
-      empty ();
+      flush ();
 
       if (cache.get_root() == null) {
         warning ("%s is empty or there was some error parsing it", config.cache_path);
@@ -143,31 +211,17 @@ namespace FleetCommander {
               return;
             }
 
-            var uids = collection.get_array_member (user_or_group);
-            if (uids == null) {
+            Json.Array? uids = null;
+            if (collection.has_member(user_or_group) == false ||
+                (uids = collection.get_array_member(user_or_group)) == null) {
               uids = new Json.Array ();
               collection.set_array_member (user_or_group, uids);
             }
+
             uids.add_string_element (uid);
           });
         }
       });
-
-      /*
-      user_profiles.foreach_member ((o, k, n) => {
-        stdout.printf("%s\n[", k);
-        n.get_array().foreach_element ((a, i, n) => {
-          stdout.printf("%s, ", n.get_string());
-        });
-        stdout.printf("]\n");
-      });
-      group_profiles.foreach_member ((o, k, n) => {
-        stdout.printf("%s\n[", k);
-        n.get_array().foreach_element ((a, i, n) => {
-          stdout.printf("%s, ", n.get_string());
-        });
-        stdout.printf("]\n");
-      });*/
 
       index_built = true;
     }
@@ -184,7 +238,8 @@ namespace FleetCommander {
       return user_profiles;
     }
 
-    internal void empty () {
+    internal void flush () {
+      debug ("Flusing UserIndex database");
       user_profiles = new Json.Object ();
       group_profiles = new Json.Object ();
 
