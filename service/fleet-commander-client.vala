@@ -119,8 +119,23 @@ namespace FleetCommander {
       foreach (var profile in merged_profiles) {
         dconf_profile_data += "\nsystem-db:%s".printf(profile);
       }
+      merged_profiles = null;
 
-      //write_dconf_profile (dconf_profile_data);
+      write_dconf_profile (name, dconf_profile_data);
+    }
+
+    private void write_dconf_profile (string user_name, string data) {
+      var path = string.join("/", config.dconf_db_path, user_name);
+      debug ("Attempting to write dconf profile in %s", path);
+      try {
+        var dconf_profile = File.new_for_path (path);
+        var w = dconf_profile.replace(null, true, FileCreateFlags.NONE, null);
+        var d = new DataOutputStream(w);
+        d.put_string(data);
+      } catch (Error e) {
+        warning("Could not rewrite %s: %s", path, e.message);
+        return;
+      }
     }
 
     private void add_elements_to_merged_profiles (Json.Array a, uint i, Json.Node n) {
