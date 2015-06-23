@@ -43,7 +43,8 @@ namespace FleetCommander {
       if (logind == null)
         return;
 
-      //FIXME: Check if we can write in config.dconf_db_path
+      if (dconf_db_can_write () == false)
+        return;
       try {
         foreach (var user in logind.list_users()) {
           create_dconf_profile_for_user (user.uid);
@@ -69,7 +70,9 @@ namespace FleetCommander {
     }
 
     private void user_logged_cb (uint32 user_id, ObjectPath path) {
-      //FIXME: Check if we can write in config.dconf_db_path
+      if (dconf_db_can_write () == false)
+        return;
+
       debug ("User logged in with uid: %u", user_id);
       create_dconf_profile_for_user (user_id);
       index.flush ();
@@ -88,7 +91,7 @@ namespace FleetCommander {
         return;
       }
 
-      merged_profiles = new List<string>();
+      merged_profiles = null;
 
       if (user_index != null         &&
           user_index.has_member (name)) {
@@ -117,7 +120,7 @@ namespace FleetCommander {
         dconf_profile_data += "\nsystem-db:%s".printf(profile);
       }
 
-      warning (dconf_profile_data);
+      //write_dconf_profile (dconf_profile_data);
     }
 
     private void add_elements_to_merged_profiles (Json.Array a, uint i, Json.Node n) {
@@ -247,6 +250,18 @@ namespace FleetCommander {
     }
   }
 
+  internal static bool dconf_db_can_write () {
+    if (FileUtils.test (config.dconf_db_path, FileTest.EXISTS) == false) {
+      warning ("dconf datbase path %s does not exists", config.dconf_db_path);
+      return false;
+    }
+    if (Posix.access(config.dconf_db_path, Posix.W_OK | Posix.X_OK) != 0) {
+      warning ("Cannot write data onto %s", config.dconf_db_path);
+      return false;
+    }
+    return true;
+  }
+
   internal class DconfDbWriter {
     private CacheData cache;
     private string[] VALIDATED_KEYS = {"uid", "settings"};
@@ -263,14 +278,8 @@ namespace FleetCommander {
       if (root == null)
         return;
 
-      if (FileUtils.test (config.dconf_db_path, FileTest.EXISTS) == false) {
-        warning ("dconf datbase path %s does not exists", config.dconf_db_path);
+      if (dconf_db_can_write() == false)
         return;
-      }
-      if (Posix.access(config.dconf_db_path, Posix.W_OK | Posix.X_OK) != 0) {
-        warning ("Cannot write data onto %s", config.dconf_db_path);
-        return;
-      }
 
       root.get_array().foreach_element ((a, i, n) => {
         var profile = n.get_object();
