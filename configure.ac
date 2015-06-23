@@ -49,7 +49,6 @@ AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$systemdsystemunitdir"])
 
 AC_CONFIG_FILES([
   data/Makefile
-  data/fleet-commander-client.spec
   service/Makefile
   Makefile
 ])
