@@ -116,16 +116,33 @@ namespace FleetCommander {
         }
       }
 
+      if (merged_profiles.length() < 1) {
+        delete_dconf_profile (name);
+        merged_profiles = null;
+        return;
+      }
+
       foreach (var profile in merged_profiles) {
-        dconf_profile_data += "\nsystem-db:%s".printf(profile);
+        dconf_profile_data += "\nsystem-db:%s".printf("fleet-commander-" + profile);
       }
       merged_profiles = null;
 
       write_dconf_profile (name, dconf_profile_data);
     }
 
+    private void delete_dconf_profile (string name) {
+      var path = string.join("/", config.dconf_profile_path, "u:" + name);
+      try {
+        var obsolete_profile = File.new_for_path (path);
+        if (obsolete_profile.query_exists() == true)
+          obsolete_profile.delete ();
+      } catch (Error e) {
+        warning ("could not remove unused profile %s", path);
+      }
+    }
+
     private void write_dconf_profile (string user_name, string data) {
-      var path = string.join("/", config.dconf_db_path, user_name);
+      var path = string.join("/", config.dconf_profile_path, "u:" + user_name);
       debug ("Attempting to write dconf profile in %s", path);
       try {
         var dconf_profile = File.new_for_path (path);
@@ -718,10 +735,11 @@ namespace FleetCommander {
 
   internal class ConfigReader
   {
-    internal string source           = "";
-    internal uint   polling_interval = 60 * 60;
-    internal string cache_path       = "/var/cache/fleet-commander/profiles.json";
-    internal string dconf_db_path    = "/etc/dconf/db";
+    internal string source             = "";
+    internal uint   polling_interval   = 60 * 60;
+    internal string cache_path         = "/var/cache/fleet-commander/profiles.json";
+    internal string dconf_db_path      = "/etc/dconf/db";
+    internal string dconf_profile_path = "/etc/dconf/profile";
 
     internal ConfigReader (string path = "/etc/xdg/fleet-commander.conf") {
       var file = File.new_for_path (path);
