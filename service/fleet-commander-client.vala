@@ -313,6 +313,8 @@ namespace FleetCommander {
       if (dconf_db_can_write() == false)
         return;
 
+      remove_current_profiles ();
+
       root.get_array().foreach_element ((a, i, n) => {
         var profile = n.get_object();
         if (profile == null) {
@@ -328,8 +330,39 @@ namespace FleetCommander {
         commit_profile(profile);
       });
 
-      //TODO: Remove unused profiles
       call_dconf_update();
+    }
+
+    private void remove_current_profiles () {
+      var db_path = Dir.open (config.dconf_db_path);
+
+      for (var db_child = db_path.read_name ();
+           db_child != null;
+           db_child = db_path.read_name ()) {
+        if (db_child.has_prefix ("fleet-commander-") == false)
+           continue;
+
+        var path = string.join ("/", config.dconf_db_path, db_child);
+
+        if (db_child.has_suffix (".d") && FileUtils.test (path, FileTest.IS_DIR)) {
+
+
+          var keyfile  = string.join("/", path, "generated");
+          var locks    = string.join("/", path, "locks");
+          var lockfile = string.join("/", locks, "generated");
+          FileUtils.remove (keyfile);
+          FileUtils.remove (lockfile);
+          FileUtils.remove (locks);
+          FileUtils.remove (path);
+        }
+
+        if (FileUtils.test (path, FileTest.IS_REGULAR) == false)
+          continue;
+
+        if (FileUtils.remove(path) == -1) {
+          warning ("There was an error attempting to remove %s", path);
+        }
+      }
     }
 
     private void call_dconf_update () {
@@ -802,4 +835,4 @@ namespace FleetCommander {
     ml.run();
     return 0;
   }
-} 
+}

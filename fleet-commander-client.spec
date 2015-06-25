@@ -1,5 +1,5 @@
 Name:           fleet-commander-client
-Version:        0.2.0
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
@@ -56,12 +56,6 @@ rm -rf %{buildroot}
 %files
 %defattr(644, root, root)
 %{_sysconfdir}/xdg/fleet-commander.conf
-#%exclude %{_sysconfdir}/profile.d/fleet-commander.csh
-#%exclude %{_sysconfdir}/profile.d/fleet-commander.sh
-#%attr(755, -, -) %{_libexecdir}/fcmdr-service
-#%attr(755, -, -) %{_libexecdir}/fcmdr-update-goa
 %attr(755, -, -) %{_libexecdir}/fleet-commander-client
-#%{_datadir}/dbus-1/system-services/org.gnome.FleetCommander.service
 %{systemd_dir}/fleet-commander.service
-
 %changelog
