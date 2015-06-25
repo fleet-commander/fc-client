@@ -316,6 +316,7 @@ namespace FleetCommander {
       remove_current_profiles ();
 
       root.get_array().foreach_element ((a, i, n) => {
+        //FIXME: Use etag to check if we need to replace this profile
         var profile = n.get_object();
         if (profile == null) {
           warning("Cached profile is not a JSON object (element #%u)", i);
@@ -334,31 +335,63 @@ namespace FleetCommander {
     }
 
     private void remove_current_profiles () {
-      var db_path = Dir.open (config.dconf_db_path);
+      var db_path               = Dir.open (config.dconf_db_path);
+      string[] current_profiles = {};
 
-      for (var db_child = db_path.read_name ();
-           db_child != null;
-           db_child = db_path.read_name ()) {
+      var root = cache.get_root ();
+      if (root != null && root.get_array () != null) {
+        root.get_array ().foreach_element ((a, i, n) => {
+          var profile = n.get_object ();
+          if (profile == null)
+            return;
+          if (profile.has_member ("uid") == false)
+            return;
+          current_profiles += profile.get_string_member ("uid");
+        });
+      }
+
+      for (var db_child = db_path.read_name (); db_child != null; db_child = db_path.read_name ()) {
+        bool exists = false;
+
         if (db_child.has_prefix ("fleet-commander-") == false)
            continue;
 
         var path = string.join ("/", config.dconf_db_path, db_child);
 
         if (db_child.has_suffix (".d") && FileUtils.test (path, FileTest.IS_DIR)) {
+          foreach (var existing in current_profiles) {
+            if (path.has_suffix (existing + ".d") == false)
+              continue;
+            exists = true;
+            break;
+          }
+          if (exists)
+            continue;
 
-
-          var keyfile  = string.join("/", path, "generated");
-          var locks    = string.join("/", path, "locks");
+          var keyfile  = string.join("/", path,  "generated");
+          var locks    = string.join("/", path,  "locks");
           var lockfile = string.join("/", locks, "generated");
           FileUtils.remove (keyfile);
           FileUtils.remove (lockfile);
           FileUtils.remove (locks);
           FileUtils.remove (path);
+          continue;
         }
 
         if (FileUtils.test (path, FileTest.IS_REGULAR) == false)
           continue;
 
+        /* Find out if this profile is still valid */
+        foreach (var existing in current_profiles) {
+          if (path.has_suffix (existing) == false)
+            continue;
+          exists = true;
+          break;
+        }
+        if (exists)
+          continue;
+
+        debug ("Removing profile database %s", path);
         if (FileUtils.remove(path) == -1) {
           warning ("There was an error attempting to remove %s", path);
         }
