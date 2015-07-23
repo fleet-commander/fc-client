@@ -43,6 +43,7 @@ namespace FleetCommander {
       /* If for some reason the file ends up corrupted we try to restore it */
       if (root == null || root.get_array() == null) {
         warning ("The root element of the cache is not an array: flushing");
+        flush ();
         return null;
       }
 
