@@ -2,14 +2,14 @@ using Soup;
 using Json;
 
 namespace Logind {
-  internal struct User {
+  public struct User {
     uint32 uid;
     string name;
     ObjectPath path;
   }
 
   [DBus (name = "org.freedesktop.login1.Manager")]
-  interface Manager : GLib.Object {
+  public interface Manager : GLib.Object {
     public abstract User[] list_users () throws IOError;
     public abstract signal void user_new     (uint32 uid, ObjectPath path);
     public abstract signal void user_removed (uint32 uid, ObjectPath path);
@@ -17,15 +17,19 @@ namespace Logind {
 }
 
 namespace FleetCommander {
-  internal ConfigReader config;
-
-  private class UserSessionHandler {
-    private UserIndex index;
+  public class UserSessionHandler {
+    private UserIndex       index;
     private Logind.Manager? logind;
-    private List<string> merged_profiles = null;
+    private List<string>    merged_profiles = null;
+    private string          dconf_db_path;
+    private string          dconf_profile_path;
 
-    internal UserSessionHandler (UserIndex index) {
+    public UserSessionHandler (UserIndex index,
+                               string    dconf_db_path,
+    				                   string    dconf_profile_path) {
       this.index = index;
+      this.dconf_db_path      = dconf_db_path;
+      this.dconf_profile_path = dconf_profile_path;
       logind = null;
 
       Bus.watch_name (BusType.SYSTEM,
@@ -43,7 +47,7 @@ namespace FleetCommander {
       if (logind == null)
         return;
 
-      if (dconf_db_can_write () == false)
+      if (dconf_db_can_write (dconf_db_path) == false)
         return;
       try {
         foreach (var user in logind.list_users()) {
@@ -70,7 +74,7 @@ namespace FleetCommander {
     }
 
     private void user_logged_cb (uint32 user_id, ObjectPath path) {
-      if (dconf_db_can_write () == false)
+      if (dconf_db_can_write (dconf_db_path) == false)
         return;
 
       debug ("User logged in with uid: %u", user_id);
@@ -131,7 +135,7 @@ namespace FleetCommander {
     }
 
     private void delete_dconf_profile (string name) {
-      var path = string.join("/", config.dconf_profile_path, "u:" + name);
+      var path = string.join("/", dconf_profile_path, "u:" + name);
       try {
         var obsolete_profile = File.new_for_path (path);
         if (obsolete_profile.query_exists() == true)
@@ -142,7 +146,7 @@ namespace FleetCommander {
     }
 
     private void write_dconf_profile (string user_name, string data) {
-      var path = string.join("/", config.dconf_profile_path, "u:" + user_name);
+      var path = string.join("/", dconf_profile_path, "u:" + user_name);
       debug ("Attempting to write dconf profile in %s", path);
       try {
         var dconf_profile = File.new_for_path (path);
@@ -181,39 +185,39 @@ namespace FleetCommander {
     return all;
   }
 
-  internal class UserIndex {
+  public class UserIndex {
     private Json.Object user_profiles;
     private Json.Object group_profiles;
     private CacheData cache;
     private bool      index_built;
 
-    internal UserIndex (CacheData cache) {
+    public UserIndex (CacheData cache) {
       this.cache = cache;
       index_built = false;
     }
 
-    internal CacheData get_cache () {
+    public CacheData get_cache () {
       return cache;
     }
 
     private void rebuild_index () {
-      debug ("%s: grabbing user/groups", config.cache_path);
+      debug ("%s: grabbing user/groups", cache.get_path ());
       flush ();
 
       if (cache.get_root() == null) {
-        warning ("%s is empty or there was some error parsing it", config.cache_path);
+        warning ("%s is empty or there was some error parsing it", cache.get_path ());
         return;
       }
       var profiles = cache.get_root().get_array();
       if (profiles == null) {
-        warning("%s does not contain a JSON list as root element", config.cache_path);
+        warning("%s does not contain a JSON list as root element", cache.get_path ());
         return;
       }
 
       profiles.foreach_element ((a,i,n) => {
         var profile = n.get_object();
         if (profile == null) {
-          warning ("%s contains an element that is not a profile", config.cache_path);
+          warning ("%s contains an element that is not a profile", cache.get_path ());
           return;
         }
 
@@ -282,13 +286,13 @@ namespace FleetCommander {
     }
   }
 
-  internal static bool dconf_db_can_write () {
-    if (FileUtils.test (config.dconf_db_path, FileTest.EXISTS) == false) {
-      warning ("dconf datbase path %s does not exists", config.dconf_db_path);
+  internal static bool dconf_db_can_write (string dconf_db_path) {
+    if (FileUtils.test (dconf_db_path, FileTest.EXISTS) == false) {
+      warning ("dconf datbase path %s does not exists", dconf_db_path);
       return false;
     }
-    if (Posix.access(config.dconf_db_path, Posix.W_OK | Posix.X_OK) != 0) {
-      warning ("Cannot write data onto %s", config.dconf_db_path);
+    if (Posix.access(dconf_db_path, Posix.W_OK | Posix.X_OK) != 0) {
+      warning ("Cannot write data onto %s", dconf_db_path);
       return false;
     }
     return true;
@@ -296,9 +300,11 @@ namespace FleetCommander {
 
   internal class DconfDbWriter {
     private CacheData cache;
+    private string    dconf_db_path;
     private string[] VALIDATED_KEYS = {"uid", "settings"};
 
-    internal DconfDbWriter(CacheData cache) {
+    internal DconfDbWriter(CacheData cache,
+                           string    dconf_db_path) {
       this.cache = cache;
 
       this.cache.parsed.connect(update_databases);
@@ -310,7 +316,7 @@ namespace FleetCommander {
       if (root == null)
         return;
 
-      if (dconf_db_can_write() == false)
+      if (dconf_db_can_write(dconf_db_path) == false)
         return;
 
       remove_current_profiles ();
@@ -335,7 +341,7 @@ namespace FleetCommander {
     }
 
     private void remove_current_profiles () {
-      var db_path               = Dir.open (config.dconf_db_path);
+      var db_path               = Dir.open (dconf_db_path);
       string[] current_profiles = {};
 
       var root = cache.get_root ();
@@ -356,7 +362,7 @@ namespace FleetCommander {
         if (db_child.has_prefix ("fleet-commander-") == false)
            continue;
 
-        var path = string.join ("/", config.dconf_db_path, db_child);
+        var path = string.join ("/", dconf_db_path, db_child);
 
         if (db_child.has_suffix (".d") && FileUtils.test (path, FileTest.IS_DIR)) {
           foreach (var existing in current_profiles) {
@@ -458,7 +464,7 @@ namespace FleetCommander {
       }
 
       /* We make sure we can write this profile and go ahead*/
-      generated = File.new_for_path (string.join("/", config.dconf_db_path, "fleet-commander-" + uid + ".d",
+      generated = File.new_for_path (string.join("/", dconf_db_path, "fleet-commander-" + uid + ".d",
                                                  "generated"));
       if (check_filesystem_for_profile (generated) == false)
         return;
@@ -540,17 +546,17 @@ namespace FleetCommander {
     }
   }
 
-  internal class CacheData {
+  public class CacheData {
     private File        profiles;
     private FileMonitor monitor;
     private Json.Node?  root = null;
     private bool        timeout;
     private uint        cookie = 0;
 
-    internal signal void parsed();
+    public signal void parsed();
 
-    internal CacheData () {
-      profiles = File.new_for_path(config.cache_path);
+    public CacheData (string cache_path) {
+      profiles = File.new_for_path(cache_path);
       monitor = profiles.monitor_file(FileMonitorFlags.NONE);
       monitor.changed.connect((file, other_file, event) => {
         switch (event) {
@@ -570,7 +576,11 @@ namespace FleetCommander {
 
       parse();
     }
-
+    
+    public string get_path () {
+      return profiles.get_path();
+    }
+    
     public Json.Node? get_root() {
       return root;
     }
@@ -623,8 +633,8 @@ namespace FleetCommander {
     private  File        profiles;
     private  Json.Parser parser;
 
-    internal ProfileCacheManager() {
-      profiles = File.new_for_path(config.cache_path);
+    internal ProfileCacheManager(string cache_path) {
+      profiles = File.new_for_path(cache_path);
       parser  = new Parser();
     }
 
@@ -691,19 +701,23 @@ namespace FleetCommander {
   }
 
   internal class SourceManager {
-    private Soup.Session    http_session;
-    private Json.Parser     parser;
+    private Soup.Session         http_session;
+    private Json.Parser          parser;
     internal ProfileCacheManager profiles;
+    private  string              source; 
 
-    internal SourceManager(ProfileCacheManager profiles) {
+    internal SourceManager(ProfileCacheManager profiles,
+                           string              source,
+                           uint                polling_interval) {
       http_session = new Soup.Session();
       parser = new Json.Parser();
       this.profiles = profiles;
+      this.source = source;
 
       update_profiles();
 
-      Timeout.add(config.polling_interval * 1000, () => {
-        if (config.source == null || config.source == "")
+      Timeout.add(polling_interval * 1000, () => {
+        if (source == null || source == "")
           return true;
 
         update_profiles ();
@@ -712,8 +726,8 @@ namespace FleetCommander {
     }
 
     private void update_profiles () {
-      var msg = new Soup.Message("GET", config.source);
-      debug("Queueing request to %s", config.source);
+      var msg = new Soup.Message("GET", source);
+      debug("Queueing request to %s", source);
       http_session.queue_message(msg, (s,m) => {
         if (process_json_request(m) == false)
           return;
@@ -791,7 +805,7 @@ namespace FleetCommander {
       debug ("Sending requests for URLs in the index");
       profiles.flush();
       foreach (var url in urls) {
-        var msg = new Soup.Message("GET", config.source + url);
+        var msg = new Soup.Message("GET", source + url);
         http_session.queue_message(msg, profile_response_cb);
       }
     }
@@ -803,15 +817,15 @@ namespace FleetCommander {
     }
   }
 
-  internal class ConfigReader
+  public class ConfigReader
   {
-    internal string source             = "";
-    internal uint   polling_interval   = 60 * 60;
-    internal string cache_path         = "/var/cache/fleet-commander/profiles.json";
-    internal string dconf_db_path      = "/etc/dconf/db";
-    internal string dconf_profile_path = "/etc/dconf/profile";
+    public string source             = "";
+    public uint   polling_interval   = 60 * 60;
+    public string cache_path         = "/var/cache/fleet-commander/profiles.json";
+    public string dconf_db_path      = "/etc/dconf/db";
+    public string dconf_profile_path = "/etc/dconf/profile";
 
-    internal ConfigReader (string path = "/etc/xdg/fleet-commander.conf") {
+    public ConfigReader (string path = "/etc/xdg/fleet-commander.conf") {
       var file = File.new_for_path (path);
       try {
         var dis = new DataInputStream (file.read ());
@@ -834,7 +848,7 @@ namespace FleetCommander {
       }
     }
 
-    internal void process_key_value (string key, string val) {
+    private void process_key_value (string key, string val) {
       switch (key) {
         case "source":
           if (!val.has_suffix ("/"))
@@ -851,21 +865,5 @@ namespace FleetCommander {
           break;
       }
     }
-  }
-
-  public static int main (string[] args) {
-    var ml = new GLib.MainLoop (null, false);
-
-    config = new ConfigReader();
-    var profmgr = new ProfileCacheManager();
-    var srcmgr  = new SourceManager(profmgr);
-
-    var cache   = new CacheData();
-    var dconfdb = new DconfDbWriter(cache);
-    var uindex  = new UserIndex(cache);
-    var usermgr = new UserSessionHandler(uindex);
-
-    ml.run();
-    return 0;
   }
 }
