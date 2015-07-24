@@ -1,14 +1,14 @@
 namespace FleetCommander {
-  internal class ProfileCacheManager {
+  public class ProfileCacheManager {
     private  File        profiles;
     private  Json.Parser parser;
 
-    internal ProfileCacheManager(string cache_path) {
+    public ProfileCacheManager(string cache_path) {
       profiles = File.new_for_path(cache_path + "/profiles.json");
       parser  = new Json.Parser();
     }
 
-    internal void add_profile_from_data (string profile_data) {
+    public void add_profile_from_data (string profile_data) {
       debug ("Building aggregated profiles.json file for local cache");
       if (parser.load_from_data (profile_data) == false ||
           parser.get_root() == null                     ||
@@ -57,7 +57,7 @@ namespace FleetCommander {
       return root;
     }
 
-    internal bool flush () {
+    public bool flush () {
       debug("Flushing profile cache");
       parser.load_from_data("");
       return write("[]");
