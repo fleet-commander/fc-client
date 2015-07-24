@@ -4,7 +4,7 @@ namespace FleetCommander {
     private  Json.Parser parser;
 
     internal ProfileCacheManager(string cache_path) {
-      profiles = File.new_for_path(cache_path);
+      profiles = File.new_for_path(cache_path + "/profiles.json");
       parser  = new Json.Parser();
     }
 
@@ -30,21 +30,28 @@ namespace FleetCommander {
       write(generator.to_data(null));
     }
 
-    public Json.Node? get_cache_root () {
+    private Json.Node? get_cache_root_private () {
       try {
         parser.load_from_stream (profiles.read(null), null);
       } catch (Error e) {
-        warning ("There was an error trying to load the profile cache: %s", e.message);
+        warning ("Could not load JSON data from %s: %s", profiles.get_path (), e.message);
         return null;
       }
+      return parser.get_root ();
+    }
 
-      var root = parser.get_root();
+    public Json.Node? get_cache_root () {
+      if (profiles.query_exists () == false) {
+        if (flush () == false)
+          return null;
+      }
 
-      /* If for some reason the file ends up corrupted we try to restore it */
+      var root = get_cache_root_private ();
       if (root == null || root.get_array() == null) {
-        warning ("The root element of the cache is not an array: flushing");
-        flush ();
-        return null;
+        message ("The root element of the cache is not an array: flushing");
+        if (flush () == false)
+          return null;
+        return get_cache_root_private ();
       }
 
       return root;

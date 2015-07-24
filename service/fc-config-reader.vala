@@ -3,7 +3,7 @@ namespace FleetCommander {
   {
     public string source             = "";
     public uint   polling_interval   = 60 * 60;
-    public string cache_path         = "/var/cache/fleet-commander/profiles.json";
+    public string cache_path         = "/var/cache/fleet-commander";
     public string dconf_db_path      = "/etc/dconf/db";
     public string dconf_profile_path = "/etc/dconf/profile";
 

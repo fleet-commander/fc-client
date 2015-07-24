@@ -9,7 +9,7 @@ namespace FleetCommander {
     public signal void parsed();
 
     public CacheData (string cache_path) {
-      profiles = File.new_for_path(cache_path);
+      profiles = File.new_for_path(cache_path + "/profiles.json");
       monitor = profiles.monitor_file(FileMonitorFlags.NONE);
       monitor.changed.connect((file, other_file, event) => {
         switch (event) {
