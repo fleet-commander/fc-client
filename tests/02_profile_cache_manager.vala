@@ -2,7 +2,11 @@ namespace FleetCommander {
   internal string? cache_dir = null;
 
   public static void setup () {
-    cache_dir = DirUtils.make_tmp ("fleet_commander.test.XXXXXX");
+    try {
+      cache_dir = DirUtils.make_tmp ("fleet_commander.test.XXXXXX");
+    } catch (FileError e) {
+      error ("Could not create temporary dir %s", e.message);
+    }
     assert_nonnull (cache_dir);
   }
 
@@ -55,6 +59,15 @@ namespace FleetCommander {
     assert (root.get_array ().get_length () == 0);
   }
 
+  public static void test_empty_cachedir () {
+    var pcm = new ProfileCacheManager (cache_dir);
+
+    var root = pcm.get_cache_root ();
+    assert_nonnull (root);
+    assert_nonnull (root.get_array ());
+    assert (root.get_array ().get_length () == 0);
+  }
+
   public delegate void TestFn ();
 
   public static void add_test (string name, TestSuite suite, TestFn fn) {
@@ -68,6 +81,7 @@ namespace FleetCommander {
 
     add_test ("add-profile", pcm_suite, test_add_profile);
     add_test ("flush", pcm_suite, test_flush);
+    add_test ("empty-cache-dir", pcm_suite, test_empty_cachedir);
 
     fc_suite.add_suite (pcm_suite);
     TestSuite.get_root ().add_suite (fc_suite);
