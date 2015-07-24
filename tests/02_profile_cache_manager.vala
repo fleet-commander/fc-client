@@ -68,6 +68,13 @@ namespace FleetCommander {
     assert (root.get_array ().get_length () == 0);
   }
 
+  public static void test_invalid_path () {
+    var pcm = new ProfileCacheManager ("/foo/bar/baz/dir/random");
+    FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Could not rewrite*");
+    var cache_root = pcm.get_cache_root ();
+    assert (cache_root == null);
+  }
+
   public delegate void TestFn ();
 
   public static void add_test (string name, TestSuite suite, TestFn fn) {
@@ -82,6 +89,7 @@ namespace FleetCommander {
     add_test ("add-profile", pcm_suite, test_add_profile);
     add_test ("flush", pcm_suite, test_flush);
     add_test ("empty-cache-dir", pcm_suite, test_empty_cachedir);
+    add_test ("invalid-path", pcm_suite, test_invalid_path);
 
     fc_suite.add_suite (pcm_suite);
     TestSuite.get_root ().add_suite (fc_suite);

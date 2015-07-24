@@ -2,6 +2,7 @@ TESTS = 02_profile_cache_manager
 check_PROGRAMS = $(TESTS)
 
 02_profile_cache_manager_SOURCES = \
+	test-utils.vapi                                     \
 	$(top_srcdir)/service/fc-profile-cache-manager.vala \
 	02_profile_cache_manager.vala
 
