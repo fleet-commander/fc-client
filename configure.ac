@@ -50,6 +50,7 @@ AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$systemdsystemunitdir"])
 AC_CONFIG_FILES([
   data/Makefile
   service/Makefile
+  tests/Makefile
   Makefile
 ])
 AC_OUTPUT

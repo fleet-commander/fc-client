@@ -1,0 +1,10 @@
+TESTS = 02_profile_cache_manager
+check_PROGRAMS = $(TESTS)
+
+02_profile_cache_manager_SOURCES = \
+	$(top_srcdir)/service/fc-profile-cache-manager.vala \
+	02_profile_cache_manager.vala
+
+02_profile_cache_manager_CFLAGS  = $(JSON_GLIB_CFLAGS) $(GIO_CFLAGS) -g
+02_profile_cache_manager_LDADD   = $(JSON_GLIB_LIBS) $(GIO_LIBS)
+02_profile_cache_manager_VALAFLAGS = --pkg gio-2.0 --pkg json-glib-1.0

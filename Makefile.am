@@ -2,7 +2,7 @@ NULL =
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = data service
+SUBDIRS = data service tests
 
 EXTRA_DIST = m4
 
