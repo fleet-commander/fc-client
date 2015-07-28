@@ -4,6 +4,7 @@ fleet_commander_client_SOURCES =       \
 	fleet-commander-client.vala    \
 	fc-cache-data.vala             \
 	fc-config-reader.vala          \
+	fc-content-monitor.vala        \
 	fc-dconf-db-writer.vala        \
 	fc-profile-cache-manager.vala  \
 	fc-source-manager.vala         \

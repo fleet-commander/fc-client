@@ -1,63 +1,27 @@
 namespace FleetCommander {
   public class CacheData {
-    private File        profiles;
-    private FileMonitor monitor;
-    private Json.Node?  root = null;
-    private bool        timeout;
-    private uint        cookie = 0;
+    private Json.Node?     root = null;
+    private File           profiles;
+    private ContentMonitor monitor;
+
 
     public signal void parsed();
 
     public CacheData (string cache_path) {
-      profiles = File.new_for_path(cache_path + "/profiles.json");
-      monitor = profiles.monitor_file(FileMonitorFlags.NONE);
-      monitor.changed.connect((file, other_file, event) => {
-        switch (event) {
-          case FileMonitorEvent.CREATED:
-          case FileMonitorEvent.CHANGED:
-            debug("%s was changed or created", profiles.get_path());
-            break;
-          case FileMonitorEvent.DELETED:
-            debug("%s was deleted", profiles.get_path());
-            break;
-          default:
-            debug("Unhandled FileMonitor event");
-            return;
-        }
-        parse_async(true);
+      profiles = File.new_for_path (cache_path + "/profiles.json");
+      monitor = new ContentMonitor (profiles.get_path ());
+      monitor.content_updated.connect (() => {
+        parse ();
       });
-
-      parse();
+      parse ();
     }
-    
+
     public string get_path () {
       return profiles.get_path();
     }
-    
+
     public Json.Node? get_root() {
       return root;
-    }
-
-    private void parse_async (bool timeout) {
-      this.timeout = timeout;
-      if (cookie != 0) {
-        debug("A timeout to parse %s is already installed", profiles.get_path());
-        return;
-      }
-
-      cookie = Timeout.add (1000, () => {
-        if (this.timeout == true) {
-          debug("Changes just happened, waiting another second without changes");
-          this.timeout = false;
-          return true;
-        }
-
-        parse();
-
-        timeout = false;
-        cookie  = 0;
-        return false;
-      });
     }
 
     private void parse () {
