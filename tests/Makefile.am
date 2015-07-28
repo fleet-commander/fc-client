@@ -1,4 +1,4 @@
-TESTS = 02_profile_cache_manager 03_source_manager
+TESTS = 02_profile_cache_manager 03_source_manager 04_cache_data
 check_PROGRAMS = 02_profile_cache_manager
 
 02_profile_cache_manager_SOURCES = \
@@ -11,9 +11,16 @@ check_PROGRAMS = 02_profile_cache_manager
 02_profile_cache_manager_VALAFLAGS = --pkg gio-2.0 --pkg json-glib-1.0
 
 
-EXTRA_DIST = 03_source_manager.vala
+EXTRA_DIST = 03_source_manager.vala 04_cache_data.vala
+
 03_source_manager_SOURCES = \
 	$(top_srcdir)/service/fc-source-manager.vala \
 	03_source_manager.vala
 03_source_manager: $(03_source_manager_SOURCES)
+	valac --pkg gio-2.0 --pkg json-glib-1.0 $^ -o $@
+
+04_cache_data_SOURCES = \
+	$(top_srcdir)/service/fc-cache-data.vala \
+	04_cache_data.vala
+04_cache_data: $(04_cache_data_SOURCES)
 	valac --pkg gio-2.0 --pkg json-glib-1.0 $^ -o $@
