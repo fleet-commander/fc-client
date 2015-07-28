@@ -4,7 +4,6 @@ namespace FleetCommander {
     private File           profiles;
     private ContentMonitor monitor;
 
-
     public signal void parsed();
 
     public CacheData (string cache_path) {
@@ -25,12 +24,17 @@ namespace FleetCommander {
     }
 
     private void parse () {
+      if (profiles.query_exists () == false) {
+        debug ("cache file %s: does not exist", profiles.get_path ());
+        return;
+      }
+
       debug ("Parsing cache file: %s", profiles.get_path());
       var parser = new Json.Parser();
       try {
         parser.load_from_stream (profiles.read());
       } catch (Error e) {
-        warning("There was an error parsing %s: %s", profiles.get_path(), e.message);
+        warning ("There was an error parsing %s: %s", profiles.get_path(), e.message);
         return;
       }
 
