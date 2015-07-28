@@ -3,6 +3,10 @@ public const string DEFAULT_URL = "http://foobar/";
 public const string PROFILE_INDEX = "[{\"url\": \"123456\"}]";
 public const string DEFAULT_PROFILE = "fake_profile_data-123456";
 
+public MainLoop? loop = null;
+public uint index_requests;
+public uint profile_requests;
+
 namespace Soup {
   public delegate void SessionCallback (Soup.Session session, Soup.Message msg);
 
@@ -42,8 +46,10 @@ namespace Soup {
       msg.status_code = 200;
       if (msg.url == DEFAULT_URL) {
         msg.response_body.data = PROFILE_INDEX;
+        index_requests++;
       } else if (msg.url == DEFAULT_URL + "123456") {
         msg.response_body.data = DEFAULT_PROFILE;
+        profile_requests++;
       }
       callback (this, msg);
     }
@@ -52,9 +58,11 @@ namespace Soup {
 
 public class ProfileCacheManager {
   private string[] profiles;
+  private uint     counter;
 
   public ProfileCacheManager () {
     profiles = {};
+    counter = 5;
   }
 
   public bool flush () {
@@ -64,6 +72,13 @@ public class ProfileCacheManager {
 
   public void add_profile_from_data (string data) {
     profiles += data;
+
+    if (loop != null) {
+      counter--;
+      if (counter < 1) {
+        loop.quit ();
+      }
+    }
   }
 
   public string[] get_profiles () {
@@ -79,7 +94,6 @@ namespace FleetCommander {
   public void test_initialization () {
     var pcm = new ProfileCacheManager();
     var sm  = new SourceManager (pcm, DEFAULT_URL, 0);
-
     assert_nonnull (sm);
 
     var profiles = pcm.get_profiles ();
@@ -88,7 +102,34 @@ namespace FleetCommander {
     assert (profiles[0] == DEFAULT_PROFILE);
   }
 
+  public void test_timeout () {
+    loop = new MainLoop (null, false);
+
+    var pcm = new ProfileCacheManager();
+    var sm  = new SourceManager (pcm, DEFAULT_URL, 0);
+    assert_nonnull (sm);
+
+    Timeout.add (1000, () => {
+      error ("Mainloop kept running - quitting test");
+      loop.quit ();
+      return false;
+    });
+
+    loop.run ();
+    loop = null;
+
+    var profiles = pcm.get_profiles ();
+    assert (profiles.length == 1);
+    assert (profiles[0] == DEFAULT_PROFILE);
+
+    assert (index_requests > 1);
+    assert (profile_requests > 1);
+  }
+
   public static void setup () {
+    index_requests = 0;
+    profile_requests = 0;
+    loop = null;
   }
 
   public static void teardown () {
@@ -104,6 +145,7 @@ namespace FleetCommander {
     var pcm_suite = new TestSuite("source-manager");
 
     add_test ("initialization", pcm_suite, test_initialization);
+    add_test ("timeout", pcm_suite, test_timeout);
 
     fc_suite.add_suite (pcm_suite);
     TestSuite.get_root ().add_suite (fc_suite);
