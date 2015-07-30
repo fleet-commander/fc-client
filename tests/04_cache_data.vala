@@ -32,6 +32,15 @@ namespace FleetCommander {
     cache_dir = null;
   }
 
+  /* Utils */
+  public static void write_content (string file, string content) {
+    try {
+      FileUtils.set_contents (file, content);
+    } catch (FileError e) {
+      error ("Could not write test data in the cache file %s", e.message);
+    }
+  }
+
   /* Tests */
   public static void test_no_cache_file () {
     var cd = new CacheData (cache_dir);
@@ -48,11 +57,7 @@ namespace FleetCommander {
                       \"name\" : \"My profile\",
                       \"etag\" : \"placeholder\",
                       \"uid\" : \"230637306661439565351338266313693940252\"}]";
-    try {
-      FileUtils.set_contents (cache_dir + "/profiles.json", payload);
-    } catch (FileError e) {
-      error ("Could not write test data in the cache file %s", e.message);
-    }
+    write_content (cache_dir + "/profiles.json", payload);
 
     var cd = new CacheData (cache_dir);
     assert_nonnull (cd);
@@ -60,14 +65,27 @@ namespace FleetCommander {
   }
 
   public static void test_empty_cache_file () {
-    var payload = "";
-    try {
-      FileUtils.set_contents (cache_dir + "/profiles.json", payload);
-    } catch (FileError e) {
-      error ("Could not write test data in the cache file %s", e.message);
-    }
+    write_content (cache_dir + "/profiles.json", "");
 
     FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Root JSON element*empty*");
+    var cd = new CacheData (cache_dir);
+    assert_nonnull (cd);
+    assert (cd.get_root () == null);
+  }
+
+  public static void test_wrong_json_cache_file () {
+    write_content (cache_dir + "/profiles.json", "{}");
+
+    FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*JSON element*not an array*");
+    var cd = new CacheData (cache_dir);
+    assert_nonnull (cd);
+    assert (cd.get_root () == null);
+  }
+
+  public static void test_dirty_cache_file () {
+    write_content (cache_dir + "/profiles.json", "#@$@#W!*");
+
+    FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*error parsing*");
     var cd = new CacheData (cache_dir);
     assert_nonnull (cd);
     assert (cd.get_root () == null);
@@ -81,7 +99,8 @@ namespace FleetCommander {
     add_test ("no-cache", pcm_suite, test_no_cache_file);
     add_test ("existing-cache", pcm_suite, test_existing_cache);
     add_test ("empty-cache-file", pcm_suite, test_empty_cache_file);
-    //TODO: bad JSON cache, removed existing cache
+    add_test ("dirty-cache", pcm_suite, test_dirty_cache_file);
+    //TODO: removed existing cache
 
     fc_suite.add_suite (pcm_suite);
     TestSuite.get_root ().add_suite (fc_suite);
