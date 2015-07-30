@@ -1,5 +1,8 @@
 namespace FleetCommander {
-  public string? cache_dir;
+  public string?         cache_dir;
+  public MainLoop?       loop;
+  public ContentMonitor? monitor_singleton;
+
   public delegate void TestFn ();
 
   public static void add_test (string name, TestSuite suite, TestFn fn) {
@@ -10,11 +13,15 @@ namespace FleetCommander {
   public class ContentMonitor : Object {
     public signal void content_updated ();
     public ContentMonitor (string path, uint interval = 1000) {
+      monitor_singleton = this;
     }
   }
 
   /* setup and teardown */
   public static void setup () {
+    loop = null;
+    monitor_singleton = null;
+
     try {
       cache_dir = DirUtils.make_tmp ("fleet_commander.test.XXXXXX");
     } catch (FileError e) {
@@ -91,6 +98,37 @@ namespace FleetCommander {
     assert (cd.get_root () == null);
   }
 
+  public static void test_content_change () {
+    bool parsed_called = false;
+    var payload = "[{ \"description\" : \"\",
+                      \"settings\" : {\"org.gnome.online-accounts\" : {}, \"org.gnome.gsettings\" : []},
+                      \"applies-to\" : {\"users\" : [], \"groups\" : []},
+                      \"name\" : \"My profile\",
+                      \"etag\" : \"placeholder\",
+                      \"uid\" : \"230637306661439565351338266313693940252\"}]";
+    write_content (cache_dir + "/profiles.json", payload);
+
+    loop = new MainLoop (null, false);
+
+    var cd = new CacheData (cache_dir);
+    assert_nonnull (cd);
+    assert_nonnull (cd.get_root ());
+
+    FileUtils.remove (cache_dir + "/profiles.json");
+
+    Idle.add (() => {
+      assert_nonnull (monitor_singleton);
+      //simulate a file monitor signal
+      monitor_singleton.content_updated ();
+      loop.quit ();
+      loop = null;
+      return false;
+    });
+
+    loop.run();
+    assert (cd.get_root () == null);
+  }
+
   public static int main (string[] args) {
     Test.init (ref args);
     var fc_suite = new TestSuite("fleetcommander");
@@ -100,6 +138,7 @@ namespace FleetCommander {
     add_test ("existing-cache", pcm_suite, test_existing_cache);
     add_test ("empty-cache-file", pcm_suite, test_empty_cache_file);
     add_test ("dirty-cache", pcm_suite, test_dirty_cache_file);
+    add_test ("content-change", pcm_suite, test_content_change);
     //TODO: removed existing cache
 
     fc_suite.add_suite (pcm_suite);
