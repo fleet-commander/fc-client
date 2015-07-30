@@ -26,6 +26,8 @@ namespace FleetCommander {
     private void parse () {
       if (profiles.query_exists () == false) {
         debug ("cache file %s: does not exist", profiles.get_path ());
+        root = null;
+        parsed ();
         return;
       }
 
@@ -44,9 +46,8 @@ namespace FleetCommander {
       } else if (root.get_array() == null) {
         warning ("Root JSON element of profile cache is not an array");
         root = null;
-      } else {
-        parsed();
       }
+      parsed();
     }
   }
 }
