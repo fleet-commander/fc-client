@@ -20,6 +20,7 @@ EXTRA_DIST = 03_source_manager.vala 04_cache_data.vala
 	valac --pkg gio-2.0 --pkg json-glib-1.0 $^ -o $@
 
 04_cache_data_SOURCES = \
+  	test-utils.vapi \
 	$(top_srcdir)/service/fc-cache-data.vala \
 	04_cache_data.vala
 04_cache_data: $(04_cache_data_SOURCES)

@@ -33,7 +33,7 @@ namespace FleetCommander {
   }
 
   /* Tests */
-  public static void test_empty_cache () {
+  public static void test_no_cache_file () {
     var cd = new CacheData (cache_dir);
     assert_nonnull (cd);
 
@@ -51,13 +51,26 @@ namespace FleetCommander {
     try {
       FileUtils.set_contents (cache_dir + "/profiles.json", payload);
     } catch (FileError e) {
-      assert (false);
+      error ("Could not write test data in the cache file %s", e.message);
     }
 
     var cd = new CacheData (cache_dir);
     assert_nonnull (cd);
-
     assert_nonnull (cd.get_root ());
+  }
+
+  public static void test_empty_cache_file () {
+    var payload = "";
+    try {
+      FileUtils.set_contents (cache_dir + "/profiles.json", payload);
+    } catch (FileError e) {
+      error ("Could not write test data in the cache file %s", e.message);
+    }
+
+    FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Root JSON element*empty*");
+    var cd = new CacheData (cache_dir);
+    assert_nonnull (cd);
+    assert (cd.get_root () == null);
   }
 
   public static int main (string[] args) {
@@ -65,9 +78,10 @@ namespace FleetCommander {
     var fc_suite = new TestSuite("fleetcommander");
     var pcm_suite = new TestSuite("cache-data");
 
-    add_test ("empty_cache", pcm_suite, test_empty_cache);
+    add_test ("no-cache", pcm_suite, test_no_cache_file);
     add_test ("existing-cache", pcm_suite, test_existing_cache);
-    //TODO: preexisting cache, bad JSON cache, removed existing cache
+    add_test ("empty-cache-file", pcm_suite, test_empty_cache_file);
+    //TODO: bad JSON cache, removed existing cache
 
     fc_suite.add_suite (pcm_suite);
     TestSuite.get_root ().add_suite (fc_suite);
