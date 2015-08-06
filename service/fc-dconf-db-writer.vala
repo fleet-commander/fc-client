@@ -7,7 +7,7 @@ namespace FleetCommander {
     internal DconfDbWriter(CacheData cache,
                            string    dconf_db_path) {
       this.cache = cache;
-
+      this.dconf_db_path = dconf_db_path;
       this.cache.parsed.connect(update_databases);
     }
 
