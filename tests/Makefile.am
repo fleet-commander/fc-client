@@ -1,4 +1,4 @@
-TESTS = 02_profile_cache_manager 03_source_manager 04_cache_data
+TESTS = 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer
 check_PROGRAMS = 02_profile_cache_manager
 
 02_profile_cache_manager_SOURCES = \
@@ -11,7 +11,7 @@ check_PROGRAMS = 02_profile_cache_manager
 02_profile_cache_manager_VALAFLAGS = --pkg gio-2.0 --pkg json-glib-1.0
 
 
-EXTRA_DIST = 03_source_manager.vala 04_cache_data.vala
+EXTRA_DIST = 03_source_manager.vala 04_cache_data.vala 05_dconf_db_writer.vala
 
 03_source_manager_SOURCES = \
 	$(top_srcdir)/service/fc-source-manager.vala \
@@ -25,3 +25,11 @@ EXTRA_DIST = 03_source_manager.vala 04_cache_data.vala
 	04_cache_data.vala
 04_cache_data: $(04_cache_data_SOURCES)
 	valac --pkg gio-2.0 --pkg json-glib-1.0 $^ -o $@
+
+05_dconf_db_writer_SOURCES = \
+  	test-utils.vapi \
+	$(top_srcdir)/service/fc-dconf-db-writer.vala \
+	$(top_srcdir)/service/fc-utils.vala \
+	05_dconf_db_writer.vala
+05_dconf_db_writer: $(05_dconf_db_writer_SOURCES)
+	valac --pkg gio-2.0 --pkg json-glib-1.0 --pkg posix $^ -o $@
