@@ -17,7 +17,10 @@ namespace FleetCommander {
     }
 
     public Json.Node? get_root () {
-      return null;
+      var builder = new Json.Builder();
+      builder.begin_array();
+      builder.end_array();
+      return builder.get_root();
     }
   }
 
@@ -34,19 +37,35 @@ namespace FleetCommander {
     }
 
     assert_nonnull (dconf_dir);
+    Environment.set_variable ("FC_TEST_TMPDIR", dconf_dir, true);
   }
 
   public static void teardown () {
     if (dconf_dir == null)
       return;
 
+    FileUtils.remove (dconf_dir + "/dconf-updated");
     DirUtils.remove (dconf_dir);
+
     dconf_dir = null;
+    Environment.unset_variable ("FC_TEST_TMPDIR");
   }
 
   public static void test_construct () {
+    stdout.printf("-- %s", Environment.get_variable ("FC_TEST_TMPDIR"));
     var ddw = new DconfDbWriter (new CacheData ("/some/path"), dconf_dir);
     assert_nonnull (ddw);
+  }
+
+  public static void test_update_empty_database () {
+    stdout.printf("-- %s", Environment.get_variable ("FC_TEST_TMPDIR"));
+    var ddw = new DconfDbWriter (new CacheData ("/some/path"), dconf_dir);
+    assert_nonnull (ddw);
+
+    ddw.update_databases ();
+
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.EXISTS));
   }
 
   public static int main (string[] args) {
@@ -55,6 +74,7 @@ namespace FleetCommander {
     var ddw_suite = new TestSuite("dconf-db-writer");
 
     add_test ("construct", ddw_suite, test_construct);
+    add_test ("empty-profile-cache", ddw_suite, test_update_empty_database);
     //TODO: commit_profile, call_dconf_update, update_databases
 
     fc_suite.add_suite (ddw_suite);
