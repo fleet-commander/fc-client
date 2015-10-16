@@ -75,7 +75,7 @@ namespace FleetCommander {
 
     add_test ("construct", ddw_suite, test_construct);
     add_test ("empty-profile-cache", ddw_suite, test_update_empty_database);
-    //TODO: commit_profile, call_dconf_update, update_databases
+    //TODO: commit_profile, call_dconf_update, update_databases, check_filesystem_for_profile,
 
     fc_suite.add_suite (ddw_suite);
     TestSuite.get_root ().add_suite (fc_suite);
