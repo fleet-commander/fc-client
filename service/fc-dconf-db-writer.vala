@@ -204,30 +204,15 @@ namespace FleetCommander {
         }
 
         string? signature = null;
-        var schema_key  = GLib.Path.get_basename (key);
-        var schema_path = GLib.Path.get_dirname  (key);
-        schema_path = schema_path.slice(1,schema_path.length);
-        /* TODO: get the logger to send the signature */
-        if (change.has_member ("signature")) {
-            signature = change.get_string_member ("signature");
-        }
-        if (signature == null && change.has_member("schema")) {
-          //TODO: Remove this after a few releases
-          warning ("profile %s: 'signature' string was not present in change %u", uid, i);
-          var schema_id = change.get_member("schema").get_string();
-          if (schema_id == null) {
-            warning("profile %s: 'schema' key is not a string in change %u", uid, i);
-          } else {
-            var schema = schema_source.lookup (schema_id, true);
-            if (schema != null && schema.has_key (schema_key)) {
-              signature = schema.get_key (schema_key).get_value_type ().dup_string ();
-            }
-          }
-        }
+        var keyname  = GLib.Path.get_basename (key);
+        var path     = GLib.Path.get_dirname  (key);
+        path = path.slice (1, path.length);
 
-        if (signature == null) {
+        /* TODO: get the logger to send the signature */
+        if (change.has_member ("signature"))
+          signature = change.get_string_member ("signature");
+        else
           warning ("profile %s: could not find signature for key %s", uid, key);
-        }
 
         var variant = Json.gvariant_deserialize(change.get_member("value"), signature);
         if (variant == null) {
@@ -235,7 +220,7 @@ namespace FleetCommander {
           return;
         }
 
-        keyfile.set_string(schema_path, schema_key, variant.print(true));
+        keyfile.set_string(path, keyname, variant.print(true));
       });
 
       debug("Saving profile keyfile in %s", generated.get_path());
