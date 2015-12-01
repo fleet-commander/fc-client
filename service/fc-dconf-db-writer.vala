@@ -44,8 +44,15 @@ namespace FleetCommander {
     }
 
     private void remove_current_profiles () {
-      var db_path               = Dir.open (dconf_db_path);
+      Dir db_path;
       string[] current_profiles = {};
+
+      try {
+        db_path = Dir.open (dconf_db_path);
+      } catch (Error e) {
+        warning ("Could not open dconf database path %s", dconf_db_path);
+        return;
+      }
 
       var root = cache.get_root ();
       if (root != null && root.get_array () != null) {
@@ -108,8 +115,14 @@ namespace FleetCommander {
     }
 
     private void call_dconf_update () {
-      var dconf_update = new Subprocess.newv ({"dconf", "update"}, SubprocessFlags.NONE);
-      dconf_update.wait ();
+      Subprocess dconf_update;
+      try {
+        dconf_update = new Subprocess.newv ({"dconf", "update"}, SubprocessFlags.NONE);
+        dconf_update.wait ();
+      } catch (Error e) {
+        warning ("Could not call dconf update, %s", e.message);
+        return;
+      }
 
       if (dconf_update.get_if_exited () == false) {
         warning ("dconf update process did not exit");
@@ -243,8 +256,10 @@ namespace FleetCommander {
       else
         warning ("profile %s: could not find signature for key %s", uid, key);
 
-      var variant = Json.gvariant_deserialize(change.get_member("value"), signature);
-      if (variant == null) {
+      Variant? variant;
+      try {
+        variant = Json.gvariant_deserialize(change.get_member("value"), signature);
+      } catch (Error e) {
         warning ("profile %s: could not deserialize JSON to GVariant for key %u", key, i);
         return;
       }
