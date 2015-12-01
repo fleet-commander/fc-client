@@ -2,7 +2,9 @@ namespace FleetCommander {
   internal class DconfDbWriter {
     private CacheData cache;
     private string    dconf_db_path;
-    private string[] VALIDATED_KEYS = {"uid", "settings"};
+    private string[]  VALIDATED_KEYS = {"uid", "settings"};
+    private string?   uid;
+    private KeyFile?   keyfile;
 
     internal DconfDbWriter(CacheData cache,
                            string    dconf_db_path) {
@@ -125,7 +127,13 @@ namespace FleetCommander {
       debug("Checking whether we can write profile data to %s", settings_keyfile.get_path ());
 
       if (settings_keyfile.query_exists() == true) {
-        var info = settings_keyfile.query_info("access::can-delete", FileQueryInfoFlags.NONE);
+        FileInfo info;
+        try {
+          info = settings_keyfile.query_info("access::can-delete", FileQueryInfoFlags.NONE);
+        } catch (Error e) {
+          warning ("There was an error querying %s attributes", settings_keyfile.get_path ());
+          return false;
+        }
         if (info.get_attribute_boolean("access::can-delete") == false) {
           warning ("Could not replace file %s", settings_keyfile.get_path ());
           return false;
@@ -154,9 +162,7 @@ namespace FleetCommander {
 
     internal void commit_profile (Json.Object profile) {
       debug("Committing profile");
-      string?           uid;
       Json.Object?      settings;
-      Json.Array?       gsettings;
       File              generated;
 
       if ((uid = profile.get_member("uid").get_string()) == null) {
@@ -175,53 +181,16 @@ namespace FleetCommander {
         warning ("profile %s: 'settings' JSON member is not a JSON object", uid);
         return;
       }
-      var node = settings.get_member("org.gnome.gsettings");
-      if (node == null) {
-        debug("profile %s: does not have any GSettings", uid);
-        return;
-      } else if ((gsettings = node.get_array()) == null) {
-        warning ("profile %s: org.gnome.gsettings member of settings is not a JSON array", uid);
-        return;
-      }
 
-      var keyfile = new KeyFile();
-      var schema_source = SettingsSchemaSource.get_default();
-      gsettings.foreach_element((a, i, n) => {
-        var change = n.get_object();
-        if (change == null) {
-          warning ("profile %s: gsettings change item #%u should be a JSON object", uid, i);
-          return;
-        }
 
-        if (object_has_members (change, {"key", "value"}) == false) {
-          warning ("profile %s: Could not find mandatory keys in change %u", uid, i);
-          return;
-        }
+      keyfile = new KeyFile ();
+      var gsettings = get_changes_array (settings, uid, "org.gnome.gsettings");
+      var libreoffice = get_changes_array (settings, uid, "org.libreoffice.registry");
 
-        var key = change.get_member("key").get_string();
-        if (key == null) {
-          warning ("profile %s: 'key' member of change %u is not a string", uid, i);
-        }
-
-        string? signature = null;
-        var keyname  = GLib.Path.get_basename (key);
-        var path     = GLib.Path.get_dirname  (key);
-        path = path.slice (1, path.length);
-
-        /* TODO: get the logger to send the signature */
-        if (change.has_member ("signature"))
-          signature = change.get_string_member ("signature");
-        else
-          warning ("profile %s: could not find signature for key %s", uid, key);
-
-        var variant = Json.gvariant_deserialize(change.get_member("value"), signature);
-        if (variant == null) {
-          warning ("profile %s: could not deserialize JSON to GVariant for key %u", key, i);
-          return;
-        }
-
-        keyfile.set_string(path, keyname, variant.print(true));
-      });
+      if (gsettings != null)
+        gsettings.foreach_element(add_change_to_keyfile);
+      if (libreoffice != null)
+        libreoffice.foreach_element(add_change_to_keyfile);
 
       debug("Saving profile keyfile in %s", generated.get_path());
       try {
@@ -229,6 +198,58 @@ namespace FleetCommander {
       } catch (Error e) {
         warning ("There was an error saving profile settings in %s", generated.get_path ());
       }
+
+      keyfile = null;
+      uid = null;
+    }
+
+    private Json.Array? get_changes_array (Json.Object settings, string uid, string collector) {
+      Json.Array? changes = null;
+
+      var node = settings.get_member(collector);
+      if (node == null)
+        debug("profile %s: does not have %s section", uid, collector);
+      if ((changes = node.get_array()) == null)
+        warning ("profile %s: %s member of settings is not a JSON array", uid, collector);
+
+      return changes;
+    }
+
+    private void add_change_to_keyfile (Json.Array a, uint i, Json.Node n) {
+      var change = n.get_object();
+      if (change == null) {
+        warning ("profile %s: gsettings change item #%u should be a JSON object", uid, i);
+        return;
+      }
+
+      if (object_has_members (change, {"key", "value"}) == false) {
+        warning ("profile %s: Could not find mandatory keys in change %u", uid, i);
+        return;
+      }
+
+      var key = change.get_member("key").get_string();
+      if (key == null) {
+        warning ("profile %s: 'key' member of change %u is not a string", uid, i);
+      }
+
+      string? signature = null;
+      var keyname  = GLib.Path.get_basename (key);
+      var path     = GLib.Path.get_dirname  (key);
+      path = path.slice (1, path.length);
+
+      /* TODO: get the logger to send the signature */
+      if (change.has_member ("signature"))
+        signature = change.get_string_member ("signature");
+      else
+        warning ("profile %s: could not find signature for key %s", uid, key);
+
+      var variant = Json.gvariant_deserialize(change.get_member("value"), signature);
+      if (variant == null) {
+        warning ("profile %s: could not deserialize JSON to GVariant for key %u", key, i);
+        return;
+      }
+
+      keyfile.set_string(path, keyname, variant.print(true));
     }
   }
 }
