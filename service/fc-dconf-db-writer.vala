@@ -153,6 +153,10 @@ namespace FleetCommander {
         }
       }
 
+      return true;
+    }
+
+    internal bool create_profile_directory (File settings_keyfile) {
       var basedir = settings_keyfile.get_parent().get_path();
       if (FileUtils.test (basedir, FileTest.EXISTS) == false) {
         if (DirUtils.create_with_parents (basedir, 0755) == -1) {
@@ -161,7 +165,7 @@ namespace FleetCommander {
         }
       }
       if (FileUtils.test (basedir, FileTest.IS_DIR) == false) {
-        warning ("%s exists but is not a file", basedir);
+        warning ("%s exists but is not a directory", basedir);
         return false;
       }
 
@@ -206,10 +210,20 @@ namespace FleetCommander {
         libreoffice.foreach_element(add_change_to_keyfile);
 
       debug("Saving profile keyfile in %s", generated.get_path());
-      try {
-        keyfile.save_to_file (generated.get_path ());
-      } catch (Error e) {
-        warning ("There was an error saving profile settings in %s", generated.get_path ());
+      if (keyfile.get_groups ().length > 0) {
+        if (create_profile_directory (generated) == false) {
+          keyfile = null;
+          uid = null;
+          return;
+        }
+
+        try {
+          keyfile.save_to_file (generated.get_path ());
+        } catch (Error e) {
+          warning ("There was an error saving profile settings in %s", generated.get_path ());
+        }
+      } else {
+        debug ("There was no settings to save");
       }
 
       keyfile = null;
