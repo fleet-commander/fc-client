@@ -1,26 +1,40 @@
 namespace FleetCommander {
-  public string?         dconf_dir;
-  public CacheData? cache_data_singleton = null;
+  public string?       dconf_dir;
+
   public delegate void TestFn ();
 
   //Mock CacheData
   public class CacheData {
-    private string cache_path;
+    private Json.Array array;
+    private string     cache_path;
+
     public signal void parsed();
-    public CacheData (string cache_path) {
-      this.cache_path = cache_path;
-      cache_data_singleton = this;
+
+    public CacheData () {
+      this.cache_path = Environment.get_variable ("FC_PROFILES_PATH");
+      array = new Json.Array ();
     }
 
     public string get_path () {
       return cache_path;
     }
 
+    public void add_profile (string profile) throws Error {
+      //TODO: Open "profile".json file, parse and add to array
+      var parser = new Json.Parser ();
+      parser.load_from_file (string.join("/", this.cache_path, profile + ".json"));
+
+      var root = parser.get_root ();
+      if (root == null)
+        return;
+
+      array.add_element (parser.get_root ());
+    }
+
     public Json.Node? get_root () {
-      var builder = new Json.Builder();
-      builder.begin_array();
-      builder.end_array();
-      return builder.get_root();
+      var root = new Json.Node (Json.NodeType.ARRAY);
+      root.set_array (array);
+      return root;
     }
   }
 
@@ -29,7 +43,6 @@ namespace FleetCommander {
   }
 
   public static void setup () {
-    cache_data_singleton = null;
     try {
       dconf_dir = DirUtils.make_tmp ("fleet_commander.test.XXXXXX");
     } catch (FileError e) {
@@ -45,6 +58,16 @@ namespace FleetCommander {
       return;
 
     FileUtils.remove (dconf_dir + "/dconf-updated");
+
+    FileUtils.remove (dconf_dir + "/fleet-commander-libreoffice.d/generated");
+    DirUtils.remove (dconf_dir + "/fleet-commander-libreoffice.d");
+
+    FileUtils.remove (dconf_dir + "/fleet-commander-gsettings.d/generated");
+    DirUtils.remove (dconf_dir + "/fleet-commander-gsettings.d");
+
+    FileUtils.remove (dconf_dir + "/fleet-commander-mixed.d/generated");
+    DirUtils.remove (dconf_dir + "/fleet-commander-mixed.d");
+
     DirUtils.remove (dconf_dir);
 
     dconf_dir = null;
@@ -52,14 +75,12 @@ namespace FleetCommander {
   }
 
   public static void test_construct () {
-    stdout.printf("-- %s", Environment.get_variable ("FC_TEST_TMPDIR"));
-    var ddw = new DconfDbWriter (new CacheData ("/some/path"), dconf_dir);
+    var ddw = new DconfDbWriter (new CacheData (), dconf_dir);
     assert_nonnull (ddw);
   }
 
-  public static void test_update_empty_database () {
-    stdout.printf("-- %s", Environment.get_variable ("FC_TEST_TMPDIR"));
-    var ddw = new DconfDbWriter (new CacheData ("/some/path"), dconf_dir);
+  public static void test_update_no_profile () {
+    var ddw = new DconfDbWriter (new CacheData (), dconf_dir);
     assert_nonnull (ddw);
 
     ddw.update_databases ();
@@ -68,14 +89,58 @@ namespace FleetCommander {
     assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.EXISTS));
   }
 
+  public static void test_update_empty_profile () {
+    var cachedata = new CacheData ();
+    cachedata.add_profile ("profile-empty");
+
+    var ddw = new DconfDbWriter (cachedata, dconf_dir);
+
+    cachedata.parsed ();
+
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.EXISTS));
+
+    assert (FileUtils.test (dconf_dir + "/fleet-commander-empty.d/generated", FileTest.EXISTS) == false);
+    assert (FileUtils.test (dconf_dir + "/fleet-commander-empty.d", FileTest.EXISTS) == false);
+  }
+
+  public static void test_update_libreoffice_profile () {
+    var cachedata = new CacheData ();
+    cachedata.add_profile ("profile-libreoffice");
+
+    var ddw = new DconfDbWriter (cachedata, dconf_dir);
+    cachedata.parsed ();
+
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.EXISTS));
+
+    var generated_path = dconf_dir + "/fleet-commander-libreoffice.d/generated";
+
+    assert (FileUtils.test (generated_path, FileTest.EXISTS));
+    assert (FileUtils.test (generated_path, FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/fleet-commander-libreoffice.d", FileTest.EXISTS));
+
+    var keyfile = new KeyFile();
+    keyfile.load_from_file (generated_path, KeyFileFlags.NONE);
+
+    assert (keyfile.get_groups ().length == 1);
+    assert (keyfile.has_group ("org/libreoffice/registry/foo/bar"));
+    assert (keyfile.has_key ("org/libreoffice/registry/foo/bar", "bool"));
+    assert (keyfile.get_value ("org/libreoffice/registry/foo/bar", "bool") == "false");
+  }
+
   public static int main (string[] args) {
     Test.init (ref args);
     var fc_suite = new TestSuite("fleetcommander");
     var ddw_suite = new TestSuite("dconf-db-writer");
 
     add_test ("construct", ddw_suite, test_construct);
-    add_test ("empty-profile-cache", ddw_suite, test_update_empty_database);
-    //TODO: commit_profile, call_dconf_update, update_databases, check_filesystem_for_profile,
+    add_test ("update-no-profile", ddw_suite, test_update_no_profile);
+    add_test ("update-empty-profile", ddw_suite, test_update_empty_profile);
+    add_test ("update-libreoffice-profile", ddw_suite, test_update_libreoffice_profile);
+
+    //TODO: test profiles with existing directoryt and/or generated key file
+    //TODO: implement and test locked keys
 
     fc_suite.add_suite (ddw_suite);
     TestSuite.get_root ().add_suite (fc_suite);
