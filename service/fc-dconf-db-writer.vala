@@ -37,10 +37,8 @@ namespace FleetCommander {
           return;
         }
 
-        commit_profile(profile);
+        commit_profile (profile);
       });
-
-      call_dconf_update();
     }
 
     private void remove_current_profiles () {
@@ -114,10 +112,14 @@ namespace FleetCommander {
       }
     }
 
-    private void call_dconf_update () {
+    private void call_dconf_compile (string uid) {
       Subprocess dconf_update;
+
+      var profile_db  = string.join ("/", dconf_db_path, "fleet-commander-" + uid);
+      var profile_dir = profile_db + ".d";
+
       try {
-        dconf_update = new Subprocess.newv ({"dconf", "update"}, SubprocessFlags.NONE);
+        dconf_update = new Subprocess.newv ({"dconf", "compile", profile_db, profile_dir}, SubprocessFlags.NONE);
         dconf_update.wait ();
       } catch (Error e) {
         warning ("Could not call dconf update, %s", e.message);
@@ -222,6 +224,8 @@ namespace FleetCommander {
         } catch (Error e) {
           warning ("There was an error saving profile settings in %s", generated.get_path ());
         }
+
+        call_dconf_compile (uid);
       } else {
         debug ("There was no settings to save");
       }

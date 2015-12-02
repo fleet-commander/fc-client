@@ -1,4 +1,4 @@
-TESTS_ENVIRONMENT = export PATH=$(abs_srcdir)/tools:$(PATH); export FC_PROFILES_PATH=$(abs_srcdir)/data;
+TESTS_ENVIRONMENT = export FC_PROFILES_PATH=$(abs_srcdir)/data;
 TESTS = 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index
 check_PROGRAMS = 02_profile_cache_manager
 
