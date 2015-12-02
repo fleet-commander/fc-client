@@ -222,7 +222,7 @@ namespace FleetCommander {
       var node = settings.get_member(collector);
       if (node == null)
         debug("profile %s: does not have %s section", uid, collector);
-      if ((changes = node.get_array()) == null)
+      else if ((changes = node.get_array()) == null)
         warning ("profile %s: %s member of settings is not a JSON array", uid, collector);
 
       return changes;
