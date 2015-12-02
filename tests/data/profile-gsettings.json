@@ -1,0 +1,12 @@
+{
+  "uid": "gsettings",
+  "name": "profile-basic",
+  "description": "",
+  "settings": {
+    "org.gnome.gsettings": [
+      {"key": "/org/gnome/foo/bar/bool",
+       "signature": "b",
+       "value": false}
+    ]
+  }
+}

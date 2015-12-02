@@ -13,12 +13,15 @@ check_PROGRAMS = 02_profile_cache_manager
 
 
 EXTRA_DIST = \
-	03_source_manager.vala  \
-	04_cache_data.vala      \
-	05_dconf_db_writer.vala \
-	06_user_index.vala      \
-	tools/dconf             \
-	data/profile-empty.json
+	03_source_manager.vala        \
+	04_cache_data.vala            \
+	05_dconf_db_writer.vala       \
+	06_user_index.vala            \
+	tools/dconf                   \
+	data/profile-empty.json       \
+	data/profile-libreoffice.json \
+	data/profile-gsettings.json   \
+	data/profile-mixed.json
 
 CLEANFILES = \
 	$(TESTS)

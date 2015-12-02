@@ -129,6 +129,59 @@ namespace FleetCommander {
     assert (keyfile.get_value ("org/libreoffice/registry/foo/bar", "bool") == "false");
   }
 
+  public static void test_update_gsettings_profile () {
+    var cachedata = new CacheData ();
+    cachedata.add_profile ("profile-gsettings");
+
+    var ddw = new DconfDbWriter (cachedata, dconf_dir);
+    cachedata.parsed ();
+
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.EXISTS));
+
+    var generated_path = dconf_dir + "/fleet-commander-gsettings.d/generated";
+
+    assert (FileUtils.test (generated_path, FileTest.EXISTS));
+    assert (FileUtils.test (generated_path, FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/fleet-commander-gsettings.d", FileTest.EXISTS));
+
+    var keyfile = new KeyFile();
+    keyfile.load_from_file (generated_path, KeyFileFlags.NONE);
+
+    assert (keyfile.get_groups ().length == 1);
+    assert (keyfile.has_group ("org/gnome/foo/bar"));
+    assert (keyfile.has_key ("org/gnome/foo/bar", "bool"));
+    assert (keyfile.get_value ("org/gnome/foo/bar", "bool") == "false");
+  }
+
+  public static void test_update_mixed_profile () {
+    var cachedata = new CacheData ();
+    cachedata.add_profile ("profile-mixed");
+
+    var ddw = new DconfDbWriter (cachedata, dconf_dir);
+    cachedata.parsed ();
+
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/dconf-updated", FileTest.EXISTS));
+
+    var generated_path = dconf_dir + "/fleet-commander-mixed.d/generated";
+
+    assert (FileUtils.test (generated_path, FileTest.EXISTS));
+    assert (FileUtils.test (generated_path, FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/fleet-commander-mixed.d", FileTest.EXISTS));
+
+    var keyfile = new KeyFile();
+    keyfile.load_from_file (generated_path, KeyFileFlags.NONE);
+
+    assert (keyfile.get_groups ().length == 2);
+    assert (keyfile.has_group ("org/libreoffice/registry/foo/bar"));
+    assert (keyfile.has_key ("org/libreoffice/registry/foo/bar", "bool"));
+    assert (keyfile.get_value ("org/libreoffice/registry/foo/bar", "bool") == "false");
+    assert (keyfile.has_group ("org/gnome/foo/bar"));
+    assert (keyfile.has_key ("org/gnome/foo/bar", "bool"));
+    assert (keyfile.get_value ("org/gnome/foo/bar", "bool") == "false");
+  }
+
   public static int main (string[] args) {
     Test.init (ref args);
     var fc_suite = new TestSuite("fleetcommander");
@@ -138,6 +191,8 @@ namespace FleetCommander {
     add_test ("update-no-profile", ddw_suite, test_update_no_profile);
     add_test ("update-empty-profile", ddw_suite, test_update_empty_profile);
     add_test ("update-libreoffice-profile", ddw_suite, test_update_libreoffice_profile);
+    add_test ("update-gsettings-profile", ddw_suite, test_update_gsettings_profile);
+    add_test ("update-mixed-profile", ddw_suite, test_update_mixed_profile);
 
     //TODO: test profiles with existing directoryt and/or generated key file
     //TODO: implement and test locked keys
