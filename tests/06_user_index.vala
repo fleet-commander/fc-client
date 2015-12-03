@@ -1,27 +1,6 @@
 namespace FleetCommander {
   public delegate void TestFn ();
 
-  //MockCacheData
-  //TODO: move this to a different file to share with DconfDbWriter
-  public class CacheData {
-    private string cache_path;
-    public signal void parsed();
-    public CacheData (string cache_path) {
-      this.cache_path = cache_path;
-    }
-
-    public string get_path () {
-      return cache_path;
-    }
-
-    public Json.Node? get_root () {
-      var builder = new Json.Builder();
-      builder.begin_array();
-      builder.end_array();
-      return builder.get_root();
-    }
-  }
-
   public static void add_test (string name, TestSuite suite, TestFn fn) {
     suite.add(new TestCase(name, setup, (GLib.TestFunc)fn, teardown));
   }
@@ -33,7 +12,12 @@ namespace FleetCommander {
   }
 
   public void test_construct () {
-    var ui = new UserIndex(new CacheData ("/some/path"));
+    var ui = new UserIndex(new CacheData ());
+    assert_nonnull (ui);
+  }
+
+  public void test_rebuild_index_empty () {
+    var ui = new UserIndex(new CacheData ());
     assert_nonnull (ui);
   }
 

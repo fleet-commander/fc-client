@@ -40,15 +40,17 @@ CLEANFILES = \
 	valac --pkg gio-2.0 --pkg json-glib-1.0 $^ -o $@
 
 05_dconf_db_writer_SOURCES = \
-  	test-utils.vapi \
+  	test-utils.vapi                               \
+	cache-data-mock.vala                          \
 	$(top_srcdir)/service/fc-dconf-db-writer.vala \
-	$(top_srcdir)/service/fc-utils.vala \
+	$(top_srcdir)/service/fc-utils.vala           \
 	05_dconf_db_writer.vala
 05_dconf_db_writer: $(05_dconf_db_writer_SOURCES)
 	valac --pkg gio-2.0 --pkg json-glib-1.0 --pkg posix $^ -o $@
 
 06_user_index_SOURCES = \
-	test-utils.vapi \
+	test-utils.vapi                          \
+	cache-data-mock.vala                     \
 	$(top_srcdir)/service/fc-user-index.vala \
 	06_user_index.vala
 06_user_index: $(06_user_index_SOURCES)
