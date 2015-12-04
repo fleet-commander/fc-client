@@ -15,8 +15,29 @@ namespace FleetCommander {
       return;
 
     FileUtils.remove (cache_dir + "/profiles.json");
+    FileUtils.remove (cache_dir + "/applies.json");
     DirUtils.remove (cache_dir);
     cache_dir = null;
+  }
+
+  public static Json.Node? get_json_root (string filename) {
+    var path = string.join ("/", cache_dir, filename);
+    if (FileUtils.test (path, FileTest.EXISTS) == false)
+      return null;
+    if (FileUtils.test (path, FileTest.IS_REGULAR) == false)
+      return null;
+
+    var parser = new Json.Parser ();
+    parser.load_from_file (path);
+    return parser.get_root ();
+  }
+
+  public static Json.Node? get_profiles_root () {
+    return get_json_root ("profiles.json");
+  }
+
+  public static Json.Node? get_applies_root () {
+    return get_json_root ("applies.json");
   }
 
   public static void test_add_profile () {
@@ -25,7 +46,7 @@ namespace FleetCommander {
     pcm.add_profile_from_data ("{\"foo\": \"bar\"}");
     pcm.add_profile_from_data ("{\"baz\": \"foo\"}");
 
-    var root = pcm.get_cache_root();
+    var root = get_profiles_root();
     assert_nonnull (root);
     assert_nonnull (root.get_array ());
     assert (root.get_array ().get_length () == 2);
@@ -47,32 +68,46 @@ namespace FleetCommander {
     assert (profile_object.get_string_member ("baz") == "foo");
   }
 
+  public static void test_write_applies () {
+    var pcm = new ProfileCacheManager (cache_dir);
+    pcm.write_applies ("{}");
+
+    assert (get_applies_root () != null);
+  }
+
   public static void test_flush () {
     var pcm = new ProfileCacheManager (cache_dir);
 
     pcm.add_profile_from_data ("{\"foo\": \"bar\"}");
+    pcm.write_applies ("{}");
     pcm.flush ();
 
-    var root = pcm.get_cache_root ();
-    assert_nonnull (root);
-    assert_nonnull (root.get_array ());
-    assert (root.get_array ().get_length () == 0);
+    assert (get_profiles_root () == null);
+    assert (get_applies_root () == null);
   }
 
   public static void test_empty_cachedir () {
     var pcm = new ProfileCacheManager (cache_dir);
 
-    var root = pcm.get_cache_root ();
-    assert_nonnull (root);
-    assert_nonnull (root.get_array ());
-    assert (root.get_array ().get_length () == 0);
+    assert (get_profiles_root () == null);
+    assert (get_applies_root () == null);
   }
 
   public static void test_invalid_path () {
     var pcm = new ProfileCacheManager ("/foo/bar/baz/dir/random");
+    assert (get_profiles_root () == null);
+
     FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Could not rewrite*");
-    var cache_root = pcm.get_cache_root ();
-    assert (cache_root == null);
+    pcm.add_profile_from_data ("{\"foo\": \"bar\"}");
+    assert (get_profiles_root () == null);
+
+    FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Could not rewrite*");
+    pcm.write_applies ("{}");
+    assert (get_applies_root () == null);
+
+    pcm.flush ();
+    assert (get_profiles_root () == null);
+    assert (get_applies_root () == null);
   }
 
   public delegate void TestFn ();
@@ -87,6 +122,7 @@ namespace FleetCommander {
     var pcm_suite = new TestSuite("profile-cache-manager");
 
     add_test ("add-profile", pcm_suite, test_add_profile);
+    add_test ("write-applies", pcm_suite, test_write_applies);
     add_test ("flush", pcm_suite, test_flush);
     add_test ("empty-cache-dir", pcm_suite, test_empty_cachedir);
     add_test ("invalid-path", pcm_suite, test_invalid_path);

@@ -3,7 +3,7 @@ namespace FleetCommander {
     private Soup.Session         http_session;
     private Json.Parser          parser;
     internal ProfileCacheManager profiles;
-    private  string              source; 
+    private  string              source;
 
     internal SourceManager(ProfileCacheManager profiles,
                            string              source,
@@ -12,6 +12,9 @@ namespace FleetCommander {
       parser = new Json.Parser();
       this.profiles = profiles;
       this.source = source;
+
+      if (this.source.has_suffix ("/") == false)
+        this.source = this.source + "/";
 
       update_profiles();
 
@@ -25,9 +28,11 @@ namespace FleetCommander {
     }
 
     private void update_profiles () {
-      var msg = new Soup.Message("GET", source);
-      debug("Queueing request to %s", source);
-      http_session.queue_message(msg, (s,m) => {
+      profiles.flush ();
+
+      var profiles_msg = new Soup.Message("GET", source + "index.json");
+      debug("Queueing request to %s", profiles_msg.uri.to_string (false));
+      http_session.queue_message(profiles_msg, (s,m) => {
         if (process_json_request(m) == false)
           return;
 
@@ -35,6 +40,8 @@ namespace FleetCommander {
         build_profile_cache(index);
         debug ("%s: %s:", m.uri.to_string(true), index);
       });
+
+      get_applies ();
     }
 
     private static bool process_json_request(Soup.Message msg) {
@@ -102,11 +109,23 @@ namespace FleetCommander {
       });
 
       debug ("Sending requests for URLs in the index");
-      profiles.flush();
       foreach (var url in urls) {
         var msg = new Soup.Message("GET", source + url);
         http_session.queue_message(msg, profile_response_cb);
       }
+    }
+
+    private void get_applies () {
+      var applies_msg = new Soup.Message ("GET", source + "applies.json");
+      debug("Queueing request to %s", applies_msg.uri.to_string (false));
+      http_session.queue_message (applies_msg, (s,m) => {
+        if (process_json_request(m) == false)
+          return;
+
+        var applies = (string) m.response_body.data;
+        profiles.write_applies (applies);
+        debug ("%s: %s:", m.uri.to_string(true), applies);
+      });
     }
 
     private void profile_response_cb (Soup.Session s, Soup.Message m) {
