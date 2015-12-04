@@ -1,6 +1,6 @@
 /* Mocked classes */
 public const string DEFAULT_URL = "http://foobar/";
-public const string PROFILE_INDEX = "[{\"url\": \"123456\"}]";
+public const string PROFILE_INDEX = "[{\"url\": \"123456.json\"}]";
 public const string DEFAULT_PROFILE = "fake_profile_data-123456";
 public const string DEFAULT_APPLIES = "{}";
 
@@ -49,7 +49,7 @@ namespace Soup {
       if (msg.url == DEFAULT_URL + "index.json") {
         msg.response_body.data = PROFILE_INDEX;
         index_requests++;
-      } else if (msg.url == DEFAULT_URL + "123456") {
+      } else if (msg.url == DEFAULT_URL + "123456.json") {
         msg.response_body.data = DEFAULT_PROFILE;
         profile_requests++;
       } else if (msg.url == DEFAULT_URL + "applies.json") {
