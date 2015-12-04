@@ -50,7 +50,7 @@ namespace FleetCommander {
 
   /* Tests */
   public static void test_no_cache_file () {
-    var cd = new CacheData (cache_dir);
+    var cd = new CacheData (cache_dir + "/profiles.json");
     assert_nonnull (cd);
 
     assert (cd.get_root () == null);
@@ -66,7 +66,7 @@ namespace FleetCommander {
                       \"uid\" : \"230637306661439565351338266313693940252\"}]";
     write_content (cache_dir + "/profiles.json", payload);
 
-    var cd = new CacheData (cache_dir);
+    var cd = new CacheData (cache_dir + "/profiles.json");
     assert_nonnull (cd);
     assert_nonnull (cd.get_root ());
   }
@@ -75,7 +75,7 @@ namespace FleetCommander {
     write_content (cache_dir + "/profiles.json", "");
 
     FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Root JSON element*empty*");
-    var cd = new CacheData (cache_dir);
+    var cd = new CacheData (cache_dir + "/profiles.json");
     assert_nonnull (cd);
     assert (cd.get_root () == null);
   }
@@ -84,7 +84,7 @@ namespace FleetCommander {
     write_content (cache_dir + "/profiles.json", "{}");
 
     FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*JSON element*not an array*");
-    var cd = new CacheData (cache_dir);
+    var cd = new CacheData (cache_dir  + "/profiles.json");
     assert_nonnull (cd);
     assert (cd.get_root () == null);
   }
@@ -93,7 +93,7 @@ namespace FleetCommander {
     write_content (cache_dir + "/profiles.json", "#@$@#W!*");
 
     FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*error parsing*");
-    var cd = new CacheData (cache_dir);
+    var cd = new CacheData (cache_dir  + "/profiles.json");
     assert_nonnull (cd);
     assert (cd.get_root () == null);
   }
@@ -110,7 +110,7 @@ namespace FleetCommander {
 
     loop = new MainLoop (null, false);
 
-    var cd = new CacheData (cache_dir);
+    var cd = new CacheData (cache_dir  + "/profiles.json");
     assert_nonnull (cd);
     assert_nonnull (cd.get_root ());
 

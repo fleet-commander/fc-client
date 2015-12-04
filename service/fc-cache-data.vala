@@ -6,8 +6,8 @@ namespace FleetCommander {
 
     public signal void parsed();
 
-    public CacheData (string cache_path) {
-      profiles = File.new_for_path (cache_path + "/profiles.json");
+    public CacheData (string path) {
+      profiles = File.new_for_path (path);
       monitor = new ContentMonitor (profiles.get_path ());
       monitor.content_updated.connect (() => {
         parse ();

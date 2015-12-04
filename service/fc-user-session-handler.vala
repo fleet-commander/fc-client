@@ -8,7 +8,7 @@ namespace FleetCommander {
 
     public UserSessionHandler (UserIndex index,
                                string    dconf_db_path,
-    				                   string    dconf_profile_path) {
+                               string    dconf_profile_path) {
       this.index = index;
       this.dconf_db_path      = dconf_db_path;
       this.dconf_profile_path = dconf_profile_path;
@@ -22,7 +22,7 @@ namespace FleetCommander {
                         warning ("org.freedesktop.login1 bus name vanished");
                         logind = null;
                       });
-      index.get_cache().parsed.connect (update_dconf_profiles);
+      index.updated.connect (update_dconf_profiles);
     }
 
      private void update_dconf_profiles () {

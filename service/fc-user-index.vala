@@ -5,13 +5,16 @@ namespace FleetCommander {
     private CacheData cache;
     private bool      index_built;
 
+    public signal void updated ();
+
     public UserIndex (CacheData cache) {
       this.cache = cache;
       index_built = false;
-    }
 
-    public CacheData get_cache () {
-      return cache;
+      this.cache.parsed.connect(() => {
+        flush ();
+        updated ();
+      });
     }
 
     private void rebuild_index () {
@@ -22,36 +25,24 @@ namespace FleetCommander {
         warning ("%s is empty or there was some error parsing it", cache.get_path ());
         return;
       }
-      var profiles = cache.get_root().get_array();
-      if (profiles == null) {
-        warning("%s does not contain a JSON list as root element", cache.get_path ());
+      var applies = cache.get_root().get_object();
+      if (applies == null) {
+        warning("%s does not contain a JSON object as root element", cache.get_path ());
         return;
       }
 
-      profiles.foreach_element ((a,i,n) => {
-        var profile = n.get_object();
-        if (profile == null) {
+      applies.foreach_member ((o, uid, n) => {
+        var profile_applies = n.get_object();
+        if (profile_applies == null) {
           warning ("%s contains an element that is not a profile", cache.get_path ());
-          return;
-        }
-
-        var uid = profile.get_string_member("uid");
-        if (uid == null) {
-          warning ("%s #%u profile's uid member is not a string", uid, i);
-          return;
-        }
-
-        var applies_to = profile.get_object_member("applies-to");
-        if (applies_to == null) {
-          warning ("%s profile: 'applies-to' holds no object", uid);
           return;
         }
 
         string[] keys = {"users", "groups"};
         foreach (string key in keys) {
-          var list = applies_to.get_array_member (key);
+          var list = profile_applies.get_array_member (key);
           if (list == null) {
-            warning ("%s profile: '%s' member is not an array", uid, key);
+            warning ("%s profile applies: '%s' member is not an array", uid, key);
             continue;
           }
 
@@ -60,7 +51,7 @@ namespace FleetCommander {
           list.foreach_element ((a, i, n) => {
             var user_or_group = n.get_string();
             if (user_or_group == null) {
-              warning ("%s[applies-to][%s] #%u array element was not a string", uid, key, i);
+              warning ("%s[%s] #%u array element was not a string", uid, key, i);
               return;
             }
 
@@ -88,7 +79,7 @@ namespace FleetCommander {
     internal Json.Object? get_group_profiles () {
       if (index_built == false)
         rebuild_index ();
-      return user_profiles;
+      return group_profiles;
     }
 
     internal void flush () {
