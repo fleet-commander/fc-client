@@ -1,6 +1,5 @@
 TESTS_ENVIRONMENT = export FC_PROFILES_PATH=$(abs_srcdir)/data;
 TESTS = 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index
-check_PROGRAMS = 02_profile_cache_manager
 
 EXTRA_DIST = \
 	02_profile_cache_manager.vala \
@@ -8,11 +7,13 @@ EXTRA_DIST = \
 	04_cache_data.vala            \
 	05_dconf_db_writer.vala       \
 	06_user_index.vala            \
-	tools/dconf                   \
+	test-utils.vapi               \
+	cache-data-mock.vala          \
 	data/profile-empty.json       \
 	data/profile-libreoffice.json \
 	data/profile-gsettings.json   \
-	data/profile-mixed.json
+	data/profile-mixed.json       \
+	data/applies-simple.json
 
 CLEANFILES = \
 	$(TESTS)
