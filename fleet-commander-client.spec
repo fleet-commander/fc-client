@@ -40,6 +40,7 @@ make
 
 %install
 %make_install
+install -m 755 -d %{buildroot}%{_localstatedir}/cache/fleet-commander
 
 %clean
 rm -rf %{buildroot}
@@ -51,11 +52,12 @@ rm -rf %{buildroot}
 %systemd_preun fleet-commander.service
 
 %postun
-%systemd_postun_with_restart fleet-commander.service 
+%systemd_postun_with_restart fleet-commander.service
 
 %files
 %defattr(644, root, root)
 %{_sysconfdir}/xdg/fleet-commander.conf
 %attr(755, -, -) %{_libexecdir}/fleet-commander-client
 %{systemd_dir}/fleet-commander.service
+%attr(755, -, -) %{_localstatedir}/cache/fleet-commander
 %changelog
