@@ -21,8 +21,8 @@ namespace FleetCommander {
   public static void teardown () {
     if (dconf_dir == null)
       return;
-    FileUtils.remove (dconf_dir + "/fleet-commander-libreoffice.d/generated");
 
+    FileUtils.remove (dconf_dir + "/fleet-commander-libreoffice.d/generated");
     DirUtils.remove (dconf_dir + "/fleet-commander-libreoffice.d");
     FileUtils.remove (dconf_dir + "/fleet-commander-libreoffice");
 
@@ -132,6 +132,32 @@ namespace FleetCommander {
     assert (keyfile.get_value ("org/gnome/foo/bar", "bool") == "false");
   }
 
+  public static void test_update_existing_profile () {
+    DirUtils.create (dconf_dir + "/fleet-commander-gsettings.d", 0x1E4);
+    FileUtils.set_contents (dconf_dir + "/fleet-commander-gsettings", "");
+    FileUtils.set_contents (dconf_dir + "/fleet-commander-gsettings.d/generated", "[b/c/d]\ne = 1");
+
+    DirUtils.create (dconf_dir + "/fleet-commander-random.d", 0x1E4);
+    FileUtils.set_contents (dconf_dir + "/fleet-commander-random", "");
+    FileUtils.set_contents (dconf_dir + "/fleet-commander-random.d/generated", "[b/c/d]\nf = 3");
+
+    var cachedata = new CacheData ();
+    cachedata.add_profile ("profile-gsettings");
+    var ddw = new DconfDbWriter (cachedata, dconf_dir);
+    cachedata.parsed ();
+
+    assert(FileUtils.test (dconf_dir + "/fleet-commander-random", FileTest.EXISTS) == false);
+    assert(FileUtils.test (dconf_dir + "/fleet-commander-random.d", FileTest.EXISTS) == false);
+
+    var keyfile = new KeyFile ();
+    keyfile.load_from_file (dconf_dir + "/fleet-commander-gsettings.d/generated", KeyFileFlags.NONE);
+
+    assert (keyfile.get_groups ().length == 1);
+    assert (keyfile.has_group ("org/gnome/foo/bar"));
+    assert (keyfile.has_key ("org/gnome/foo/bar", "bool"));
+    assert (keyfile.get_value ("org/gnome/foo/bar", "bool") == "false");
+  }
+
   public static int main (string[] args) {
     Test.init (ref args);
     var fc_suite = new TestSuite("fleetcommander");
@@ -142,8 +168,8 @@ namespace FleetCommander {
     add_test ("update-libreoffice-profile", ddw_suite, test_update_libreoffice_profile);
     add_test ("update-gsettings-profile", ddw_suite, test_update_gsettings_profile);
     add_test ("update-mixed-profile", ddw_suite, test_update_mixed_profile);
+    add_test ("update-existing-profile", ddw_suite, test_update_existing_profile);
 
-    //TODO: test profiles with existing directoryt and/or generated key file
     //TODO: implement and test locked keys
 
     fc_suite.add_suite (ddw_suite);
