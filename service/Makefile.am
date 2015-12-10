@@ -16,6 +16,6 @@ fleet_commander_client_SOURCES =       \
 	fleet-commander-posix-helper.h \
 	fleet-commander-posix-helper.vapi
 
-fleet_commander_client_CFLAGS  = $(JSON_GLIB_CFLAGS) $(GIO_CFLAGS) $(LIBSOUP_CFLAGS) -g
+fleet_commander_client_CFLAGS  = $(JSON_GLIB_CFLAGS) $(GIO_CFLAGS) $(LIBSOUP_CFLAGS) -g -DG_LOG_DOMAIN=\"fleet-commander\"
 fleet_commander_client_LDADD   = $(JSON_GLIB_LIBS) $(GIO_LIBS) $(LIBSOUP_LIBS)
 fleet_commander_client_VALAFLAGS = --pkg gio-2.0 --pkg libsoup-2.4 --pkg json-glib-1.0 --pkg posix
