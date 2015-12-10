@@ -5,7 +5,7 @@ namespace FleetCommander {
     public uint   polling_interval   = 60 * 60;
     public string cache_path         = "/var/cache/fleet-commander";
     public string dconf_db_path      = "/etc/dconf/db";
-    public string dconf_profile_path = "/etc/dconf/profile";
+    public string dconf_profile_path = "/run/dconf/user";
 
     public ConfigReader (string path = "/etc/xdg/fleet-commander.conf") {
       var file = File.new_for_path (path);

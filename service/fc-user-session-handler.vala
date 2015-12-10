@@ -113,7 +113,7 @@ namespace FleetCommander {
       }
       merged_profiles = null;
 
-      write_dconf_profile (name, dconf_profile_data);
+      write_dconf_profile (uid, dconf_profile_data);
     }
 
     private void delete_dconf_profile (string name) {
@@ -127,12 +127,24 @@ namespace FleetCommander {
       }
     }
 
-    private void write_dconf_profile (string user_name, string data) {
-      var path = string.join("/", dconf_profile_path, "u:" + user_name);
+    private void write_dconf_profile (uint32 uid, string data) {
+      var path = dconf_profile_path + "/%u".printf(uid);
+      var dconf_profile = File.new_for_path (path);
+
+      // Create parent directory for profile if it doesn't exists
+      if (dconf_profile.get_parent ().query_exists () == false) {
+        try {
+          dconf_profile.get_parent ().make_directory_with_parents ();
+        } catch (Error e) {
+          warning ("Could not create directory %s: %s",
+                   dconf_profile.get_parent ().get_path (), e.message);
+          return;
+        }
+      }
+
       debug ("Attempting to write dconf profile in %s", path);
       try {
-        var dconf_profile = File.new_for_path (path);
-        var w = dconf_profile.replace(null, true, FileCreateFlags.NONE, null);
+        var w = dconf_profile.replace(null, false, FileCreateFlags.NONE, null);
         var d = new DataOutputStream(w);
         d.put_string(data);
       } catch (Error e) {
