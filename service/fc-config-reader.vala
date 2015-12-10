@@ -8,25 +8,31 @@ namespace FleetCommander {
     public string dconf_profile_path = "/run/dconf/user";
 
     public ConfigReader (string path = "/etc/xdg/fleet-commander.conf") {
-      var file = File.new_for_path (path);
+      var keyfile = new KeyFile ();
       try {
-        var dis = new DataInputStream (file.read ());
-        string line;
-
-        while ((line = dis.read_line (null)) != null) {
-          debug ("LINE '%s'\n", line);
-          var field = line.split(":", 2);
-          if (field.length != 2)
-            continue;
-
-          var key = field[0].strip();
-          var val = field[1].strip();
-
-          process_key_value (key, val);
-        }
+        keyfile.load_from_file (path, KeyFileFlags.NONE);
       } catch (Error e) {
-        debug ("There was an error reading configuration");
+        warning ("Error parsing configuration file %s: %s", path, e.message);
         return;
+      }
+
+      if (keyfile.has_group("fleet-commander") == false) {
+        warning ("Configuration file %s does not have [fleet-commander] group", path);
+        return;
+      }
+
+      string[] keys = {"source", "polling-interval", "cache-path", "dconf-db-path", "dconf-profile-path"};
+      foreach (string key in keys) {
+        if (keyfile.has_key ("fleet-commander", key) == false)
+          continue;
+
+        try {
+          var val = keyfile.get_string ("fleet-commander", key);
+          process_key_value (key, val);
+        } catch (Error e) {
+          warning ("There was an error reading key %s from %s: %s", key, path, e.message);
+          continue;
+        }
       }
     }
 
@@ -41,9 +47,20 @@ namespace FleetCommander {
           break;
         case "polling-interval":
           int tmp = int.parse(val);
-          if (tmp == 0)
+          if (tmp == 0) {
+            warning ("Value 0 is invalid for polling-interval");
             break;
+          }
           polling_interval = (uint)tmp;
+          break;
+        case "cache-path":
+          cache_path = val;
+          break;
+        case "dconf-db-path":
+          dconf_db_path = val;
+          break;
+        case "dconf-profile-path":
+          dconf_profile_path = val;
           break;
       }
     }

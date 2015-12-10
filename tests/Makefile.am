@@ -1,7 +1,8 @@
 TESTS_ENVIRONMENT = export FC_PROFILES_PATH=$(abs_srcdir)/data;
-TESTS = 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index
+TESTS = 01_config_reader 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index
 
 EXTRA_DIST = \
+	01_config_reader.vala         \
 	02_profile_cache_manager.vala \
 	03_source_manager.vala        \
 	04_cache_data.vala            \
@@ -13,10 +14,20 @@ EXTRA_DIST = \
 	data/profile-libreoffice.json \
 	data/profile-gsettings.json   \
 	data/profile-mixed.json       \
-	data/applies-simple.json
+	data/applies-simple.json      \
+	data/simple-test.conf         \
+	data/interval-zero.conf       \
+	data/missing-group.conf
 
 CLEANFILES = \
 	$(TESTS)
+
+01_config_reader_SOURCES = \
+  	test-utils.vapi                             \
+  	$(top_srcdir)/service/fc-config-reader.vala \
+	01_config_reader.vala
+01_config_reader: $(01_config_reader_SOURCES)
+	valac --pkg gio-2.0 $^ -o $@
 
 02_profile_cache_manager_SOURCES = \
 	test-utils.vapi                                     \
