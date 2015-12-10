@@ -11,7 +11,12 @@ namespace FleetCommander {
     public ContentMonitor (string path, uint interval = 1000) {
       this.interval = interval;
       profiles = File.new_for_path(path);
-      monitor = profiles.monitor_file(FileMonitorFlags.NONE);
+      try {
+        monitor = profiles.monitor_file(FileMonitorFlags.NONE);
+      } catch (Error e) {
+        error ("Could not start file monitor for %s: %s", profiles.get_path (), e.message);
+      }
+
       monitor.changed.connect((file, other_file, event) => {
         switch (event) {
           case FileMonitorEvent.CREATED:

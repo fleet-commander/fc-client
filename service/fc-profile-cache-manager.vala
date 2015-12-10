@@ -17,8 +17,14 @@ namespace FleetCommander {
       if (profiles_cache == null)
         return;
 
-      if (parser.load_from_data (profile_data) == false ||
-          parser.get_root() == null                     ||
+      try {
+        parser.load_from_data (profile_data);
+      } catch (Error e) {
+        warning ("Could not parse %s: %s", profile_data, e.message);
+        return;
+      }
+
+      if (parser.get_root() == null                     ||
           parser.get_root().get_object() == null) {
         warning("Profile request data was not a valid JSON object: %s", profile_data);
         return;
@@ -65,13 +71,19 @@ namespace FleetCommander {
       debug("Flushing profile cache");
 
       if (profiles.query_exists (null)) {
-          if (profiles.delete () == false)
-            warning ("Could not delete %s", profiles.get_path ());
+        try {
+          profiles.delete ();
+        } catch (Error e) {
+          warning ("Could not delete %s: %s", profiles.get_path (), e.message);
+        }
       }
 
       if (applies.query_exists ()) {
-        if (applies.delete () == false)
-          warning ("Could not delete %s", applies.get_path ());
+        try {
+          applies.delete ();
+        } catch (Error e) {
+          warning ("Could not delete %s: %s", applies.get_path (), e.message);
+        }
       }
     }
 
