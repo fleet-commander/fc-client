@@ -43,10 +43,8 @@ namespace FleetCommander {
       root = parser.get_root();
       if (root == null) {
         warning ("Root JSON element of profile cache is empty");
-      } else if (root.get_array() == null) {
-        warning ("Root JSON element of profile cache is not an array");
-        root = null;
       }
+
       parsed();
     }
   }
