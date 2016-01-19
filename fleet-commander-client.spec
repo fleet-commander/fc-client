@@ -1,9 +1,9 @@
 Name:           fleet-commander-client
-Version:        0.3.0
+Version:        0.7.0
 Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
-License: LGPL-2.1+
+License: LGPLv2+
 URL: https://github.com/fleet-commander/fc-client
 Source0: https://github.com/fleet-commander/fc-client/releases/download/%{version}/%{name}-%{version}.tar.xz
 
@@ -16,10 +16,6 @@ BuildRequires: gtk-doc
 BuildRequires: dconf
 BuildRequires: systemd
 
-Requires: glib2
-Requires: json-glib
-Requires: libsoup
-Requires: gnome-online-accounts
 Requires: dconf
 
 Requires: systemd
@@ -27,15 +23,13 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 
-%define systemd_dir %{_prefix}/lib/systemd/system
-
 %description
-Profile data retreiver for Fleet Commander client hosts
+Profile data retriever for Fleet Commander client hosts
 
 %prep
 %setup -q
 %build
-%configure --with-systemdsystemunitdir=%{systemd_dir}
+%configure
 make
 
 %install
@@ -56,8 +50,14 @@ rm -rf %{buildroot}
 
 %files
 %defattr(644, root, root)
-%{_sysconfdir}/xdg/fleet-commander.conf
+%config(noreplace) %{_sysconfdir}/xdg/fleet-commander.conf
 %attr(755, -, -) %{_libexecdir}/fleet-commander-client
-%{systemd_dir}/fleet-commander.service
+%{_unitdir}/fleet-commander.service
 %attr(755, -, -) %{_localstatedir}/cache/fleet-commander
+
 %changelog
+* Tue Jan 19 2016 Alberto Ruiz <aruiz@redhat.com> - 0.7.0-1
+- Update package for 0.7.0
+
+* Fri Jan 15 2016 Alberto Ruiz <aruiz@redhat.com> - 0.3.0-1
+- Initial RPM package
