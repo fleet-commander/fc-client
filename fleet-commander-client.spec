@@ -1,6 +1,6 @@
 Name:           fleet-commander-client
 Version:        0.7.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Fleet Commander Client
 
 License: LGPLv2+
@@ -24,7 +24,9 @@ Requires(preun): systemd
 Requires(postun): systemd
 
 %description
-Profile data retriever for Fleet Commander client hosts
+Profile data retriever for Fleet Commander client hosts. Fleet Commander is an
+application that allows you to manage the desktop configuration of a large
+network of users and workstations/laptops.
 
 %prep
 %setup -q
@@ -56,6 +58,9 @@ rm -rf %{buildroot}
 %attr(755, -, -) %{_localstatedir}/cache/fleet-commander
 
 %changelog
+* Wed Feb 03 2016 Alberto Ruiz <aruiz@redhat.com> - 0.7.0-2
+- Fix documentation string
+
 * Tue Jan 19 2016 Alberto Ruiz <aruiz@redhat.com> - 0.7.0-1
 - Update package for 0.7.0
 
