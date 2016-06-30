@@ -151,7 +151,7 @@ namespace FleetCommander {
   }
 
   public static void add_test (string name, TestSuite suite, TestFn fn) {
-    suite.add(new TestCase(name, setup, (GLib.TestFunc)fn, teardown));
+    suite.add(new TestCase(name, setup, (GLib.TestFixtureFunc)fn, teardown));
   }
 
   public static int main (string[] args) {
