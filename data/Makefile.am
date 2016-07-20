@@ -18,7 +18,7 @@ fleet-commander.service: Makefile
 	             echo 'StandardError=inherit';                                   \
 	             echo '';                                                        \
 		     echo '[Install]';                                               \
-		     echo 'Alias=fleet-commander.service') > $@.tmp &&               \
+		     echo 'WantedBy=multi-user.target') > $@.tmp &&               \
 	            mv $@.tmp $@
 endif
 
