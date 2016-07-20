@@ -1,5 +1,5 @@
 Name:           fleet-commander-client
-Version:        0.7.0
+Version:        0.7.1
 Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
@@ -56,6 +56,9 @@ rm -rf %{buildroot}
 %attr(755, -, -) %{_localstatedir}/cache/fleet-commander
 
 %changelog
+* Wed Jul 20 2016 Alberto Ruiz <aruizrui@redhat.com> - 0.7.1-1
+- Fix systemd unit file regression that would prevent autostart of the service
+
 * Tue Jan 19 2016 Alberto Ruiz <aruiz@redhat.com> - 0.7.0-1
 - Update package for 0.7.0
 
