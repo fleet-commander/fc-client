@@ -1,6 +1,6 @@
 Name:           fleet-commander-client
-Version:        0.7.0
-Release:        2%{?dist}
+Version:        0.7.99
+Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
 License: LGPLv2+
