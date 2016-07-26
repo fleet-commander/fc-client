@@ -8,7 +8,9 @@ namespace FleetCommander {
 
     var dconfdb = new DconfDbWriter(new CacheData(config.cache_path + "/profiles.json"), config.dconf_db_path);
     var uindex  = new UserIndex(new CacheData (config.cache_path + "/applies.json"));
-    var usermgr = new UserSessionHandler(uindex, config.dconf_db_path, config.dconf_profile_path);
+
+    var usermgr = new UserSessionHandler(uindex);
+    usermgr.register_handler (new ConfigurationAdapterDconfProfiles (config.dconf_profile_path));
 
     ml.run();
     return 0;

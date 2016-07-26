@@ -1,5 +1,5 @@
 TESTS_ENVIRONMENT = export FC_PROFILES_PATH=$(abs_srcdir)/data;
-TESTS = 01_config_reader 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index
+TESTS = 01_config_reader 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index 07_adapter_dconf_profiles
 
 EXTRA_DIST = \
 	01_config_reader.vala         \
@@ -8,8 +8,10 @@ EXTRA_DIST = \
 	04_cache_data.vala            \
 	05_dconf_db_writer.vala       \
 	06_user_index.vala            \
+	07_adapter_dconf_profiles.vala \
 	test-utils.vapi               \
 	cache-data-mock.vala          \
+	posix-mock.vala               \
 	data/profile-empty.json       \
 	data/profile-libreoffice.json \
 	data/profile-gsettings.json   \
@@ -66,3 +68,17 @@ CLEANFILES = \
 	06_user_index.vala
 06_user_index: $(06_user_index_SOURCES)
 	valac --pkg gio-2.0 --pkg json-glib-1.0 $^ -o $@
+
+07_adapter_dconf_profiles_SOURCES = \
+	test-utils.vapi             \
+	cache-data-mock.vala        \
+	posix-mock.vala             \
+	$(top_srcdir)/service/fc-utils.vala                                \
+	$(top_srcdir)/service/fc-user-index.vala                           \
+	$(top_srcdir)/service/fc-configuration-adapter.vala                \
+	$(top_srcdir)/service/fc-configuration-adapter-dconf-profiles.vala \
+	$(top_srcdir)/service/logind-manager.vala                          \
+	07_adapter_dconf_profiles.vala
+
+07_adapter_dconf_profiles: $(07_adapter_dconf_profiles_SOURCES)
+	valac --pkg gio-2.0 --pkg json-glib-1.0 --pkg posix --includedir=$(top_srcdir)/service $^ -o $@
