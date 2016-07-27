@@ -43,6 +43,35 @@ namespace FleetCommander {
     assert (profiles.get_string_element (0) == "simpleprofile");
   }
 
+  public void test_profiles_users_groups () {
+    var cache = new CacheData ();
+    cache.set_applies ("applies-duplicates");
+
+    var ui = new UserIndex(cache);
+
+    List<string> groups = null;
+    groups.append ("group1");
+    groups.append ("group2");
+    groups.append ("group3");
+
+    var profiles = ui.get_profiles_for_user_and_groups ("user1", groups);
+
+    assert (profiles.length == 3);
+
+    uint counter = 3;
+    string[] applied_profiles = {"simpleprofile", "anotherprofile", "moarprofile"};
+    foreach (string uid in profiles) {
+      bool found = false;
+      foreach (string subuid in applied_profiles) {
+        if (subuid == uid)
+          found = true;
+      }
+      assert (found);
+      counter--;
+    }
+    assert (counter == 0);
+  }
+
   //TODO: test CacheData.parsed() signal
 
   public static int main (string[] args) {
@@ -52,6 +81,7 @@ namespace FleetCommander {
 
     add_test ("construct", ui_suite, test_construct);
     add_test ("simple-applies", ui_suite, test_simple_applies);
+    add_test ("profiles-for-user-and-groups", ui_suite, test_profiles_users_groups);
 
     fc_suite.add_suite (ui_suite);
     TestSuite.get_root ().add_suite (fc_suite);

@@ -17,6 +17,7 @@ EXTRA_DIST = \
 	data/profile-gsettings.json   \
 	data/profile-mixed.json       \
 	data/applies-simple.json      \
+	data/applies-duplicates.json  \
 	data/simple-test.conf         \
 	data/interval-zero.conf       \
 	data/missing-group.conf

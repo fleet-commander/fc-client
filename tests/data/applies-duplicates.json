@@ -1,0 +1,7 @@
+{
+  "simpleprofile": {"users": ["user1"], "groups": ["group1"]},
+  "anotherprofile": {"users": ["user1"], "groups": []},
+  "moarprofile": {"users": [], "groups": ["group2", "group3"]},
+  "dumbprofile": {"users": ["user2"], "groups": ["group4"]},
+  "emptyprofile": {"users": [], "groups": []}
+}

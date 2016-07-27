@@ -1,7 +1,7 @@
 namespace FleetCommander {
   public class UserIndex {
-    private Json.Object user_profiles;
-    private Json.Object group_profiles;
+    private Json.Object? user_profiles = null;
+    private Json.Object? group_profiles = null;
     private CacheData cache;
     private bool      index_built;
 
@@ -72,6 +72,47 @@ namespace FleetCommander {
       });
 
       index_built = true;
+    }
+
+    internal string[] get_profiles_for_user_and_groups (string user, List<string> groups) {
+      if (index_built == false)
+        rebuild_index ();
+
+      var profiles = new GenericArray<string> ();
+
+      if (user_profiles != null && user_profiles.has_member (user)) {
+        var uids = user_profiles.get_array_member (user);
+        uids.foreach_element ((a, i, n) => {
+          if (n == null || n.get_node_type() != Json.NodeType.VALUE)
+            return;
+
+          append_dedup (profiles, n.get_string ());
+        });
+      }
+      if (group_profiles != null) {
+        foreach (var group in groups) {
+          if (!group_profiles.has_member (group))
+            continue;
+
+          var uids = group_profiles.get_array_member (group);
+          uids.foreach_element ((a, i, n) => {
+            if (n == null || n.get_node_type () != Json.NodeType.VALUE)
+              return;
+
+            append_dedup (profiles, n.get_string ());
+          });
+        }
+      }
+
+      return profiles.data;
+    }
+
+    private static void append_dedup (GenericArray<string> list, string new_element) {
+      foreach (var element in list.data) {
+        if (element == new_element)
+          return;
+      }
+      list.add (new_element);
     }
 
     internal Json.Object? get_user_profiles () {
