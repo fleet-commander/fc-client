@@ -23,6 +23,42 @@ namespace FleetCommander {
       return root;
     }
 
+    //FIXME: This probably belongs in another class
+    public Json.Object? get_profile (string uid) {
+      if (root == null) {
+        warning ("Could not read JSON data from profile cache");
+        return null;
+      }
+
+      if (root.get_node_type () != Json.NodeType.ARRAY) {
+        warning ("Root JSON object was not an array");
+        return null;
+      }
+
+      var profiles = root.get_array ();
+      
+      Json.Object? result = null;
+
+      for (uint i = 0; i < profiles.get_length (); i++) {
+        var n = profiles.get_element (i);
+        if (n == null)
+          continue;
+        if (n.get_node_type () != Json.NodeType.OBJECT)
+          continue;
+
+        var profile = n.get_object ();
+        if (!profile.has_member ("uid"))
+          continue;
+
+        if (profile.get_string_member ("uid") == uid) {
+          result = profile;
+          break;
+        }
+      }
+
+      return result;
+    }
+
     private void parse () {
       if (profiles.query_exists () == false) {
         debug ("cache file %s: does not exist", profiles.get_path ());

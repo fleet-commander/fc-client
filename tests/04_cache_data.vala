@@ -3,6 +3,13 @@ namespace FleetCommander {
   public MainLoop?       loop;
   public ContentMonitor? monitor_singleton;
 
+  public const string PAYLOAD = "[{ \"description\" : \"\",
+                      \"settings\" : {\"org.gnome.online-accounts\" : {}, \"org.gnome.gsettings\" : []},
+                      \"applies-to\" : {\"users\" : [], \"groups\" : []},
+                      \"name\" : \"My profile\",
+                      \"etag\" : \"placeholder\",
+                      \"uid\" : \"230637306661439565351338266313693940252\"}]";
+
   public delegate void TestFn ();
 
   public static void add_test (string name, TestSuite suite, TestFn fn) {
@@ -58,13 +65,7 @@ namespace FleetCommander {
   }
 
   public static void test_existing_cache () {
-    var payload = "[{ \"description\" : \"\",
-                      \"settings\" : {\"org.gnome.online-accounts\" : {}, \"org.gnome.gsettings\" : []},
-                      \"applies-to\" : {\"users\" : [], \"groups\" : []},
-                      \"name\" : \"My profile\",
-                      \"etag\" : \"placeholder\",
-                      \"uid\" : \"230637306661439565351338266313693940252\"}]";
-    write_content (cache_dir + "/profiles.json", payload);
+    write_content (cache_dir + "/profiles.json", PAYLOAD);
 
     var cd = new CacheData (cache_dir + "/profiles.json");
     assert_nonnull (cd);
@@ -100,14 +101,7 @@ namespace FleetCommander {
 
   public static void test_content_change () {
     bool parsed_called = false;
-    var payload = "[{ \"description\" : \"\",
-                      \"settings\" : {\"org.gnome.online-accounts\" : {}, \"org.gnome.gsettings\" : []},
-                      \"applies-to\" : {\"users\" : [], \"groups\" : []},
-                      \"name\" : \"My profile\",
-                      \"etag\" : \"placeholder\",
-                      \"uid\" : \"230637306661439565351338266313693940252\"}]";
-    write_content (cache_dir + "/profiles.json", payload);
-
+    write_content (cache_dir + "/profiles.json", PAYLOAD);
     loop = new MainLoop (null, false);
 
     var cd = new CacheData (cache_dir  + "/profiles.json");
@@ -129,6 +123,23 @@ namespace FleetCommander {
     assert (cd.get_root () == null);
   }
 
+  public static void test_get_profile () {    
+    write_content (cache_dir + "/profiles.json", PAYLOAD);
+
+    var cd = new CacheData (cache_dir + "/profiles.json");
+    assert_nonnull (cd);
+    assert_nonnull (cd.get_root ());
+
+    var prof = cd.get_profile ("230637306661439565351338266313693940252");
+    assert_nonnull (cd);
+
+    assert (prof.has_member ("uid"));
+    assert (prof.get_string_member ("uid") == "230637306661439565351338266313693940252");
+
+    prof = cd.get_profile ("FAKEUID");
+    assert_null (cd);
+  }
+
   public static int main (string[] args) {
     Test.init (ref args);
     var fc_suite = new TestSuite("fleetcommander");
@@ -139,6 +150,7 @@ namespace FleetCommander {
     add_test ("empty-cache-file", pcm_suite, test_empty_cache_file);
     add_test ("dirty-cache", pcm_suite, test_dirty_cache_file);
     add_test ("content-change", pcm_suite, test_content_change);
+    add_test ("get-profile", pcm_suite, test_get_profile);
     //TODO: removed existing cache
 
     fc_suite.add_suite (pcm_suite);
