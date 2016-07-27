@@ -8,7 +8,13 @@ namespace FleetCommander {
                       \"applies-to\" : {\"users\" : [], \"groups\" : []},
                       \"name\" : \"My profile\",
                       \"etag\" : \"placeholder\",
-                      \"uid\" : \"230637306661439565351338266313693940252\"}]";
+                      \"uid\" : \"230637306661439565351338266313693940252\"},
+                      {\"description\" : \"\",
+                      \"settings\" : {\"org.gnome.online-accounts\" : {}, \"org.gnome.gsettings\" : []},
+                      \"applies-to\" : {\"users\" : [], \"groups\" : []},
+                      \"name\" : \"My other profile\",
+                      \"etag\" : \"placeholder\",
+                      \"uid\" : \"351338266313693940252230637306661439565\"}]";
 
   public delegate void TestFn ();
 
@@ -138,6 +144,13 @@ namespace FleetCommander {
 
     prof = cd.get_profile ("FAKEUID");
     assert_null (cd);
+
+    var profiles = cd.get_profiles ({"230637306661439565351338266313693940252", "351338266313693940252230637306661439565"});
+    assert (profiles.length == 2);
+    assert (profiles[0].get_string_member ("uid") == "230637306661439565351338266313693940252");
+    assert (profiles[1].get_string_member ("uid") == "351338266313693940252230637306661439565");
+    assert (profiles[0].get_string_member ("name") == "My profile");
+    assert (profiles[1].get_string_member ("name") == "My other profile");
   }
 
   public static int main (string[] args) {

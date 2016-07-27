@@ -23,8 +23,19 @@ namespace FleetCommander {
       return root;
     }
 
-    //FIXME: This probably belongs in another class
     public Json.Object? get_profile (string uid) {
+      var profiles = get_profiles ({uid});
+
+      if (profiles == null || profiles.length < 1)
+        return null;
+
+      return profiles[0];
+    }
+
+    //FIXME: This probably belongs in another class
+    public Json.Object[]? get_profiles (string[] uids) {
+      GenericArray<Json.Object?> result_array = new GenericArray<Json.Object?> ();
+
       if (root == null) {
         warning ("Could not read JSON data from profile cache");
         return null;
@@ -50,13 +61,18 @@ namespace FleetCommander {
         if (!profile.has_member ("uid"))
           continue;
 
-        if (profile.get_string_member ("uid") == uid) {
-          result = profile;
-          break;
+        var profile_uid = profile.get_string_member ("uid");
+
+        if (profile_uid == null)
+          continue;
+
+        foreach (string requested_uid in uids) {
+          if (requested_uid == profile_uid)
+            result_array.add (profile);
         }
       }
 
-      return result;
+      return result_array.data;
     }
 
     private void parse () {
