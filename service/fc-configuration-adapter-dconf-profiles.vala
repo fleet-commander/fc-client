@@ -14,9 +14,18 @@ namespace FleetCommander {
     }
 
     public void update (UserIndex index, CacheData profiles_cache, uint32 uid) {
-      if (dconf_db_can_write (dconf_profile_path) == false) {
-        warning ("There was an error trying to write to %s", dconf_profile_path);
-        return;
+      if (FileUtils.test (dconf_profile_path, FileTest.EXISTS) == false) {
+        if (DirUtils.create_with_parents (dconf_profile_path, 0755) != 0) {
+          warning ("Could not create directory %s", dconf_profile_path);
+          return;
+        }
+      }
+
+      if (FileUtils.test ("%s/%u".printf (dconf_profile_path, uid), FileTest.EXISTS)) {
+        if (Posix.access(dconf_profile_path, Posix.W_OK | Posix.X_OK) != 0) {
+          warning ("Cannot write data onto %s", dconf_profile_path);
+          return;
+        }
       }
  
       var dconf_profile_data = "user-db:user";
