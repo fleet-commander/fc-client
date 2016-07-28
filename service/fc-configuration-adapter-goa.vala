@@ -18,6 +18,7 @@ namespace FleetCommander {
     }
 
     public void update (UserIndex index, CacheData profiles_cache, uint32 uid) {
+      debug ("Updating GOA profile for user %u", uid);
       try {
         create_goa_runtime_path (uid);
       } catch (Error e) {
@@ -29,6 +30,11 @@ namespace FleetCommander {
       var groups = Posix.get_groups_for_user (uid);
 
       var profile_uids = index.get_profiles_for_user_and_groups (name, groups);
+
+      if (profile_uids.length < 1) {
+        debug ("User %u did not have any profiles assigned", uid);
+        return;
+      }
 
       var profiles = profiles_cache.get_profiles (profile_uids);
 
