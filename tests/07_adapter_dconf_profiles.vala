@@ -32,16 +32,19 @@ namespace FleetCommander {
   public void test_simple_applies () {
     string content;
 
-    var cache = new CacheData ();
-    assert_nonnull (cache);
-    cache.set_applies ("applies-simple");
-    var ui = new UserIndex(cache);
+    //Profile Cache: There's no need to add profiles for this adaptor
+    var pcache = new CacheData (); 
+    //User index cache
+    var icache = new CacheData ();
+    assert_nonnull (icache);
+    icache.set_applies ("applies-simple");
+    var ui = new UserIndex(icache);
     assert_nonnull (ui);
 
     var dp = new ConfigurationAdapterDconfProfiles (dconf_dir);
     assert_nonnull (dp);
 
-    dp.update (ui, 1000);
+    dp.update (ui, pcache, 1000);
     assert (FileUtils.test (dconf_dir + "/1000", FileTest.EXISTS | FileTest.IS_REGULAR));
 
     FileUtils.get_contents (dconf_dir + "/1000", out content);

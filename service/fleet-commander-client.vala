@@ -6,10 +6,11 @@ namespace FleetCommander {
     var profmgr = new ProfileCacheManager(config.cache_path);
     var srcmgr  = new SourceManager(profmgr, config.source, config.polling_interval);
 
-    var dconfdb = new DconfDbWriter(new CacheData(config.cache_path + "/profiles.json"), config.dconf_db_path);
+    var profiles_cache = new CacheData(config.cache_path + "/profiles.json");
+    var dconfdb = new DconfDbWriter(profiles_cache, config.dconf_db_path);
     var uindex  = new UserIndex(new CacheData (config.cache_path + "/applies.json"));
 
-    var usermgr = new UserSessionHandler(uindex);
+    var usermgr = new UserSessionHandler(uindex, profiles_cache);
     usermgr.register_handler (new ConfigurationAdapterDconfProfiles (config.dconf_profile_path));
 
     ml.run();

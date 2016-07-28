@@ -7,13 +7,13 @@ namespace FleetCommander {
       this.dconf_profile_path = dconf_profile_path;
     }
 
-    private void bootstrap (UserIndex index, Logind.User[] users) {
+    private void bootstrap (UserIndex index, CacheData profiles_cache, Logind.User[] users) {
       foreach (var user in users) {
-        update (index, user.uid);
+        update (index, profiles_cache, user.uid);
       }
     }
 
-    public void update (UserIndex index, uint32 uid) {
+    public void update (UserIndex index, CacheData profiles_cache, uint32 uid) {
       if (dconf_db_can_write (dconf_profile_path) == false) {
         warning ("There was an error trying to write to %s", dconf_profile_path);
         return;

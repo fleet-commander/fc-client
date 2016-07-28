@@ -17,10 +17,6 @@ namespace FleetCommander {
       });
     }
 
-    public CacheData get_cache_data () {
-      return cache;
-    }
-
     private void rebuild_index () {
       debug ("%s: grabbing user/groups", cache.get_path ());
       flush ();

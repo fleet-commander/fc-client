@@ -3,9 +3,11 @@ namespace FleetCommander {
     private UserIndex       index;
     private Logind.Manager? logind = null;
     private List<ConfigurationAdapter> handlers = null;
+    private CacheData profiles;
 
-    public UserSessionHandler (UserIndex index) {
+    public UserSessionHandler (UserIndex index, CacheData profiles) {
       this.index = index;
+      this.profiles = profiles;
 
       Bus.watch_name (BusType.SYSTEM,
                       "org.freedesktop.login1",
@@ -37,7 +39,7 @@ namespace FleetCommander {
       }
 
       foreach (var handler in handlers) {
-        handler.bootstrap (index, users);
+        handler.bootstrap (index, profiles, users);
       }
       index.flush ();
     }
@@ -58,7 +60,7 @@ namespace FleetCommander {
     private void user_logged_cb (uint32 user_id, ObjectPath path) {
       debug ("User logged in with uid: %u", user_id);
       foreach (var handler in handlers) {
-        handler.update (index, user_id);
+        handler.update (index, profiles, user_id);
       }
       index.flush ();
     }
