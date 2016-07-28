@@ -41,13 +41,13 @@ namespace FleetCommander {
     var ui = new UserIndex(icache);
     assert_nonnull (ui);
 
-    var dp = new ConfigurationAdapterDconfProfiles (dconf_dir);
+    var dp = new ConfigurationAdapterDconfProfiles (dconf_dir + "/dconf");
     assert_nonnull (dp);
 
     dp.update (ui, pcache, 1000);
-    assert (FileUtils.test (dconf_dir + "/1000", FileTest.EXISTS | FileTest.IS_REGULAR));
+    assert (FileUtils.test (dconf_dir + "/dconf/1000", FileTest.EXISTS | FileTest.IS_REGULAR));
 
-    FileUtils.get_contents (dconf_dir + "/1000", out content);
+    FileUtils.get_contents (dconf_dir + "/dconf/1000", out content);
     assert ("user-db:user\nsystem-db:fleet-commander-simpleprofile" == content);
   }
 
