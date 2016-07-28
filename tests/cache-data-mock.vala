@@ -49,6 +49,27 @@ namespace FleetCommander {
       applies = root.get_object ();
     }
 
+    public Json.Object? get_profile (string uid) {
+      var profiles = get_profiles ({uid});
+      if (profiles == null)
+        return null;
+      return profiles[0];
+    }
+
+    public Json.Object[]? get_profiles (string[] uids) {
+      var result = new GenericArray<Json.Object> ();
+
+      profiles.foreach_element ((a, i, n) => {
+        foreach (var uid in uids) {
+          if (uid != n.get_object().get_string_member ("uid"))
+            return;
+          result.add (n.get_object ());
+        }
+      });
+
+      return result.data;
+    }
+
     public Json.Node? get_root () {
       if (profiles != null) {
         var root = new Json.Node (Json.NodeType.ARRAY);

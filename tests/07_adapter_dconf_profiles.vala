@@ -20,7 +20,7 @@ namespace FleetCommander {
   public static void teardown () {
     if (dconf_dir == null)
       return;
-    DirUtils.remove (dconf_dir);
+    rmrf (dconf_dir);
     dconf_dir = null;
   }
 
