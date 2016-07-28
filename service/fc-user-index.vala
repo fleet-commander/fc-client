@@ -22,7 +22,7 @@ namespace FleetCommander {
       flush ();
 
       if (cache.get_root() == null) {
-        warning ("%s is empty or there was some error parsing it", cache.get_path ());
+        debug ("%s is empty or there was some error parsing it", cache.get_path ());
         return;
       }
       var applies = cache.get_root().get_object();
