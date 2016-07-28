@@ -59,6 +59,9 @@ namespace FleetCommander {
     public Json.Object[]? get_profiles (string[] uids) {
       var result = new GenericArray<Json.Object> ();
 
+      if (profiles == null)
+        return null;
+
       profiles.foreach_element ((a, i, n) => {
         foreach (var uid in uids) {
           if (uid != n.get_object().get_string_member ("uid"))

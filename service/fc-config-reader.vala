@@ -6,6 +6,7 @@ namespace FleetCommander {
     public string cache_path         = "/var/cache/fleet-commander";
     public string dconf_db_path      = "/etc/dconf/db";
     public string dconf_profile_path = "/run/dconf/user";
+    public string goa_run_path       = "/run/goa-1.0";
 
     public ConfigReader (string path = "/etc/xdg/fleet-commander.conf") {
       var keyfile = new KeyFile ();
@@ -61,6 +62,9 @@ namespace FleetCommander {
           break;
         case "dconf-profile-path":
           dconf_profile_path = val;
+          break;
+        case "goa-run-path":
+          goa_run_path = val;
           break;
       }
     }

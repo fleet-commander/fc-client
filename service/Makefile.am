@@ -5,6 +5,7 @@ valasources = \
 	fleet-commander-client.vala    \
 	fc-configuration-adapter.vala  \
 	fc-configuration-adapter-dconf-profiles.vala \
+	fc-configuration-adapter-goa.vala            \
 	fc-cache-data.vala             \
 	fc-config-reader.vala          \
 	fc-content-monitor.vala        \

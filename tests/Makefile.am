@@ -1,5 +1,5 @@
 TESTS_ENVIRONMENT = export FC_PROFILES_PATH=$(abs_srcdir)/data;
-TESTS = 01_config_reader 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index 07_adapter_dconf_profiles
+TESTS = 01_config_reader 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index 07_adapter_dconf_profiles 08_adapter_goa
 
 EXTRA_DIST = \
 	01_config_reader.vala         \
@@ -9,6 +9,7 @@ EXTRA_DIST = \
 	05_dconf_db_writer.vala       \
 	06_user_index.vala            \
 	07_adapter_dconf_profiles.vala \
+	08_adapter_goa.vala           \
 	test-utils.vapi               \
 	cache-data-mock.vala          \
 	posix-mock.vala               \
@@ -16,8 +17,11 @@ EXTRA_DIST = \
 	data/profile-libreoffice.json \
 	data/profile-gsettings.json   \
 	data/profile-mixed.json       \
+	data/profile-goa.json         \
 	data/applies-simple.json      \
 	data/applies-duplicates.json  \
+	data/applies-goa.json         \
+	data/applies-empty.json       \
 	data/simple-test.conf         \
 	data/interval-zero.conf       \
 	data/missing-group.conf
@@ -82,4 +86,18 @@ CLEANFILES = \
 	07_adapter_dconf_profiles.vala
 
 07_adapter_dconf_profiles: $(07_adapter_dconf_profiles_SOURCES)
+	valac --pkg gio-2.0 --pkg json-glib-1.0 --pkg posix --includedir=$(top_srcdir)/service $^ -o $@
+
+08_adapter_goa_SOURCES = \
+	test-utils.vapi             \
+	cache-data-mock.vala        \
+	posix-mock.vala             \
+	$(top_srcdir)/service/fc-utils.vala                     \
+	$(top_srcdir)/service/fc-user-index.vala                \
+	$(top_srcdir)/service/fc-configuration-adapter.vala     \
+	$(top_srcdir)/service/fc-configuration-adapter-goa.vala \
+	$(top_srcdir)/service/logind-manager.vala               \
+	08_adapter_goa.vala
+
+08_adapter_goa: $(08_adapter_goa_SOURCES)
 	valac --pkg gio-2.0 --pkg json-glib-1.0 --pkg posix --includedir=$(top_srcdir)/service $^ -o $@
