@@ -23,4 +23,26 @@ namespace FleetCommander {
     }
     return all;
   }
+
+  public static void rmrf (string path) throws Error {
+    rmrf_file (File.new_for_path (path));
+  }
+
+  private static void rmrf_file (File file) throws Error {
+    if (!file.query_exists (null))
+      return;
+
+    var info = file.query_info ("standard::*", FileQueryInfoFlags.NONE);
+    if (info.get_file_type () == FileType.DIRECTORY) {
+      var enumerator = file.enumerate_children ("standard::*", FileQueryInfoFlags.NONE, null);
+      for (var child = enumerator.next_file (); child != null; child = enumerator.next_file ()) {
+        var child_file = enumerator.get_child (child);
+        if (child.get_file_type () == FileType.DIRECTORY)
+          rmrf_file (child_file);
+        else
+          child_file.delete ();
+      }
+    }
+    file.delete (null);
+  }
 }
