@@ -35,6 +35,7 @@ namespace FleetCommander {
     //FIXME: This probably belongs in another class
     public Json.Object[]? get_profiles (string[] uids) {
       GenericArray<Json.Object?> result_array = new GenericArray<Json.Object?> ();
+      result_array.length = 0;
 
       if (root == null) {
         warning ("Could not read JSON data from profile cache");
@@ -48,8 +49,6 @@ namespace FleetCommander {
 
       var profiles = root.get_array ();
       
-      Json.Object? result = null;
-
       for (uint i = 0; i < profiles.get_length (); i++) {
         var n = profiles.get_element (i);
         if (n == null)

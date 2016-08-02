@@ -10,7 +10,7 @@ namespace FleetCommander {
       parser  = new Json.Parser ();
     }
 
-    public void add_profile_from_data (string profile_data) {
+    /*public void add_profile_from_data (string profile_data) {
       debug ("Building aggregated profiles.json file for local cache");
 
       var profiles_cache = get_profiles_node();
@@ -38,7 +38,7 @@ namespace FleetCommander {
       generator.pretty = true;
       generator.set_root(profiles_cache);
       write_profiles (generator.to_data(null));
-    }
+    }*/
 
     private Json.Node? get_cache_root () {
       try {
@@ -53,7 +53,7 @@ namespace FleetCommander {
     private Json.Node? get_profiles_node () {
       if (profiles.query_exists () == false) {
         debug ("%s does not exists, creating an empty one", profiles.get_path ());
-        if (write_profiles ("[]") == false)
+        if (write_profiles ({}) == false)
           return null;
       }
 
@@ -87,8 +87,25 @@ namespace FleetCommander {
       }
     }
 
-    private bool write_profiles (string payload) {
-      return write_to_file (profiles, payload);
+    public bool write_profiles (Json.Object[] profiles_objs) {
+      var gen = new Json.Generator ();
+      var node = new Json.Node (Json.NodeType.ARRAY);
+      var arr = new Json.Array ();
+      foreach (var p in profiles_objs) {
+        arr.add_object_element (p);
+      }
+
+      node.set_array (arr);
+      gen.set_root (node);
+
+      try {
+        debug("Writing %s", profiles.get_path ());
+        gen.to_file (profiles.get_path ());
+      } catch (Error e) {
+        warning ("Could not write profiles.json cache file: %s", e.message);
+        return false;
+      }
+      return true;
     }
 
     public void write_applies (string payload) {
