@@ -16,7 +16,8 @@ BuildRequires: gtk-doc
 BuildRequires: dconf
 BuildRequires: systemd
 
-Requires: dconf
+Requires: dconf >= 0.25.0
+Requires: NetworkManager
 
 Requires: systemd
 Requires(post): systemd

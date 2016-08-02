@@ -1,4 +1,8 @@
 namespace FleetCommander {
+  public errordomain Error {
+    ERROR
+  }
+
   public static bool dconf_db_can_write (string dconf_db_path) {
     if (FileUtils.test (dconf_db_path, FileTest.EXISTS) == false) {
       warning ("dconf datbase path %s does not exists", dconf_db_path);

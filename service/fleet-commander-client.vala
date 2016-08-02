@@ -13,6 +13,7 @@ namespace FleetCommander {
     var usermgr = new UserSessionHandler(uindex, profiles_cache);
     usermgr.register_handler (new ConfigurationAdapterDconfProfiles (config.dconf_profile_path));
     usermgr.register_handler (new ConfigurationAdapterGOA (config.goa_run_path));
+    usermgr.register_handler (new ConfigurationAdapterNM ());
 
     ml.run();
     return 0;

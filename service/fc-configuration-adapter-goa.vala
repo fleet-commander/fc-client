@@ -1,8 +1,4 @@
 namespace FleetCommander {
-  public errordomain Error {
-    ERROR
-  }
-
   public class ConfigurationAdapterGOA : ConfigurationAdapter, Object {
     const string FC_ACCOUNTS_FILE = "fleet-commander-accounts.conf";
     string goa_runtime_path;

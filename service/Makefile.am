@@ -6,6 +6,7 @@ valasources = \
 	fc-configuration-adapter.vala  \
 	fc-configuration-adapter-dconf-profiles.vala \
 	fc-configuration-adapter-goa.vala            \
+	fc-configuration-adapter-nm.vala            \
 	fc-cache-data.vala             \
 	fc-config-reader.vala          \
 	fc-content-monitor.vala        \
@@ -15,7 +16,8 @@ valasources = \
 	fc-user-index.vala             \
 	fc-user-session-handler.vala   \
 	fc-utils.vala                  \
-	logind-manager.vala
+	logind-manager.vala            \
+	network-manager.vala
 
 fleet_commander_client_SOURCES =       \
 	$(valasources)	               \
