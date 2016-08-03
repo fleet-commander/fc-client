@@ -82,8 +82,6 @@ namespace FleetCommander {
         var node = new Json.Node (Json.NodeType.OBJECT);
         node.set_object (profile);
         gen.set_root (node);
-        debug ("PROFILE: %x %s", (uint)profile, gen.to_data (null));
-
         
         var settings = profile.get_object_member("settings");
         var puuid = profile.get_string_member ("uid");
@@ -95,30 +93,32 @@ namespace FleetCommander {
           continue;
 
         nm.foreach_element ((a, i, connection_node) => {
-          var conn = connection_node.get_object ();
-          if (conn == null)
+          var root = connection_node.get_object ();
+/*          if (root == null)
             return;
 
-          if (conn.has_member ("connection") == false) {
-              warning ("NetworkManager connection %u from profile %s had no 'connection' member and will be ignored", i, puuid);
+          var json_obj = root.get_object_member ("json");
+          if (json_obj == null) {
+              warning ("NetworkManager connection %u from profile %s had no 'json' member and will be ignored", i, puuid);
               return;
           }
 
-          var conn_conn = conn.get_object_member ("connection");
-          if (conn_conn == null) {
-            warning ("NetworkManager connection %u from profile %s has a 'connection' member that is not a JSON object and will be ignored",
+          var conn = root.get_object_member ("connection");
+          if (conn == null) {
+            warning ("NetworkManager connection %u from profile %s does not have json.connection.uuid as string and will be ignored",
                      i, puuid);
-            return;
           }
 
-          if (conn_conn.has_member ("uuid") == false) {
-            warning ("NetworkManager connection %u from profile %s does not have connection.uuid and will be ignored",
+          var uuid = json_obj.get_string_member ("uuid");
+          if (uuid == null) {
+            warning ("NetworkManager connection %u from profile %s does not have json.connection.uuid as string and will be ignored",
                      i, puuid);
             return;
           }
-          var uuid = conn_conn.get_string_member ("uuid");
+*/
+          var uuid = Json.Path.query ("$.json.connection.uuid", connection_node).get_array ().get_string_element (0);
           if (uuid == null) {
-            warning ("NetworkManager connection %u from profile %s does not have connection.uuid as string and will be ignored",
+            warning ("NetworkManager connection %u from profile %s does not have a json.connection.uuid in the form of a string",
                      i, puuid);
             return;
           }
@@ -132,14 +132,18 @@ namespace FleetCommander {
                    uuid, e.message);
           }
 
-          //FIXME: Add permissions and other modifications here
-          GLib.Variant conn_variant;
-          try {
-             conn_variant = Json.gvariant_deserialize (connection_node, "a{sa{sv}}");
-          } catch (Error e) {
-            warning ("Could not turn Json node for connection %u into GVariant of signature 'a{sa{sv}}': %s", i, e.message);
+          var encoded_data = root.get_string_member ("data");
+          if (encoded_data == null) {
+            warning ("NetworkManager connection %u from profile %s does not have a 'data' member",
+                     i, puuid);
             return;
           }
+
+          //FIXME: Add permissions and other modifications here
+
+          var decoded = new Bytes (Base64.decode (encoded_data));
+          var conn_variant = new Variant.from_bytes (new VariantType("a{sa{sv}}"), decoded, false);
+          //FIXME: swap bytes if big endian
 
           try {
             if (nm_conn_path == null) {
