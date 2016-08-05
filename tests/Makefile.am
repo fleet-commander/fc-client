@@ -1,6 +1,6 @@
 TESTS_ENVIRONMENT = export FC_PROFILES_PATH=$(abs_srcdir)/data;
 TESTS = 01_config_reader 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index 07_adapter_dconf_profiles 08_adapter_goa
-VALAC_FLAGS=-g --pkg gio-2.0 --pkg json-glib-1.0 --pkg posix
+VALAC_FLAGS=--pkg gio-2.0 --pkg json-glib-1.0 --pkg posix -g #-X -g
 EXTRA_DIST = \
 	01_config_reader.vala         \
 	02_profile_cache_manager.vala \
@@ -18,10 +18,14 @@ EXTRA_DIST = \
 	data/profile-gsettings.json   \
 	data/profile-mixed.json       \
 	data/profile-goa.json         \
+	data/profile-moar.json        \
+	data/profile-simple.json      \
+	data/profile-dumb.json        \
 	data/applies-simple.json      \
 	data/applies-duplicates.json  \
 	data/applies-goa.json         \
 	data/applies-empty.json       \
+	data/applies-libreoffice.json \
 	data/simple-test.conf         \
 	data/interval-zero.conf       \
 	data/missing-group.conf
@@ -34,7 +38,6 @@ CLEANFILES = \
   	$(top_srcdir)/service/fc-config-reader.vala \
 	01_config_reader.vala
 01_config_reader: $(01_config_reader_SOURCES)
-	valac $(VALAC_FLAGS) -C $^
 	valac $(VALAC_FLAGS) $^ -o $@
 
 02_profile_cache_manager_SOURCES = \
@@ -42,7 +45,6 @@ CLEANFILES = \
 	$(top_srcdir)/service/fc-profile-cache-manager.vala \
 	02_profile_cache_manager.vala
 02_profile_cache_manager: $(02_profile_cache_manager_SOURCES)
-	valac $(VALAC_FLAGS) -C $^
 	valac $(VALAC_FLAGS) $^ -o $@
 
 03_source_manager_SOURCES = \

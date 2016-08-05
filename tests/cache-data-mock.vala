@@ -1,8 +1,8 @@
 namespace FleetCommander {
   //Mock CacheData
   public class CacheData {
-    private Json.Array?  profiles;
-    private Json.Object? applies;
+    public Json.Array?  profiles;
+    public Json.Object? applies;
 
     private string      cache_path;
 

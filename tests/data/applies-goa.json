@@ -1,0 +1,4 @@
+{
+  "goa1": {"users": ["user1"], "groups": ["group1"]},
+  "dumbprofile": {"users": ["user2"], "groups": ["group4"]}
+}

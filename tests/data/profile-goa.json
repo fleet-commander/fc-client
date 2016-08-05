@@ -1,0 +1,11 @@
+{
+  "uid": "goa1",
+  "name": "profile-basic",
+  "description": "",
+  "settings": {
+    "org.gnome.online-accounts": {
+      "Account account_fc_FooBar": {"Provider": "foobar"},
+      "Account account_fc_BarBaz": {"Provider": "barbaz"}
+    }
+  }
+}
