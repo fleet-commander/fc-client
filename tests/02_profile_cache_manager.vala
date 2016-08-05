@@ -43,8 +43,12 @@ namespace FleetCommander {
   public static void test_add_profile () {
     var pcm = new ProfileCacheManager (cache_dir);
 
-    pcm.add_profile_from_data ("{\"foo\": \"bar\"}");
-    pcm.add_profile_from_data ("{\"baz\": \"foo\"}");
+    var prof1 = new Json.Object ();
+    prof1.set_string_member ("foo", "bar");
+    var prof2 = new Json.Object ();
+    prof2.set_string_member ("baz", "foo");
+
+    pcm.write_profiles ({prof1, prof2});
 
     var root = get_profiles_root();
     assert_nonnull (root);
@@ -78,7 +82,9 @@ namespace FleetCommander {
   public static void test_flush () {
     var pcm = new ProfileCacheManager (cache_dir);
 
-    pcm.add_profile_from_data ("{\"foo\": \"bar\"}");
+    var prof = new Json.Object ();
+    prof.set_string_member ("foo", "bar");
+    pcm.write_profiles ({prof});
     pcm.write_applies ("{}");
     pcm.flush ();
 
@@ -97,8 +103,12 @@ namespace FleetCommander {
     var pcm = new ProfileCacheManager ("/foo/bar/baz/dir/random");
     assert (get_profiles_root () == null);
 
-    FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Could not rewrite*");
-    pcm.add_profile_from_data ("{\"foo\": \"bar\"}");
+    FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Could not write*");
+
+    var prof = new Json.Object ();
+    prof.set_string_member ("foo", "bar");
+    pcm.write_profiles ({prof});
+
     assert (get_profiles_root () == null);
 
     FcTest.expect_message (null, LogLevelFlags.LEVEL_WARNING, "*Could not rewrite*");
