@@ -59,8 +59,6 @@ namespace FleetCommander {
         build_profile_cache(index);
         debug ("%s: %s:", m.uri.to_string(true), index);
       });
-
-      get_applies ();
     }
 
     private static bool process_json_request(Soup.Message msg) {
@@ -135,6 +133,8 @@ namespace FleetCommander {
         var msg = new Soup.Message("GET", source + url);
         http_session.queue_message(msg, profile_response_cb);
       }
+      
+      get_applies ();
     }
 
     private void get_applies () {
