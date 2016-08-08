@@ -24,8 +24,10 @@ namespace FleetCommander {
 
       string[] keys = {"source", "polling-interval", "cache-path", "dconf-db-path", "dconf-profile-path"};
       foreach (string key in keys) {
-        if (keyfile.has_key ("fleet-commander", key) == false)
-          continue;
+        try {
+          if (keyfile.has_key ("fleet-commander", key) == false)
+            continue;
+        } catch (Error e) { continue; }
 
         try {
           var val = keyfile.get_string ("fleet-commander", key);
