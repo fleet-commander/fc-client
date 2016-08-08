@@ -10,16 +10,6 @@ namespace FleetCommander {
       parser  = new Json.Parser ();
     }
 
-    private Json.Node? get_cache_root () {
-      try {
-        parser.load_from_stream (profiles.read(null), null);
-      } catch (Error e) {
-        warning ("Could not load JSON data from %s: %s", profiles.get_path (), e.message);
-        return null;
-      }
-      return parser.get_root ();
-    }
-
     public void flush () {
       debug("Flushing profile cache");
 
