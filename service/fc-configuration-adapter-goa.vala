@@ -7,7 +7,11 @@ namespace FleetCommander {
     }
 
     public void bootstrap (UserIndex index, CacheData profiles_cache, Logind.User[] users) {
-      rmrf (goa_runtime_path);
+      try {
+        rmrf (goa_runtime_path);
+      } catch (Error e) {
+        warning ("There was a problem trying to wipe %s: %s", goa_runtime_path, e.message);
+      }
       foreach (var user in users) {
         update (index, profiles_cache, user.uid);
       }
@@ -80,10 +84,9 @@ namespace FleetCommander {
 
     public void create_goa_runtime_path (uint32 uid) throws Error {
       var uid_path = "%s/%u".printf(goa_runtime_path, uid);
-      
       if (FileUtils.test (uid_path, FileTest.EXISTS) == false) {
         if (DirUtils.create_with_parents (uid_path, 0755) != 0)
-          throw new Error.ERROR ("Could not create directory %s with parents.".printf(uid_path));
+          throw new FCError.ERROR ("Could not create directory %s with parents.".printf(uid_path));
       }
 
       var accounts = "%s/fleet-commander-accounts.conf".printf(uid_path);
@@ -91,7 +94,7 @@ namespace FleetCommander {
         return;
 
       if (FileUtils.remove(accounts) != 0)
-        throw new Error.ERROR ("Could not remove file %s", accounts);
+        throw new FCError.ERROR ("Could not remove file %s", accounts);
     }
   }
 }
