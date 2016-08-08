@@ -1,5 +1,5 @@
 TESTS_ENVIRONMENT = export FC_PROFILES_PATH=$(abs_srcdir)/data;
-TESTS = 01_config_reader 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index 07_adapter_dconf_profiles 08_adapter_goa
+TESTS = 01_config_reader 02_profile_cache_manager 03_source_manager 04_cache_data 05_dconf_db_writer 06_user_index 07_adapter_dconf_profiles 08_adapter_goa 09_adapter_nm
 VALAC_FLAGS=--pkg gio-2.0 --pkg json-glib-1.0 --pkg posix -g #-X -g
 EXTRA_DIST = \
 	01_config_reader.vala         \
@@ -10,6 +10,7 @@ EXTRA_DIST = \
 	06_user_index.vala            \
 	07_adapter_dconf_profiles.vala \
 	08_adapter_goa.vala           \
+	09_adapter_nm.vala            \
 	test-utils.vapi               \
 	cache-data-mock.vala          \
 	posix-mock.vala               \
@@ -104,4 +105,19 @@ CLEANFILES = \
 	08_adapter_goa.vala
 
 08_adapter_goa: $(08_adapter_goa_SOURCES)
+	valac $(VALAC_FLAGS) $^ -o $@
+
+09_adapter_nm_SOURCES = \
+	test-utils.vapi             \
+	cache-data-mock.vala        \
+	posix-mock.vala             \
+	$(top_srcdir)/service/fc-utils.vala                     \
+	$(top_srcdir)/service/fc-user-index.vala                \
+	$(top_srcdir)/service/fc-configuration-adapter.vala     \
+	$(top_srcdir)/service/fc-configuration-adapter-nm.vala  \
+	$(top_srcdir)/service/logind-manager.vala               \
+	$(top_srcdir)/service/network-manager.vala              \
+	09_adapter_nm.vala
+
+09_adapter_nm: $(09_adapter_nm_SOURCES)
 	valac $(VALAC_FLAGS) $^ -o $@
