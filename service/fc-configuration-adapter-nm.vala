@@ -1,37 +1,19 @@
 namespace FleetCommander {
   public class ConfigurationAdapterNM : ConfigurationAdapter, Object {
-    NetworkManager.Settings? nms = null;
+    NetworkManager.SettingsHelper nmsh;
 
     public signal void bus_appeared (ConfigurationAdapterNM nma);
     public signal void bus_disappeared (ConfigurationAdapterNM nma);
 
     public ConfigurationAdapterNM () {
-      Bus.watch_name (BusType.SYSTEM,
-                      "org.freedesktop.NetworkManager",
-                      BusNameWatcherFlags.AUTO_START,
-                      bus_name_appeared_cb,
-                      (con, name) => {
-                        warning ("org.freedesktop.NetworkManager bus name disappeared");
-                        nms = null;
-                        bus_disappeared (this);
-                      });
-    }
-
-    private void bus_name_appeared_cb (DBusConnection con, string name, string owner) {
-      debug("org.freedesktop.NetworkManager bus name appeared");
-      try {
-         nms = Bus.get_proxy_sync<NetworkManager.Settings> (BusType.SYSTEM,
-                                     "org.freedesktop.NetworkManager",
-                                     "/org/freedesktop/NetworkManager/Settings");
-      } catch (Error e) {
-        debug ("There was an error trying to create the dbus proxy: %s", e.message);
-      }
-      bus_appeared (this);
+      nmsh = new NetworkManager.SettingsHelper ();
+      nmsh.bus_appeared.connect (() => { bus_appeared (this); });
+      nmsh.bus_disappeared.connect (() => { bus_disappeared (this); });
     }
 
     public void bootstrap (UserIndex index, CacheData profiles_cache, Logind.User[] users) {
       debug ("Bootstrapping NetworkManager settings for all logged in users");
-      if (nms == null) {
+      if (nmsh.in_bus () == false) {
         debug ("NetworkManager's bus name was not connected");
         return;
       }
@@ -43,7 +25,7 @@ namespace FleetCommander {
 
     public void update (UserIndex index, CacheData profiles_cache, uint32 uid) {
       debug ("Updating NM connections for user %u", uid);
-      if (nms == null) {
+      if (nmsh.in_bus () == false) {
         debug ("NetworkManager's bus name was not connected");
         return;
       }
@@ -103,15 +85,6 @@ namespace FleetCommander {
             return;
           }
 
-          string? nm_conn_path = null;
-          try {
-            nm_conn_path = nms.GetConnectionByUuid (uuid);
-          } catch (GLib.Error e) {
-            //FIXME: discriminate non existing connection from other errors, assume not existing for now
-            debug ("There was no NetworkManager connection with uuid %s or there was an error doing the DBus call:\n%s",
-                   uuid, e.message);
-          }
-
           var encoded_data = root.get_string_member ("data");
           if (encoded_data == null) {
             warning ("NetworkManager connection %u from profile %s does not have a 'data' member",
@@ -125,25 +98,19 @@ namespace FleetCommander {
           var conn_variant = new Variant.from_bytes (new VariantType("a{sa{sv}}"), decoded, false);
           //FIXME: swap bytes if big endian
 
+          var nm_conn_path = nmsh.get_connection_path_by_uid (uuid);
           try {
             if (nm_conn_path == null) {
-              nms.AddConnection (conn_variant);
+              nmsh.add_connection (conn_variant);
             } else {
-              update_connection (nm_conn_path, conn_variant);
+              nmsh.update_connection (nm_conn_path, conn_variant);
             }
-          } catch (GLib.Error e) {
+          } catch (Error e) {
             warning ("Could not add/update %u connection from profile %s, there was an error making the DBus call:\n%s",
                      i, puuid, e.message);
           }
         });
       }
-    }
-
-    private void update_connection (string path, GLib.Variant properties) throws IOError {
-       var conn = Bus.get_proxy_sync<NetworkManager.Connection> (BusType.SYSTEM,
-                                     "org.freedesktop.NetworkManager",
-                                     path);
-       conn.Update (properties);
     }
   }
 }

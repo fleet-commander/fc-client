@@ -1,21 +1,21 @@
 namespace NetworkManager {
   [DBus (name = "org.freedesktop.NetworkManager.Settings")]
-  public interface Settings : GLib.Object {
+  private interface Settings : GLib.Object {
     public abstract string GetConnectionByUuid (string uuid) throws IOError;
     public abstract string AddConnection ([DBus (signature = "(a{sa{sv}})")] GLib.Variant connection) throws IOError;
   }
 
   [DBus (name = "org.freedesktop.NetworkManager.Settings.Connection")]
-  public interface Connection : GLib.Object {
+  private interface Connection : GLib.Object {
     //public abstract GLib.Variant GetSettings () throws IOError;
     public abstract void Update ([DBus (signature = "(a{sa{sv}})")] GLib.Variant properties) throws IOError;
-    public abstract void Save () throws IOError;
+    //public abstract void Save () throws IOError;
   }
 
   public class SettingsHelper {
     private Settings? settp = null;
     private Connection? connp = null;
-    public signal void bus_dissapeared ();
+    public signal void bus_disappeared ();
     public signal void bus_appeared ();
     public SettingsHelper () {
       debug ("Watching for bus name org.freedesktop.NetworkManager in the system bus");
