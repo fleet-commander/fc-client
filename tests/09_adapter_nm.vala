@@ -12,14 +12,14 @@ namespace FleetCommander {
   }
 
   public void test_construct () {
-    var dp = new ConfigurationAdapterNM ();
+    var dp = new ConfigurationAdapterNM (new NetworkManager.SettingsHelper ());
     assert_nonnull (dp);
   }
 
   public static int main (string[] args) {
     Test.init (ref args);
     var fc_suite = new TestSuite("fleetcommander");
-    var ui_suite = new TestSuite("adapter-goa");
+    var ui_suite = new TestSuite("adapter-network-manager");
 
     add_test ("construct", ui_suite, test_construct);
 

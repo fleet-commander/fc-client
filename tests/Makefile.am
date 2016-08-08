@@ -14,6 +14,7 @@ EXTRA_DIST = \
 	test-utils.vapi               \
 	cache-data-mock.vala          \
 	posix-mock.vala               \
+	network-manager-mock.vala     \
 	data/profile-empty.json       \
 	data/profile-libreoffice.json \
 	data/profile-gsettings.json   \
@@ -111,12 +112,12 @@ CLEANFILES = \
 	test-utils.vapi             \
 	cache-data-mock.vala        \
 	posix-mock.vala             \
+	network-manager-mock.vala   \
 	$(top_srcdir)/service/fc-utils.vala                     \
 	$(top_srcdir)/service/fc-user-index.vala                \
 	$(top_srcdir)/service/fc-configuration-adapter.vala     \
 	$(top_srcdir)/service/fc-configuration-adapter-nm.vala  \
 	$(top_srcdir)/service/logind-manager.vala               \
-	$(top_srcdir)/service/network-manager.vala              \
 	09_adapter_nm.vala
 
 09_adapter_nm: $(09_adapter_nm_SOURCES)
