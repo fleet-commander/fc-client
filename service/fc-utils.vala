@@ -1,5 +1,5 @@
 namespace FleetCommander {
-  public errordomain Error {
+  public errordomain FCError {
     ERROR
   }
 
@@ -28,11 +28,11 @@ namespace FleetCommander {
     return all;
   }
 
-  public static void rmrf (string path) throws Error {
+  public static void rmrf (string path) throws IOError, Error {
     rmrf_file (File.new_for_path (path));
   }
 
-  private static void rmrf_file (File file) throws Error {
+  private static void rmrf_file (File file) throws IOError, Error {
     if (!file.query_exists (null))
       return;
 
