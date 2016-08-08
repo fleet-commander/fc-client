@@ -23,8 +23,6 @@ namespace FleetCommander {
          nms = Bus.get_proxy_sync<NetworkManager.Settings> (BusType.SYSTEM,
                                      "org.freedesktop.NetworkManager",
                                      "/org/freedesktop/NetworkManager/Settings");
-
-         //connection = nms.GetConnectionByUuid ("5d4bfafe-0da0-42de-b425-e7b4c2f03ddc");
       } catch (Error e) {
         debug ("There was an error trying to create the dbus proxy: %s", e.message);
       }
@@ -63,7 +61,7 @@ namespace FleetCommander {
       var profiles = profiles_cache.get_profiles (profile_uids);
 
       if (profiles == null || profiles.length != profile_uids.length) {
-        string uids = "", found = "";
+        string uids = "";
         foreach (var u in profile_uids) {
           uids = "%s, %s".printf (uids, u);
         }
@@ -73,7 +71,6 @@ namespace FleetCommander {
           return;
         }
 
-        //FIXME: only iterate if debugging is enabled;
         debug ("Some profiles applied to user %u were not found", uid);
       }
 
@@ -82,7 +79,7 @@ namespace FleetCommander {
         var node = new Json.Node (Json.NodeType.OBJECT);
         node.set_object (profile);
         gen.set_root (node);
-        
+
         var settings = profile.get_object_member("settings");
         var puuid = profile.get_string_member ("uid");
         if (settings == null)
@@ -94,30 +91,13 @@ namespace FleetCommander {
 
         nm.foreach_element ((a, i, connection_node) => {
           var root = connection_node.get_object ();
-/*          if (root == null)
-            return;
+          string uuid;
 
-          var json_obj = root.get_object_member ("json");
-          if (json_obj == null) {
-              warning ("NetworkManager connection %u from profile %s had no 'json' member and will be ignored", i, puuid);
-              return;
-          }
-
-          var conn = root.get_object_member ("connection");
-          if (conn == null) {
-            warning ("NetworkManager connection %u from profile %s does not have json.connection.uuid as string and will be ignored",
-                     i, puuid);
-          }
-
-          var uuid = json_obj.get_string_member ("uuid");
-          if (uuid == null) {
-            warning ("NetworkManager connection %u from profile %s does not have json.connection.uuid as string and will be ignored",
-                     i, puuid);
-            return;
-          }
-*/
-          var uuid = Json.Path.query ("$.json.connection.uuid", connection_node).get_array ().get_string_element (0);
-          if (uuid == null) {
+          try {
+            uuid = Json.Path.query ("$.json.connection.uuid", connection_node).get_array ().get_string_element (0);
+            if (uuid == null)
+              throw new FCError.ERROR ("Could find json.connection.uuid member in profile %s, skipping".printf (puuid));
+          } catch (GLib.Error e) {
             warning ("NetworkManager connection %u from profile %s does not have a json.connection.uuid in the form of a string",
                      i, puuid);
             return;
@@ -159,7 +139,7 @@ namespace FleetCommander {
       }
     }
 
-    private void update_connection (string path, GLib.Variant properties) throws Error {
+    private void update_connection (string path, GLib.Variant properties) throws IOError {
        var conn = Bus.get_proxy_sync<NetworkManager.Connection> (BusType.SYSTEM,
                                      "org.freedesktop.NetworkManager",
                                      path);
