@@ -25,7 +25,11 @@ namespace FleetCommander {
       }
 
       var parser = new Json.Parser ();
-      parser.load_from_file (string.join("/", this.cache_path, profile + ".json"));
+      try {
+        parser.load_from_file (string.join("/", this.cache_path, profile + ".json"));
+      } catch (GLib.Error e) {
+        return;
+      }
 
       var root = parser.get_root ();
       if (root == null)
@@ -40,7 +44,12 @@ namespace FleetCommander {
       }
 
       var parser = new Json.Parser ();
-      parser.load_from_file (string.join("/", this.cache_path, applies_file + ".json"));
+
+      try {
+        parser.load_from_file (string.join("/", this.cache_path, applies_file + ".json"));
+      } catch (GLib.Error e) {
+        return;
+      }
 
       var root = parser.get_root ();
       if (root == null)
