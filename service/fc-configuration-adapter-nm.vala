@@ -5,10 +5,10 @@ namespace FleetCommander {
     public signal void bus_appeared (ConfigurationAdapterNM nma);
     public signal void bus_disappeared (ConfigurationAdapterNM nma);
 
-    public ConfigurationAdapterNM () {
-      nmsh = new NetworkManager.SettingsHelper ();
-      nmsh.bus_appeared.connect (() => { bus_appeared (this); });
-      nmsh.bus_disappeared.connect (() => { bus_disappeared (this); });
+    public ConfigurationAdapterNM (NetworkManager.SettingsHelper nmsh) {
+      this.nmsh = nmsh;
+      this.nmsh.bus_appeared.connect (() => { bus_appeared (this); });
+      this.nmsh.bus_disappeared.connect (() => { bus_disappeared (this); });
     }
 
     public void bootstrap (UserIndex index, CacheData profiles_cache, Logind.User[] users) {
