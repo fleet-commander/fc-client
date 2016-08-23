@@ -21,19 +21,18 @@ namespace FleetCommander {
     }
 
     public void register_handler (ConfigurationAdapter handler) {
-      if (handler is ConfigurationAdapterNM) {
-        (handler as ConfigurationAdapterNM).bus_appeared.connect ((nma) => {
-          Logind.User[] users;
-          try {
-            users = logind.list_users ();
-          } catch (Error e) {
-            warning ("There was an error listing logged in users using the logind dbus interface: %s", e.message);
-            return;
-          }
+      handler.available.connect ((nma) => {
+        debug ("Configuration adapter has become available");
+        Logind.User[] users;
+        try {
+          users = logind.list_users ();
+        } catch (Error e) {
+          warning ("There was an error listing logged in users using the logind dbus interface: %s", e.message);
+          return;
+        }
 
-          nma.bootstrap (index, profiles, users);
-        });
-      }
+        nma.bootstrap (index, profiles, users);
+      });
       handlers.append (handler);
     }
 
