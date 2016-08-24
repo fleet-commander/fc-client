@@ -81,6 +81,8 @@ namespace FleetCommander {
             return;
           }
 
+          debug ("Adding network profile %s to user %s", uuid, name);
+
           var encoded_data = root.get_string_member ("data");
           if (encoded_data == null) {
             warning ("NetworkManager connection %u from profile %s does not have a 'data' member",
@@ -97,8 +99,10 @@ namespace FleetCommander {
           var nm_conn_path = nmsh.get_connection_path_by_uid (uuid);
           try {
             if (nm_conn_path == null) {
+              debug ("Connection %s didn't exist already, adding", uuid);
               nmsh.add_connection (conn_variant);
             } else {
+              debug ("Connection %s already existed, updating", uuid);
               nmsh.update_connection (nm_conn_path, conn_variant);
             }
           } catch (Error e) {
