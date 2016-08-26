@@ -72,7 +72,7 @@ namespace FleetCommander {
           string uuid;
 
           try {
-            uuid = Json.Path.query ("$.json.connection.uuid", connection_node).get_array ().get_string_element (0);
+            uuid = Json.Path.query ("$.uuid", connection_node).get_array ().get_string_element (0);
             if (uuid == null)
               throw new FCError.ERROR ("Could find json.connection.uuid member in profile %s, skipping".printf (puuid));
           } catch (GLib.Error e) {
@@ -83,18 +83,23 @@ namespace FleetCommander {
 
           debug ("Adding network profile %s to user %s", uuid, name);
 
-          var encoded_data = root.get_string_member ("data");
-          if (encoded_data == null) {
+          var serialized_data = root.get_string_member ("data");
+          if (serialized_data == null) {
             warning ("NetworkManager connection %u from profile %s does not have a 'data' member",
                      i, puuid);
             return;
           }
 
-          //FIXME: Add permissions and other modifications here
+          Variant conn_variant;
+          try {
+            conn_variant = Variant.parse (null, serialized_data, null, null);
+          } catch (Error e) {
+            warning ("Could not parse 'data' member of %u connection in profile %s into a variant:\n%s\n%s",
+                     i, puuid, e.message, serialized_data);
+            return;
+          }
 
-          var decoded = new Bytes (Base64.decode (encoded_data));
-          var conn_variant = new Variant.from_bytes (new VariantType("a{sa{sv}}"), decoded, false);
-          //FIXME: swap bytes if big endian
+          //FIXME: Add permissions and other modifications here
 
           var nm_conn_path = nmsh.get_connection_path_by_uid (uuid);
           try {
