@@ -74,9 +74,9 @@ namespace FleetCommander {
           try {
             uuid = Json.Path.query ("$.uuid", connection_node).get_array ().get_string_element (0);
             if (uuid == null)
-              throw new FCError.ERROR ("Could find json.connection.uuid member in profile %s, skipping".printf (puuid));
+              throw new FCError.ERROR ("Could not find uuid member in profile %s, skipping".printf (puuid));
           } catch (GLib.Error e) {
-            warning ("NetworkManager connection %u from profile %s does not have a json.connection.uuid in the form of a string",
+            warning ("NetworkManager connection %u from profile %s does not have a uuid in the form of a string",
                      i, puuid);
             return;
           }
