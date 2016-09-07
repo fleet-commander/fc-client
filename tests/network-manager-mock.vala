@@ -1,10 +1,13 @@
 namespace NetworkManager {
-    public class SettingsHelper {
+  public class SettingsHelper {
     public signal void bus_disappeared ();
     public signal void bus_appeared ();
 
+    private const string OBJPATHPREFIX = "/org/freedesktop/NetworkManager/Settings/";
+
     public SettingsHelper () {
       updated_connections = new HashTable <string, GLib.Variant> (str_hash, direct_equal);
+      added_connections = new HashTable <string, GLib.Variant> (str_hash, direct_equal);
     }
 
     public bool in_bus () {
@@ -16,22 +19,32 @@ namespace NetworkManager {
     }
 
     public string? get_connection_path_by_uid (string uuid) {
-      return conn_path;
+      if (added_connections.lookup (uuid) != null)
+        return OBJPATHPREFIX + uuid;
+      foreach (var present in present_connections) {
+        if (present == uuid)
+          return  OBJPATHPREFIX + uuid;
+      }
+      return null;
     }
 
     public void update_connection (string path, GLib.Variant properties) throws IOError {
-      return;
+      updated_connections.insert (path, properties);
     }
 
     public string? add_connection (GLib.Variant conn) throws IOError {
-      return null;
+      string uuid = conn.lookup_value ("connection", null).lookup_value ("uuid", null).get_string ();
+      added_connections.insert (uuid, conn);
+      return OBJPATHPREFIX + uuid;
     }
 
     /* Mock entry points */
     private bool _in_bus = false;
     private string? conn_path = null;
+    private string[] present_connections;
 
-    private HashTable <string, GLib.Variant> updated_connections;
+    public HashTable <string, GLib.Variant> updated_connections;
+    public HashTable <string, GLib.Variant> added_connections;
 
     public void emit_bus_appeared () {
       _in_bus = true;
@@ -41,6 +54,10 @@ namespace NetworkManager {
     public void emit_bus_disappeared () {
       _in_bus = false;
       bus_disappeared ();
+    }
+
+    public void add_present_uuid (string uuid) {
+      present_connections += uuid;
     }
   }
 }

@@ -23,11 +23,13 @@ EXTRA_DIST = \
 	data/profile-moar.json        \
 	data/profile-simple.json      \
 	data/profile-dumb.json        \
+	data/profile-nm-all.json      \
 	data/applies-simple.json      \
 	data/applies-duplicates.json  \
 	data/applies-goa.json         \
 	data/applies-empty.json       \
 	data/applies-libreoffice.json \
+	data/applies-nm-all.json      \
 	data/simple-test.conf         \
 	data/interval-zero.conf       \
 	data/missing-group.conf

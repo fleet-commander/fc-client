@@ -1,0 +1,19 @@
+{"uid": "nm-all",
+ "settings": {
+   "org.freedesktop.NetworkManager": [
+     {"type": "vpn",
+       "data": "{'connection': {'id': <'VPNConn'>, 'uuid': <'37fd27fb-8e3b-4e08-9bd4-b68469879e79'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'bazbar', 'IPSec gateway': 'foobar', 'Xauth password-flags': '2', 'IPSec ID': 'foo', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+       "uuid": "37fd27fb-8e3b-4e08-9bd4-b68469879e79",
+       "id": "VPNConn"},
+     {"type": "802-3-ethernet",
+       "data": "{'802-3-ethernet': {'mac-address-blacklist': <@as []>, 's390-options': <@a{ss} {}>}, 'connection': {'id': <'Eth Profile'>, 'uuid': <'5c66fffa-baf6-40ce-b04d-b2575bf3f6a0'>, 'type': <'802-3-ethernet'>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, '802-1x': {'eap': <['md5']>, 'identity': <'asdasd'>, 'altsubject-matches': <@as []>, 'phase2-altsubject-matches': <@as []>, 'password-flags': <uint32 1>, 'system-ca-certs': <true>}, 'ipv4': {'method': <'auto'>, 'dns': <[uint32 134744072]>, 'dns-search': <@as []>, 'ignore-auto-dns': <true>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}}",
+       "uuid": "5c66fffa-baf6-40ce-b04d-b2575bf3f6a0",
+       "id": "Eth Profile"},
+     {"type": "802-11-wireless",
+      "data": "{'connection': {'id': <'foo'>, 'uuid': <'e04f8eda-d1d9-4d8b-811b-49ae463600de'>, 'type': <'802-11-wireless'>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, '802-11-wireless': {'ssid': <[byte 0x66, 0x6f, 0x6f]>, 'mac-address-blacklist': <@as []>, 'seen-bssids': <@as []>, 'hidden': <true>, 'security': <'802-11-wireless-security'>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, '802-11-wireless-security': {'key-mgmt': <'ieee8021x'>, 'auth-alg': <'leap'>, 'proto': <@as []>, 'pairwise': <@as []>, 'group': <@as []>, 'leap-username': <'asdasd'>}}",
+      "uuid": "e04f8eda-d1d9-4d8b-811b-49ae463600de",
+      "id": "foo"}
+   ]
+ },
+ "name": "Foobar",
+ "description": ""}
