@@ -199,7 +199,6 @@ namespace FleetCommander {
         return;
       }
 
-      debug ("------------- %s", profile);
       // Avoid duplicates
       foreach (var p in merged_profiles) {
         if (p != profile)
@@ -211,7 +210,6 @@ namespace FleetCommander {
 
       //Filter by profiles with dconf data
       foreach (var valid_profile in dconf_data_profiles) {
-        debug ("++++ valid :%s", valid_profile);
         if (profile != valid_profile)
           continue;
 
