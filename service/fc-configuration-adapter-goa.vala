@@ -67,9 +67,27 @@ namespace FleetCommander {
             return;
 
           account.foreach_member ((ao, key, value_node) => {
-            var val = value_node.get_string ();
-            if (val == null)
+            if (value_node.get_node_type () != Json.NodeType.VALUE) {
+              warning ("Key %s on provider %s did not hold a valid value", key, account_name);
               return;
+            }
+
+            string? val = null;
+            //TODO: Explore if we need to support more data types
+            if (value_node.get_value_type () == typeof(string)) {
+              val = value_node.get_string ();
+            } else if (value_node.get_value_type () == typeof(bool)) {
+              val = value_node.get_boolean ()? "true" : "false";
+            } else {
+              warning ("Value type for key %s/%s not supported", account_name, key);
+              return;
+            }
+
+            if (val == null) {
+              warning ("Could not assign string to %s/%s", account_name, key);
+              return;
+            }
+
             keyfile.set_string (account_name, key, val);
           });
         });

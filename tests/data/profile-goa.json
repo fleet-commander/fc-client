@@ -4,8 +4,8 @@
   "description": "",
   "settings": {
     "org.gnome.online-accounts": {
-      "Account account_fc_FooBar": {"Provider": "foobar"},
-      "Account account_fc_BarBaz": {"Provider": "barbaz"}
+      "Template account_fc_1473351850_0": {"Provider": "google", "FilesEnabled": true, "PhotosEnabled": false, "ContactsEnabled": false, "CalendarEnabled": false, "DocumentsEnabled": true, "PrintersEnabled": false, "MailEnabled": true},
+      "Template account_fc_1473351865_0": {"Provider": "facebook", "MapsEnabled": true, "PhotosEnabled": true}
     }
   }
 }

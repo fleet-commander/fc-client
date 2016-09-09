@@ -47,10 +47,24 @@ namespace FleetCommander {
     FileUtils.get_contents (path, out content);
 
     var keyfile = new KeyFile ();
-    keyfile.set_string ("Account account_fc_FooBar", "Provider", "foobar");
-    keyfile.set_string ("Account account_fc_BarBaz", "Provider", "barbaz");
+    keyfile.load_from_data (content, -1, KeyFileFlags.NONE);
 
-    assert (content == keyfile.to_data ());
+    assert (keyfile.get_string  ("Template account_fc_1473351850_0", "Provider") == "google");
+    assert (keyfile.get_boolean ("Template account_fc_1473351850_0", "FilesEnabled") == true);
+    assert (keyfile.get_boolean ("Template account_fc_1473351850_0", "PhotosEnabled") == false);
+    assert (keyfile.get_boolean ("Template account_fc_1473351850_0", "ContactsEnabled") == false);
+    assert (keyfile.get_boolean ("Template account_fc_1473351850_0", "CalendarEnabled") == false);
+    assert (keyfile.get_boolean ("Template account_fc_1473351850_0", "DocumentsEnabled") == true);
+    assert (keyfile.get_boolean ("Template account_fc_1473351850_0", "PrintersEnabled") == false);
+    assert (keyfile.get_boolean ("Template account_fc_1473351850_0", "MailEnabled") == true);
+
+    assert (keyfile.get_keys ("Template account_fc_1473351850_0").length == 8);
+
+    assert (keyfile.get_string  ("Template account_fc_1473351865_0", "Provider") == "facebook");
+    assert (keyfile.get_boolean ("Template account_fc_1473351865_0", "MapsEnabled") == true);
+    assert (keyfile.get_boolean ("Template account_fc_1473351865_0", "PhotosEnabled") == true);
+
+    assert (keyfile.get_keys ("Template account_fc_1473351865_0").length == 3);
 
     icache = new CacheData ();
     pcache = new CacheData ();
