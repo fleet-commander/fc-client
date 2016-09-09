@@ -6,7 +6,7 @@
     "org.libreoffice.registry": [
       {"key": "/org/libreoffice/registry/foo/bar/bool",
        "signature": "b",
-       "value": false}
+       "value": "false"}
     ]
   }
 }

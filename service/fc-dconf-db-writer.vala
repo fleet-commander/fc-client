@@ -274,11 +274,14 @@ namespace FleetCommander {
       else
         warning ("profile %s: could not find signature for key %s", uid, key);
 
-      Variant? variant;
-      try {
-        variant = Json.gvariant_deserialize(change.get_member("value"), signature);
-      } catch (Error e) {
-        warning ("profile %s: could not deserialize JSON to GVariant for key %u", key, i);
+      var change_value = change.get_string_member("value");
+      if (change_value == null) {
+        warning ("profile %s: there was no 'value' member in dconf change %s or it was not a string %u", uid, key, i);
+        return;
+      }
+      var variant = GLib.Variant.parse (null, change_value, null, null);
+      if (variant == null) {
+        warning ("profile %s: could not parse value for key %s '%s' is not a valid GVariant string", uid, key, change_value);
         return;
       }
 
