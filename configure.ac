@@ -1,5 +1,5 @@
 AC_INIT([fleet-commander-client],
-        [0.7.99],,
+        [0.8.0],,
         [fleet-commander-client])
 
 AC_CONFIG_SRCDIR([configure.ac])

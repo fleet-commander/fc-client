@@ -1,5 +1,5 @@
 Name:           fleet-commander-client
-Version:        0.7.99
+Version:        0.8.0
 Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
@@ -59,6 +59,9 @@ rm -rf %{buildroot}
 %attr(755, -, -) %{_localstatedir}/cache/fleet-commander
 
 %changelog
+* Fri Sep 16 2016 Alberto Ruiz <aruizrui@redhat.com> - 0.8.0-1
+- new version
+
 * Wed Feb 03 2016 Alberto Ruiz <aruiz@redhat.com> - 0.7.0-2
 - Fix documentation string
 
