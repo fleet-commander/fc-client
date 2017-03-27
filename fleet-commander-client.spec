@@ -1,28 +1,40 @@
 Name:           fleet-commander-client
-Version:        0.8.0
+Version:        0.9.0
 Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
-License: LGPLv2+
-URL: https://github.com/fleet-commander/fc-client
+BuildArch: noarch
+
+License: LGPLv3+ and LGPLv2+ and MIT and BSD
+URL: https://raw.githubusercontent.com/fleet-commander/fc-client/master/fleet-commander-client.spec
 Source0: https://github.com/fleet-commander/fc-client/releases/download/%{version}/%{name}-%{version}.tar.xz
 
-BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: pkgconfig(gio-unix-2.0)
-BuildRequires: pkgconfig(json-glib-1.0)
-BuildRequires: pkgconfig(libsoup-2.4)
-BuildRequires: pkgconfig(goa-1.0)
-BuildRequires: gtk-doc
+BuildRequires: python2-devel
+BuildRequires: dbus-python
+BuildRequires: pygobject2
+BuildRequires: python-dbusmock
 BuildRequires: dconf
-BuildRequires: systemd
+%if 0%{?rhel} < 8
+BuildRequires: pygobject3
+%endif
+%if 0%{?fedora} >= 21
+BuildRequires: python-gobject
+%endif
 
-Requires: dconf >= 0.25.0
 Requires: NetworkManager
-
+Requires: NetworkManager-libnm
 Requires: systemd
-Requires(post): systemd
+Requires: dconf
+Requires: python2
+Requires: dbus-python
+Requires: pygobject2
 Requires(preun): systemd
-Requires(postun): systemd
+%if 0%{?rhel} < 8
+Requires: pygobject3
+%endif
+%if 0%{?fedora} >= 21
+Requires: python-gobject
+%endif
 
 %description
 Profile data retriever for Fleet Commander client hosts. Fleet Commander is an
@@ -31,32 +43,35 @@ network of users and workstations/laptops.
 
 %prep
 %setup -q
+
 %build
-%configure
-make
+%configure --with-systemdsystemunitdir=%{_unitdir}
+%make_build
 
 %install
 %make_install
-install -m 755 -d %{buildroot}%{_localstatedir}/cache/fleet-commander
-
-%clean
-rm -rf %{buildroot}
-
-%post
-%systemd_post fleet-commander.service
 
 %preun
-%systemd_preun fleet-commander.service
+%systemd_preun fleet-commander-client.service
+
+%post
+%systemd_post fleet-commander-client.service
 
 %postun
-%systemd_postun_with_restart fleet-commander.service
+%systemd_postun_with_restart fleet-commander-client.service
 
 %files
-%defattr(644, root, root)
-%config(noreplace) %{_sysconfdir}/xdg/fleet-commander.conf
-%attr(755, -, -) %{_libexecdir}/fleet-commander-client
-%{_unitdir}/fleet-commander.service
-%attr(755, -, -) %{_localstatedir}/cache/fleet-commander
+%license
+%dir %{_datadir}/%{name}
+%dir %{_datadir}/%{name}/python
+%dir %{_datadir}/%{name}/python/fleetcommander/client
+%attr(644, -, -) %{_datadir}/%{name}/python/fleetcommander/*.py
+%attr(644, -, -) %{_datadir}/%{name}/python/fleetcommander/*.py[co]
+%config(noreplace) %{_sysconfdir}/xdg/%{name}.conf
+%config(noreplace) %{_sysconfdir}/dbus-1/system.d/org.freedesktop.FleetCommanderClient.conf
+%{_unitdir}/fleet-commander-client.service
+%{_datadir}/dbus-1/system-services/org.freedesktop.FleetCommanderClient.service
+%{_localstatedir}/lib/%{name}
 
 %changelog
 * Fri Sep 16 2016 Alberto Ruiz <aruizrui@redhat.com> - 0.8.0-1

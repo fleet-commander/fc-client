@@ -1,29 +1,19 @@
-NULL =
+fc_client_dbus_servicedir = ${datarootdir}/dbus-1/system-services/
+fc_client_dbus_service_in_files = org.freedesktop.FleetCommanderClient.service.in
+fc_client_dbus_service_DATA = org.freedesktop.FleetCommanderClient.service
 
-serviceconfdir = $(sysconfdir)/xdg/
-serviceconf_DATA = fleet-commander.conf
+fc_client_systemd_servicedir = $(systemdsystemunitdir)
+fc_client_systemd_service_in_files = fleet-commander-client.service.in
+fc_client_systemd_service_DATA = fleet-commander-client.service
 
-if HAVE_SYSTEMD
-systemdservicedir = $(systemdsystemunitdir)
-systemdservice_DATA = fleet-commander.service
+fc_client_dbus_configdir = ${sysconfdir}/dbus-1/system.d/
+fc_client_dbus_config_DATA = org.freedesktop.FleetCommanderClient.conf
 
-fleet-commander.service: Makefile
-	$(AM_V_GEN) (echo '[Unit]'; \
-	             echo 'Description=Fleet Commander client configuration management service'; \
-	             echo 'After=network.target remote-fs.target nss-lookup.target'; \
-	             echo '';                                                        \
-	             echo '[Service]';                                               \
-	             echo 'ExecStart=${libexecdir}/fleet-commander-client';          \
-	             echo 'StandardOutput=syslog';                                   \
-	             echo 'StandardError=inherit';                                   \
-	             echo '';                                                        \
-		     echo '[Install]';                                               \
-		     echo 'WantedBy=multi-user.target') > $@.tmp &&               \
-	            mv $@.tmp $@
-endif
+EXTRA_DIST = \
+	$(fc_client_dbus_service_in_files) \
+	$(fc_client_dbus_config_DATA) \
+	$(fc_client_systemd_service_in_files)
 
-CLEANFILES = $(systemdservice_DATA)
-
-EXTRA_DIST = $(serviceconf_DATA)
-
--include $(top_srcdir)/git.mk
+CLEANFILES = \
+	$(fc_client_dbus_service_DATA) \
+	$(fc_client_systemd_service_DATA)
