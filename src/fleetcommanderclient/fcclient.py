@@ -20,6 +20,7 @@
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
 import time
+import logging
 
 import dbus
 import dbus.service
@@ -78,15 +79,25 @@ class FleetCommanderClientDbusService(dbus.service.Object):
     Fleet commander client d-bus service class
     """
 
-    def __init__(self):
+    def __init__(self, args):
         """
         Class initialization
         """
+        # TODO: Get from config file or command line argument
+        # Set logging level
+        self.log_level = 'debug'
+        loglevel = getattr(logging, self.log_level.upper())
+        logging.basicConfig(level=loglevel)
+
         super(FleetCommanderClientDbusService, self).__init__()
 
-    def run(self):
+    def run(self, sessionbus=False):
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-        bus_name = dbus.service.BusName(DBUS_BUS_NAME, dbus.SessionBus())
+        if not sessionbus:
+            bus = dbus.SystemBus()
+        else:
+            bus = dbus.SessionBus()
+        bus_name = dbus.service.BusName(DBUS_BUS_NAME, bus)
         dbus.service.Object.__init__(self, bus_name, DBUS_OBJECT_PATH)
         self._loop = GObject.MainLoop()
 
@@ -102,7 +113,7 @@ class FleetCommanderClientDbusService(dbus.service.Object):
             directory: String (Path where the files has been deployed by SSSD)
             policy: Unsigned 16 bit integer (as specified in FreeIPA)
         """
-        print(
+        logging.debug(
             'Fleet Commander Client: Data received - %(u)s - %(d)s - %(p)s' % {
                 'u': uid,
                 'd': directory,

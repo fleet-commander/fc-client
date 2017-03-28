@@ -25,63 +25,17 @@ import os
 import sys
 import logging
 
-PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'admin')
+import dbus
+
+PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
 sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
-from fleetcommander import fcdbus
+from fleetcommanderclient import fcclient
 
 
-class MockLibVirtController(object):
-
-    TEMPLATE_UUID = 'e2e3ad2a-7c2d-45d9-b7bc-fefb33925a81'
-    SESSION_UUID = 'fefb45d9-5a81-3392-b7bc-e2e37c2d'
-
-    DOMAINS_LIST = [
-        {
-            'uuid': TEMPLATE_UUID,
-            'name': 'fedora-unkno',
-            'active': False,
-            'temporary': False
-        }
-    ]
-
-    def __init__(self, data_path, username, hostname,
-                 mode, admin_hostname, admin_port):
-
-        self.data_dir = os.path.abspath(data_path)
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir)
-
-        self.public_key_file = os.path.join(self.data_dir, 'id_rsa.pub')
-
-        with open(self.public_key_file, 'w') as fd:
-            fd.write('PUBLIC_KEY')
-            fd.close()
-
-    def list_domains(self):
-        return self.DOMAINS_LIST
-
-    def session_start(self, uuid):
-        self.DOMAINS_LIST.append({
-            'uuid': self.SESSION_UUID,
-            'name': 'fc-',
-            'active': True,
-            'temporary': True
-        })
-        return (self.SESSION_UUID, 0, 'tunnel_pid')
-
-    def session_stop(self, uuid, tunnel_pid):
-        for d in self.DOMAINS_LIST:
-            if d['uuid'] == uuid:
-                self.DOMAINS_LIST.remove(d)
-
-
-# Mock libvirt controller
-fcdbus.libvirtcontroller.LibVirtController = MockLibVirtController
-
-
-class TestFleetCommanderDbusService(fcdbus.FleetCommanderDbusService):
+class TestFleetCommanderClientDbusService(
+        fcclient.FleetCommanderClientDbusService):
 
     def __init__(self, test_directory):
         args = {
@@ -97,21 +51,14 @@ class TestFleetCommanderDbusService(fcdbus.FleetCommanderDbusService):
             'default_profile_priority': 50,
         }
 
-        super(TestFleetCommanderDbusService, self).__init__(args)
-        self.known_hosts_file = os.path.join(test_directory, 'known_hosts')
+        super(TestFleetCommanderClientDbusService, self).__init__(args)
 
-        self.GOA_PROVIDERS_FILE = os.path.join(
-            os.environ['TOPSRCDIR'],
-            'tests/data/fc_goa_providers_test.ini')
+    @dbus.service.method(fcclient.DBUS_INTERFACE_NAME,
+                         in_signature='', out_signature='b')
+    def TestServiceAlive(self):
+        return True
 
-        self.ssh.install_pubkey = self.ssh_install_pubkey_mock
-
-    def ssh_install_pubkey_mock(self, pubkey, user, password, host, port):
-        """
-        Just mock ssh command execution
-        """
-        if password != 'password':
-            raise ssh.SSHControllerException('Invalid credentials')
 
 if __name__ == '__main__':
-    TestFleetCommanderDbusService(sys.argv[1]).run(sessionbus=True)
+    # TestFleetCommanderClientDbusService(sys.argv[1]).run(sessionbus=True)
+    TestFleetCommanderClientDbusService(sys.argv[1]).run(sessionbus=True)

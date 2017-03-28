@@ -24,7 +24,7 @@ if [ "x$TOPSRCDIR" = "x" ] ; then
 fi
 
 export TOPSRCDIR
-export PYTHONPATH=$TOPSRCDIR/_build/sub/client/fleetcommander
+export PYTHONPATH=$TOPSRCDIR/_build/sub/src
 
 # We assume dbus-launch never fails
 eval `dbus-launch`

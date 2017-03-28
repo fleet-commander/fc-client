@@ -1,7 +1,7 @@
-fc_client_pydir = ${fcpythondir}/fleetcommander/client
+fc_client_pydir = ${fcpythondir}/fleetcommanderclient
 fc_client_py_SCRIPTS = \
-	__init__.py \
-	fcclient.py
+	fleetcommanderclient/__init__.py \
+	fleetcommanderclient/fcclient.py
 
 #fc_client_constsdir = ${fcpythondir}/fleetcommander
 #fc_client_consts_in_files = fleetcommander/constants.py.in

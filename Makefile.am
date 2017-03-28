@@ -3,5 +3,5 @@ DISTCHECK_CONFIGURE_FLAGS = \
 SUBDIRS = data src tests
 
 EXTRA_DIST = \
- 	$(wildcard LICENSE.*)                  \
+ 	$(wildcard LICENSE.*) \
  	$(wildcard COPYING.*)
