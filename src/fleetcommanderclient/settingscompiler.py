@@ -61,8 +61,7 @@ class SettingsCompiler(object):
             fd = open(filepath, 'r')
             contents = fd.read()
             data = json.loads(contents)
-            if 'settings' in data:
-                return data['settings']
+            return data
         except Exception, e:
             logging.error(
                 'ProfileGenerator: Ignoring profile data from %(f)s: %(e)s' % {
