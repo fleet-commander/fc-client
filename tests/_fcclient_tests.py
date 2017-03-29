@@ -44,7 +44,7 @@ class TestDbusClient(fcclient.FleetCommanderClientDbusClient):
     DEFAULT_BUS = dbus.SessionBus
 
     def test_service_alive(self):
-        return self.iface.ServiceAlive()
+        return self.iface.TestServiceAlive()
 
 # Mock dbus client
 fcclient.FleetCommanderClientDbusClient = TestDbusClient

@@ -31,7 +31,7 @@ eval `dbus-launch`
 export DBUS_SESSION_BUS_ADDRESS
 
 # Execute fleet commander dbus service tests
-$TOPSRCDIR/tests/_01_fcclient_tests.py
+$TOPSRCDIR/tests/_fcclient_tests.py
 RET=$?
 
 kill $DBUS_SESSION_BUS_PID
