@@ -48,7 +48,7 @@ class SettingsCompiler(object):
         """
         Get file name list from path given at class initialization
         """
-        filenames = os.listdir(path)
+        filenames = os.listdir(self.path)
         filenames.sort()
         return filenames
 
@@ -70,26 +70,29 @@ class SettingsCompiler(object):
                 })
         return {}
 
-    def merge_profile_settings(old, new):
+    def merge_profile_settings(self, old, new):
         """
         Merge two profiles overwriting previous values with new ones
         """
-        for key, value in new:
+        print old, new
+        for namespace, settings in new:
             # Check for merger
             if key in self.mergers:
-                old[key] = mergers[key].merge(old[key], new[key])
+                old[namespace] = mergers[namespace].merge(
+                    old[namespace], new[namespace])
             else:
-                # Overwrite key with new one
-                old[key] = new[key]
+                # Overwrite namespace with new one
+                old[namespace] = new[namespace]
         return old
 
-    def compile_settings(self, path):
+    def compile_settings(self):
         """
         Generate final settings
         """
-        filenames = self.get_ordered_file_names(path)
+        filenames = self.get_ordered_file_names()
         profile_settings = {}
         for filename in filenames:
-            data = process_file_data(filename)
-            profile_settings = self.merge_data(profile_settings, data)
+            data = self.read_profile_settings(filename)
+            profile_settings = self.merge_profile_settings(
+                profile_settings, data)
         return profile_settings
