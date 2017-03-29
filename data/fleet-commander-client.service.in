@@ -5,7 +5,7 @@ Description=Fleet Commander Client dbus service
 Type=dbus
 BusName=org.freedesktop.FleetCommanderClient
 Environment=PYTHONPATH=@FCPYTHONDIR@
-ExecStart=@PYTHON@ -m fleetcommander.fcclient --configuration @XDGCONFIGDIR@/fleet-commander-client.conf
+ExecStart=@PYTHON@ -m fleetcommanderclient.fcclient --configuration @XDGCONFIGDIR@/fleet-commander-client.conf
 StandardOutput=syslog
 StandardError=inherit
 

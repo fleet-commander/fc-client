@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vi:ts=4 sw=4 sts=4
 
-# Copyright (C) 2014 Red Hat, Inc.
+# Copyright (C) 2017 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -63,7 +63,7 @@ class FleetCommanderClientDbusClient(object):
         raise Exception(
             'Timed out connecting to fleet commander client dbus service')
 
-    def sssd_files_ready(self, uid, directory, policy):
+    def process_sssd_files(self, uid, directory, policy):
         """
         Types:
             uid: Unsigned 32 bit integer (Real local user ID)
@@ -104,9 +104,12 @@ class FleetCommanderClientDbusService(dbus.service.Object):
         # Enter main loop
         self._loop.run()
 
+    def quit(self):
+        self._loop.quit()
+
     @dbus.service.method(DBUS_INTERFACE_NAME,
-                         in_signature='usq', out_signature='b')
-    def SSSDFilesReady(self, uid, directory, policy):
+                         in_signature='usq', out_signature='')
+    def ProcessSSSDFiles(self, uid, directory, policy):
         """
         Types:
             uid: Unsigned 32 bit integer (Real local user ID)
@@ -119,8 +122,12 @@ class FleetCommanderClientDbusService(dbus.service.Object):
                 'd': directory,
                 'p': policy,
             })
-        return True
+        self.quit()
 
+    @dbus.service.method(DBUS_INTERFACE_NAME,
+                         in_signature='', out_signature='')
+    def Quit(self):
+        self.quit()
 
 if __name__ == '__main__':
     svc = FleetCommanderClientDbusService()
