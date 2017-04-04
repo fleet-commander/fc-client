@@ -45,13 +45,178 @@ class TestSettingsCompiler(unittest.TestCase):
 
     invalid_profile_filename = ordered_filenames[2]
 
-    PROFILE_1_SETTINGS = {}
+    PROFILE_1_SETTINGS = {
+        "org.freedesktop.NetworkManager": [
+            {
+                "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+                "type": "vpn",
+                "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
+                "id": "Company VPN"
+            }
+        ],
+        "org.gnome.gsettings": [
+            {
+                "signature": "s",
+                "value": "'#FFFFFF'",
+                "key": "/org/yorba/shotwell/preferences/ui/background-color",
+                "schema": "org.yorba.shotwell.preferences.ui"
+            },
+        ],
+        "org.libreoffice.registry": [
+            {
+                "value": "'Company'",
+                "key": "/org/libreoffice/registry/org.openoffice.UserProfile/Data/o",
+                "signature": "s"
+            }
+        ]
+    }
 
-    PROFILE_2_SETTINGS = {}
+    PROFILE_2_SETTINGS = {
+        "org.gnome.gsettings": [
+            {
+                "signature": "s",
+                "value": "'#CCCCCC'",
+                "key": "/org/yorba/shotwell/preferences/ui/background-color",
+                "schema": "org.yorba.shotwell.preferences.ui"
+            },
+            {
+                "key": "/org/gnome/software/popular-overrides",
+                "value": "['firefox.desktop','builder.desktop']",
+                "signature": "as"
+            }
+        ],
+        "org.libreoffice.registry": [
+            {
+                "value": "true",
+                "key": "/org/libreoffice/registry/org.openoffice.Office.Writer/Layout/Window/HorizontalRuler",
+                "signature": "b"
+            },
+            {
+                "value": "'Our Company'",
+                "key": "/org/libreoffice/registry/org.openoffice.UserProfile/Data/o",
+                "signature": "s"
+            }
+        ],
+        "org.gnome.online-accounts": {
+            "Template account_fc_1490729747_0": {
+                "FilesEnabled": False,
+                "PhotosEnabled": False,
+                "ContactsEnabled": False,
+                "CalendarEnabled": True,
+                "Provider": "google",
+                "DocumentsEnabled": False,
+                "PrintersEnabled": False,
+                "MailEnabled": True
+            }
+        }
+    }
 
-    PROFILE_SETTINGS_MERGED = {}
+    PROFILE_SETTINGS_MERGED = {
+        "org.freedesktop.NetworkManager": [
+            {
+                "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+                "type": "vpn",
+                "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
+                "id": "Company VPN"
+            }
+        ],
+        "org.gnome.gsettings": [
+            {
+                "signature": "s",
+                "value": "'#CCCCCC'",
+                "key": "/org/yorba/shotwell/preferences/ui/background-color",
+                "schema": "org.yorba.shotwell.preferences.ui"
+            },
+            {
+                "key": "/org/gnome/software/popular-overrides",
+                "value": "['firefox.desktop','builder.desktop']",
+                "signature": "as"
+            }
+        ],
+        "org.libreoffice.registry": [
+            {
+                "value": "true",
+                "key": "/org/libreoffice/registry/org.openoffice.Office.Writer/Layout/Window/HorizontalRuler",
+                "signature": "b"
+            },
+            {
+                "value": "'Our Company'",
+                "key": "/org/libreoffice/registry/org.openoffice.UserProfile/Data/o",
+                "signature": "s"
+            }
+        ],
+        "org.gnome.online-accounts": {
+            "Template account_fc_1490729747_0": {
+                "FilesEnabled": False,
+                "PhotosEnabled": False,
+                "ContactsEnabled": False,
+                "CalendarEnabled": True,
+                "Provider": "google",
+                "DocumentsEnabled": False,
+                "PrintersEnabled": False,
+                "MailEnabled": True
+            }
+        }
+    }
 
-    COMPILED_SETTINGS = {}
+    COMPILED_SETTINGS = {
+        "org.freedesktop.NetworkManager": [
+            {
+                "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+                "type": "vpn",
+                "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
+                "id": "The Company VPN"
+            },
+            {
+                "data": "{'connection': {'id': <'Intranet VPN'>, 'uuid': <'0be7d422-1635-11e7-a83f-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+                "type": "vpn",
+                "uuid": "0be7d422-1635-11e7-a83f-68f728db19d3",
+                "id": "Intranet VPN"
+            }
+        ],
+        "org.gnome.gsettings": [
+            {
+                "signature": "s",
+                "value": "'#CCCCCC'",
+                "key": "/org/yorba/shotwell/preferences/ui/background-color",
+                "schema": "org.yorba.shotwell.preferences.ui"
+            },
+            {
+                "key": "/org/gnome/software/popular-overrides",
+                "value": "['riot.desktop','matrix.desktop']",
+                "signature": "as"
+            }
+        ],
+        "org.libreoffice.registry": [
+            {
+                "value": "true",
+                "key": "/org/libreoffice/registry/org.openoffice.Office.Writer/Layout/Window/HorizontalRuler",
+                "signature": "b"
+            },
+            {
+                "value": "'The Company'",
+                "key": "/org/libreoffice/registry/org.openoffice.UserProfile/Data/o",
+                "signature": "s"
+            }
+        ],
+        "org.gnome.online-accounts": {
+            "Template account_fc_1490729747_0": {
+                "FilesEnabled": True,
+                "PhotosEnabled": False,
+                "ContactsEnabled": False,
+                "CalendarEnabled": True,
+                "Provider": "google",
+                "DocumentsEnabled": False,
+                "PrintersEnabled": True,
+                "MailEnabled": True
+            },
+            "Template account_fc_1490729585_0": {
+                "PhotosEnabled": False,
+                "Provider": "facebook",
+                "MapsEnabled": False
+            }
+        }
+    }
 
     def setUp(self):
         self.sc = SettingsCompiler('./data/sampleprofiledata/')
@@ -81,6 +246,10 @@ class TestSettingsCompiler(unittest.TestCase):
     def test_03_compile_settings(self):
         # Read from invalid filename
         result = self.sc.compile_settings()
+        print "OK"
+        print result
+        print self.COMPILED_SETTINGS
+        print "END"
         self.assertEqual(result, self.COMPILED_SETTINGS)
 
 if __name__ == '__main__':

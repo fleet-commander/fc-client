@@ -13,68 +13,13 @@
       "value": "'#FFFFFF'",
       "key": "/org/yorba/shotwell/preferences/ui/background-color",
       "schema": "org.yorba.shotwell.preferences.ui"
-    },
-    {
-      "schema": "org.gnome.nautilus.list-view",
-      "key": "/org/gnome/nautilus/list-view/default-zoom-level",
-      "value": "'large'",
-      "signature": "s"
-    },
-    {
-      "schema": "org.gnome.nautilus.preferences",
-      "key": "/org/gnome/nautilus/preferences/default-folder-viewer",
-      "value": "'list-view'",
-      "signature": "s"
-    },
-    {
-      "schema": "org.gtk.Settings.FileChooser",
-      "key": "/org/gtk/settings/file-chooser/show-hidden",
-      "value": "true",
-      "signature": "b"
-    },
-    {
-      "key": "/org/gnome/software/popular-overrides",
-      "value": "['firefox.desktop','builder.desktop']",
-      "signature": "as"
     }
   ],
   "org.libreoffice.registry": [
-    {
-      "value": "true",
-      "key": "/org/libreoffice/registry/org.openoffice.Office.Writer/Layout/Window/HorizontalRuler",
-      "signature": "b"
-    },
-    {
-      "value": "false",
-      "key": "/org/libreoffice/registry/org.openoffice.Office.Writer/Layout/Window/SmoothScroll",
-      "signature": "b"
-    },
-    {
-      "value": "true",
-      "key": "/org/libreoffice/registry/org.openoffice.Office.Writer/Layout/Window/ShowRulers",
-      "signature": "b"
-    },
-    {
-      "value": "false",
-      "key": "/org/libreoffice/registry/org.openoffice.Office.Writer/Layout/Window/VerticalRuler",
-      "signature": "b"
-    },
     {
       "value": "'Company'",
       "key": "/org/libreoffice/registry/org.openoffice.UserProfile/Data/o",
       "signature": "s"
     }
-  ],
-  "org.gnome.online-accounts": {
-    "Template account_fc_1490729747_0": {
-      "FilesEnabled": false,
-      "PhotosEnabled": false,
-      "ContactsEnabled": false,
-      "CalendarEnabled": true,
-      "Provider": "google",
-      "DocumentsEnabled": false,
-      "PrintersEnabled": false,
-      "MailEnabled": true
-    }
-  }
+  ]
 }

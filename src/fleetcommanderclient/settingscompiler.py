@@ -74,14 +74,15 @@ class SettingsCompiler(object):
         """
         Merge two profiles overwriting previous values with new ones
         """
-        print old, new
-        for namespace, settings in new:
+        for namespace, settings in new.items():
             # Check for merger
-            if key in self.mergers:
-                old[namespace] = mergers[namespace].merge(
-                    old[namespace], new[namespace])
+            if namespace in self.mergers:
+                if namespace not in old.keys():
+                    old[namespace] = new[namespace]
+                else:
+                    old[namespace] = self.mergers[namespace].merge(
+                        old[namespace], new[namespace])
             else:
-                # Overwrite namespace with new one
                 old[namespace] = new[namespace]
         return old
 
