@@ -1,6 +1,10 @@
 fc_client_pydir = ${fcpythondir}/fleetcommanderclient
 fc_client_py_SCRIPTS = \
 	fleetcommanderclient/__init__.py \
+	fleetcommanderclient/mergers.py \
+	fleetcommanderclient/settingscompiler.py \
+	fleetcommanderclient/configadapters/__init__.py \
+	fleetcommanderclient/configadapters/goa.py \
 	fleetcommanderclient/fcclient.py
 
 #fc_client_constsdir = ${fcpythondir}/fleetcommander
