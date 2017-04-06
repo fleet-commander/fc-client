@@ -79,7 +79,7 @@ class FleetCommanderClientDbusService(dbus.service.Object):
     Fleet commander client d-bus service class
     """
 
-    def __init__(self, args):
+    def __init__(self):
         """
         Class initialization
         """

@@ -37,22 +37,6 @@ from fleetcommanderclient import fcclient
 class TestFleetCommanderClientDbusService(
         fcclient.FleetCommanderClientDbusService):
 
-    def __init__(self, test_directory):
-        args = {
-            'log_level': 'debug',
-            'log_format': '\n[%(levelname)s] %(asctime)-15s %(message)s',
-            'webservice_host': 'localhost',
-            'webservice_port': '0',
-            'data_dir': test_directory,
-            'state_dir': test_directory,
-            'database_path': os.path.join(test_directory, 'database.db'),
-            'client_data_url': '/',
-            'tmp_session_destroy_timeout': 60,
-            'default_profile_priority': 50,
-        }
-
-        super(TestFleetCommanderClientDbusService, self).__init__(args)
-
     @dbus.service.method(fcclient.DBUS_INTERFACE_NAME,
                          in_signature='', out_signature='b')
     def TestServiceAlive(self):
@@ -60,5 +44,4 @@ class TestFleetCommanderClientDbusService(
 
 
 if __name__ == '__main__':
-    # TestFleetCommanderClientDbusService(sys.argv[1]).run(sessionbus=True)
-    TestFleetCommanderClientDbusService(sys.argv[1]).run(sessionbus=True)
+    TestFleetCommanderClientDbusService().run(sessionbus=True)
