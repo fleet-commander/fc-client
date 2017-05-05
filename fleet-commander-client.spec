@@ -64,14 +64,16 @@ network of users and workstations/laptops.
 %license
 %dir %{_datadir}/%{name}
 %dir %{_datadir}/%{name}/python
-%dir %{_datadir}/%{name}/python/fleetcommander/client
-%attr(644, -, -) %{_datadir}/%{name}/python/fleetcommander/*.py
-%attr(644, -, -) %{_datadir}/%{name}/python/fleetcommander/*.py[co]
+%dir %{_datadir}/%{name}/python/fleetcommanderclient
+%attr(644, -, -) %{_datadir}/%{name}/python/fleetcommanderclient/*.py
+%attr(644, -, -) %{_datadir}/%{name}/python/fleetcommanderclient/*.py[co]
+%dir %{_datadir}/%{name}/python/fleetcommanderclient/configadapters
+%attr(644, -, -) %{_datadir}/%{name}/python/fleetcommanderclient/configadapters/*.py
+%attr(644, -, -) %{_datadir}/%{name}/python/fleetcommanderclient/configadapters/*.py[co]
 %config(noreplace) %{_sysconfdir}/xdg/%{name}.conf
 %config(noreplace) %{_sysconfdir}/dbus-1/system.d/org.freedesktop.FleetCommanderClient.conf
 %{_unitdir}/fleet-commander-client.service
 %{_datadir}/dbus-1/system-services/org.freedesktop.FleetCommanderClient.service
-%{_localstatedir}/lib/%{name}
 
 %changelog
 * Fri Sep 16 2016 Alberto Ruiz <aruizrui@redhat.com> - 0.8.0-1
