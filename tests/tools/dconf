@@ -1,0 +1,4 @@
+#!/bin/bash
+if [ $1 == 'compile' ]; then
+  echo "COMPILED" > $2
+fi

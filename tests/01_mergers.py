@@ -25,8 +25,7 @@ import os
 import sys
 import unittest
 
-PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
-sys.path.append(PYTHONPATH)
+sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
 
 # Fleet commander imports
 from fleetcommanderclient import mergers

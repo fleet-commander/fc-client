@@ -37,10 +37,10 @@ class TestSettingsCompiler(unittest.TestCase):
     maxDiff = None
 
     ordered_filenames = [
-        '0050-0050-0000-0000-0000-Test_Profile_1.profile',
-        '0060-0060-0000-0000-0000-Test_Profile_2.profile',
+        '0050-0050-0000-0000-0000-Test1.profile',
+        '0060-0060-0000-0000-0000-Test2.profile',
         '0070-0070-0000-0000-0000-Invalid.profile',
-        '0090-0090-0000-0000-0000-Test_Profile_3.profile',
+        '0090-0090-0000-0000-0000-Test3.profile',
     ]
 
     invalid_profile_filename = ordered_filenames[2]
@@ -219,7 +219,9 @@ class TestSettingsCompiler(unittest.TestCase):
     }
 
     def setUp(self):
-        self.sc = SettingsCompiler('./data/sampleprofiledata/')
+        self.sc = SettingsCompiler(
+            os.path.join(
+                os.environ['TOPSRCDIR'], 'tests/data/sampleprofiledata/'))
 
     def test_00_get_ordered_file_names(self):
         # Read from invalid filename
@@ -246,10 +248,6 @@ class TestSettingsCompiler(unittest.TestCase):
     def test_03_compile_settings(self):
         # Read from invalid filename
         result = self.sc.compile_settings()
-        print "OK"
-        print result
-        print self.COMPILED_SETTINGS
-        print "END"
         self.assertEqual(result, self.COMPILED_SETTINGS)
 
 if __name__ == '__main__':

@@ -37,7 +37,7 @@ from fleetcommanderclient.configadapters.goa import GOAConfigAdapter
 
 class TestGOAConfigAdapter(unittest.TestCase):
 
-    TEST_UID = '1002'
+    TEST_UID = 1002
 
     TEST_DATA = {
         "Template account_fc_1490729747_0": {
@@ -59,16 +59,14 @@ class TestGOAConfigAdapter(unittest.TestCase):
 
     def setUp(self):
         self.test_directory = tempfile.mkdtemp(prefix='fc-client-goa-test')
-        print self.test_directory
         self.ca = GOAConfigAdapter(self.test_directory)
 
     def tearDown(self):
         # Remove test directory
-        #shutil.rmtree(self.test_directory)
-        pass
+        shutil.rmtree(self.test_directory)
 
     def test_00_bootstrap(self):
-        dirpath = os.path.join(self.test_directory, self.TEST_UID)
+        dirpath = os.path.join(self.test_directory, unicode(self.TEST_UID))
         # Run bootstrap with no directory created should continue and warn
         self.ca.bootstrap(self.TEST_UID)
         # Run bootstrap with a existing directory
@@ -82,7 +80,7 @@ class TestGOAConfigAdapter(unittest.TestCase):
         self.ca.bootstrap(self.TEST_UID)
         self.ca.update(self.TEST_UID, self.TEST_DATA)
         keyfile_path = os.path.join(
-            self.test_directory, self.TEST_UID, self.ca.FC_ACCOUNTS_FILE)
+            self.test_directory, unicode(self.TEST_UID), self.ca.FC_ACCOUNTS_FILE)
         # Check keyfile has been written
         self.assertTrue(os.path.exists(keyfile_path))
         # Read keyfile
@@ -93,7 +91,6 @@ class TestGOAConfigAdapter(unittest.TestCase):
         accounts = self.TEST_DATA.keys()
         accounts.sort()
         accounts_keyfile = keyfile.get_groups()[0]
-        print accounts_keyfile
         accounts_keyfile.sort()
         self.assertEqual(accounts, accounts_keyfile)
 

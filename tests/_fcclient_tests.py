@@ -54,6 +54,8 @@ class TestDbusService(unittest.TestCase):
 
     maxDiff = None
     MAX_DBUS_CHECKS = 1
+    TEST_UID = 1002
+    TEST_POLICY = 23
 
     def setUp(self):
         self.test_directory = tempfile.mkdtemp()
@@ -86,20 +88,26 @@ class TestDbusService(unittest.TestCase):
         # Kill service
         self.service.kill()
         self.print_dbus_service_output()
-        shutil.rmtree(self.test_directory)
+        # shutil.rmtree(self.test_directory)
 
     def print_dbus_service_output(self):
-        print('------- BEGIN DBUS SERVICE OUTPUT -------')
+        print('------- BEGIN DBUS SERVICE STDOUT -------')
         print(self.service.stdout.read())
+        print('-------- END DBUS SERVICE STDOUT --------')
+        print('------- BEGIN DBUS SERVICE STDERR -------')
         print(self.service.stderr.read())
-        print('-------- END DBUS SERVICE OUTPUT --------')
+        print('-------- END DBUS SERVICE STDERR --------')
 
     def get_client(self):
         return fcclient.FleetCommanderClientDbusClient()
 
-    def test_00_(self):
+    def test_00_process_sssd_files(self):
         c = self.get_client()
-
+        directory = os.path.join(
+            os.environ['TOPSRCDIR'],
+            'tests/data/sampleprofiledata/')
+        c.process_sssd_files(self.TEST_UID, directory, self.TEST_POLICY)
+        # TODO: Check files has been created and placed in temporary directory
         self.assertEqual(True, True)
 
 
