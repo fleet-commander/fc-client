@@ -29,6 +29,12 @@ import dbus.mainloop.glib
 import gi
 from gi.repository import GObject
 
+from fleetcommanderclient.configloader import ConfigLoader
+from fleetcommanderclient.configadapters import GSettingsConfigAdapter
+from fleetcommanderclient.configadapters import GOAConfigAdapter
+from fleetcommanderclient.configadapters import NetworkManagerConfigAdapter
+from fleetcommanderclient.settingscompiler import SettingsCompiler
+
 DBUS_BUS_NAME = 'org.freedesktop.FleetCommanderClient'
 DBUS_OBJECT_PATH = '/org/freedesktop/FleetCommanderClient'
 DBUS_INTERFACE_NAME = 'org.freedesktop.FleetCommanderClient'
@@ -70,7 +76,7 @@ class FleetCommanderClientDbusClient(object):
             directory: String (Path where the files has been deployed by SSSD)
             policy: Unsigned 16 bit integer (as specified in FreeIPA)
         """
-        return self.iface.SSSDFilesReady(uid, directory, policy)
+        return self.iface.ProcessSSSDFiles(uid, directory, policy)
 
 
 class FleetCommanderClientDbusService(dbus.service.Object):
@@ -79,16 +85,33 @@ class FleetCommanderClientDbusService(dbus.service.Object):
     Fleet commander client d-bus service class
     """
 
-    def __init__(self):
+    def __init__(self, configfile='/etc/xdg/fleet-commander.conf'):
         """
         Class initialization
         """
-        # TODO: Get from config file or command line argument
+        # Load configuration options
+        self.config = ConfigLoader(configfile)
+
         # Set logging level
-        self.log_level = 'debug'
+        self.log_level = self.config.get_value('log_level')
         loglevel = getattr(logging, self.log_level.upper())
         logging.basicConfig(level=loglevel)
 
+        # Configuration adapters
+        self.adapters = {}
+
+        self.register_config_adapter(
+            GSettingsConfigAdapter,
+            self.config.get_value('dconf_profile_path'),
+            self.config.get_value('dconf_db_path'))
+
+        self.register_config_adapter(
+            GOAConfigAdapter,
+            self.config.get_value('goa_run_path'))
+
+        self.register_config_adapter(NetworkManagerConfigAdapter)
+
+        # Parent initialization
         super(FleetCommanderClientDbusService, self).__init__()
 
     def run(self, sessionbus=False):
@@ -107,6 +130,9 @@ class FleetCommanderClientDbusService(dbus.service.Object):
     def quit(self):
         self._loop.quit()
 
+    def register_config_adapter(self, adapterclass, *args, **kwargs):
+        self.adapters[adapterclass.NAMESPACE] = adapterclass(*args, **kwargs)
+
     @dbus.service.method(DBUS_INTERFACE_NAME,
                          in_signature='usq', out_signature='')
     def ProcessSSSDFiles(self, uid, directory, policy):
@@ -116,12 +142,23 @@ class FleetCommanderClientDbusService(dbus.service.Object):
             directory: String (Path where the files has been deployed by SSSD)
             policy: Unsigned 16 bit integer (as specified in FreeIPA)
         """
+
         logging.debug(
             'Fleet Commander Client: Data received - %(u)s - %(d)s - %(p)s' % {
                 'u': uid,
                 'd': directory,
                 'p': policy,
             })
+
+        # Compile settings
+        sc = SettingsCompiler(directory)
+        compiled_settings = sc.compile_settings()
+        # Send data to configuration adapters
+        for namespace in compiled_settings:
+            if namespace in self.adapters:
+                self.adapters[namespace].bootstrap(uid)
+                data = compiled_settings[namespace]
+                self.adapters[namespace].update(uid, data)
         self.quit()
 
     @dbus.service.method(DBUS_INTERFACE_NAME,

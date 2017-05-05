@@ -20,6 +20,22 @@
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
 
-from fleetcommanderclient.configadapters.gsettings import GSettingsConfigAdapter
-from fleetcommanderclient.configadapters.goa import GOAConfigAdapter
-from fleetcommanderclient.configadapters.networkmanager import NetworkManagerConfigAdapter
+class BaseConfigAdapter(object):
+    """
+    Base configuration adapter class
+    """
+
+    # Namespace this config adapter handles
+    NAMESPACE = None
+
+    def bootstrap(self, uid):
+        """
+        Prepare environment for a clean configuration deploy
+        """
+        raise NotImplementedError('You must implement bootstrap method')
+
+    def update(self, uid, data):
+        """
+        Update configuration for given user
+        """
+        raise NotImplementedError('You must implement update method')

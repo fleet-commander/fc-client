@@ -26,7 +26,7 @@ import logging
 import gi
 from gi.repository import GLib
 
-from fleetcommanderclient.configadapters import BaseConfigAdapter
+from fleetcommanderclient.configadapters.base import BaseConfigAdapter
 
 
 class GOAConfigAdapter(BaseConfigAdapter):
@@ -41,7 +41,7 @@ class GOAConfigAdapter(BaseConfigAdapter):
         self.goa_runtime_path = goa_runtime_path
 
     def bootstrap(self, uid):
-        runtime_path = os.path.join(self.goa_runtime_path, uid)
+        runtime_path = os.path.join(self.goa_runtime_path, unicode(uid))
         logging.debug('Removing runtime path for GOA: "%s"' % runtime_path)
         try:
             shutil.rmtree(runtime_path)
@@ -51,7 +51,7 @@ class GOAConfigAdapter(BaseConfigAdapter):
 
     def update(self, uid, data):
         # Create runtime path
-        runtime_path = os.path.join(self.goa_runtime_path, uid)
+        runtime_path = os.path.join(self.goa_runtime_path, unicode(uid))
         logging.debug('Creating runtime path for GOA: "%s"' % runtime_path)
         try:
             os.makedirs(runtime_path)
