@@ -23,7 +23,6 @@ import os
 import time
 import shutil
 import logging
-import pwd
 
 import dbus
 
@@ -65,24 +64,22 @@ class NetworkManagerDbusHelper(object):
             Gio.DBusCallFlags.NONE, -1, None)[0]
 
     def add_connection(self, connection_data):
-        conn_variant = self.variant_parse(connection_data)
         return self.bus.call_sync(
             self.BUS_NAME,
             self.DBUS_OBJECT_PATH,
             self.DBUS_INTERFACE_NAME,
             "AddConnection",
-            GLib.Variant.new_tuple(conn_variant),
+            GLib.Variant.new_tuple(connection_data),
             GLib.VariantType("(o)"),
             Gio.DBusCallFlags.NONE, -1, None)
 
     def update_connection(self, connection_path, connection_data):
-        conn_variant = self.variant_parse(connection_data)
         return self.bus.call_sync(
             self.BUS_NAME,
             connection_path,
             self.DBUS_INTERFACE_NAME + '.Connection',
             "Update",
-            GLib.Variant.new_tuple(conn_variant),
+            GLib.Variant.new_tuple(connection_data),
             GLib.VariantType("()"),
             Gio.DBusCallFlags.NONE, -1, None)
 
@@ -98,11 +95,10 @@ class NetworkManagerConfigAdapter(BaseConfigAdapter):
         self.nmhelper = NetworkManagerDbusHelper()
 
     def update(self, uid, data):
-        # Get username
-        # username = pwd.getpwuid(uid)
         for connection in data:
             uuid = connection['uuid']
             connection_data = self.nmhelper.variant_parse(connection['data'])
+            logging.debug('Checking connection %s' % uuid)
             # Check if connection already exist
             try:
                 path = self.nmhelper.get_connection_path_by_uuid(uuid)
