@@ -85,7 +85,7 @@ class FleetCommanderClientDbusService(dbus.service.Object):
     Fleet commander client d-bus service class
     """
 
-    def __init__(self, configfile='/etc/xdg/fleet-commander.conf'):
+    def __init__(self, configfile='/etc/xdg/fleet-commander-client.conf'):
         """
         Class initialization
         """
@@ -152,10 +152,14 @@ class FleetCommanderClientDbusService(dbus.service.Object):
 
         # Compile settings
         sc = SettingsCompiler(directory)
+        logging.debug('Compiling settings')
         compiled_settings = sc.compile_settings()
         # Send data to configuration adapters
+        logging.debug('Applying settings')
         for namespace in compiled_settings:
+            logging.debug('Checking adapters for namespace %s' % namespace)
             if namespace in self.adapters:
+                logging.debug('Applying settings for namespace %s' % namespace)
                 self.adapters[namespace].bootstrap(uid)
                 data = compiled_settings[namespace]
                 self.adapters[namespace].update(uid, data)
