@@ -96,4 +96,17 @@ class SettingsCompiler(object):
             data = self.read_profile_settings(filename)
             profile_settings = self.merge_profile_settings(
                 profile_settings, data)
+
+        # FIXME: Right now merging libreoffice config data into gsettings
+        #        because both use the same configuration adapter.
+        #        We should change the config adapter interface to allow
+        #        multiple namespaces for the same config adapter.
+
+        if 'org.libreoffice.registry' in profile_settings.keys():
+            libreoffice_data = {
+                'org.gnome.gsettings':
+                    profile_settings['org.libreoffice.registry']
+            }
+            profile_settings = self.merge_profile_settings(
+                profile_settings, libreoffice_data)
         return profile_settings

@@ -185,7 +185,19 @@ class TestSettingsCompiler(unittest.TestCase):
                 "key": "/org/gnome/software/popular-overrides",
                 "value": "['riot.desktop','matrix.desktop']",
                 "signature": "as"
-            }
+            },
+            # FIXME: This data is added to merge libreoffice settings with
+            #        gsettings to deploy all together with dconf config adapter
+            {
+                "value": "'The Company'",
+                "key": "/org/libreoffice/registry/org.openoffice.UserProfile/Data/o",
+                "signature": "s"
+            },
+            {
+                "value": "true",
+                "key": "/org/libreoffice/registry/org.openoffice.Office.Writer/Layout/Window/HorizontalRuler",
+                "signature": "b"
+            },
         ],
         "org.libreoffice.registry": [
             {
