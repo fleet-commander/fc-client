@@ -4,7 +4,7 @@ fc_client_confadapt_py_SCRIPTS = \
 	fleetcommanderclient/configadapters/base.py \
 	fleetcommanderclient/configadapters/goa.py \
 	fleetcommanderclient/configadapters/networkmanager.py \
-	fleetcommanderclient/configadapters/gsettings.py
+	fleetcommanderclient/configadapters/dconf.py
 
 fc_client_pydir = ${fcpythondir}/fleetcommanderclient
 fc_client_py_SCRIPTS = \

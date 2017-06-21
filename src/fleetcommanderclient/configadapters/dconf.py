@@ -30,9 +30,9 @@ from gi.repository import GLib
 from fleetcommanderclient.configadapters.base import BaseConfigAdapter
 
 
-class GSettingsConfigAdapter(BaseConfigAdapter):
+class DconfConfigAdapter(BaseConfigAdapter):
     """
-    Configuration adapter for GSettings
+    Configuration adapter for Dconf
     """
 
     NAMESPACE = 'org.gnome.gsettings'

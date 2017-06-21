@@ -30,9 +30,7 @@ import gi
 from gi.repository import GObject
 
 from fleetcommanderclient.configloader import ConfigLoader
-from fleetcommanderclient.configadapters import GSettingsConfigAdapter
-from fleetcommanderclient.configadapters import GOAConfigAdapter
-from fleetcommanderclient.configadapters import NetworkManagerConfigAdapter
+from fleetcommanderclient import configadapters
 from fleetcommanderclient.settingscompiler import SettingsCompiler
 
 DBUS_BUS_NAME = 'org.freedesktop.FleetCommanderClient'
@@ -101,15 +99,16 @@ class FleetCommanderClientDbusService(dbus.service.Object):
         self.adapters = {}
 
         self.register_config_adapter(
-            GSettingsConfigAdapter,
+            configadapters.DconfConfigAdapter,
             self.config.get_value('dconf_profile_path'),
             self.config.get_value('dconf_db_path'))
 
         self.register_config_adapter(
-            GOAConfigAdapter,
+            configadapters.GOAConfigAdapter,
             self.config.get_value('goa_run_path'))
 
-        self.register_config_adapter(NetworkManagerConfigAdapter)
+        self.register_config_adapter(
+            configadapters.NetworkManagerConfigAdapter)
 
         # Parent initialization
         super(FleetCommanderClientDbusService, self).__init__()

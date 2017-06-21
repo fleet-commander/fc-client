@@ -32,10 +32,10 @@ from gi.repository import GLib
 sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
 
 
-from fleetcommanderclient.configadapters.gsettings import GSettingsConfigAdapter
+from fleetcommanderclient.configadapters.dconf import DconfConfigAdapter
 
 
-class TestGSettingsConfigAdapter(unittest.TestCase):
+class TestDconfConfigAdapter(unittest.TestCase):
 
     TEST_UID = 1002
 
@@ -55,21 +55,21 @@ class TestGSettingsConfigAdapter(unittest.TestCase):
 
     def setUp(self):
         self.test_directory = tempfile.mkdtemp(
-            prefix='fc-client-gsettings-test')
+            prefix='fc-client-dconf-test')
 
         self.profiledir = os.path.join(self.test_directory, 'profile')
         self.dbdir = os.path.join(self.test_directory, 'db')
         self.kfdir = os.path.join(self.dbdir, '%s%s.d' % (
-            GSettingsConfigAdapter.FC_DB_FILE, unicode(self.TEST_UID)))
+            DconfConfigAdapter.FC_DB_FILE, unicode(self.TEST_UID)))
         self.profilepath = os.path.join(
             self.profiledir, unicode(self.TEST_UID))
         self.kfpath = os.path.join(
-            self.kfdir, GSettingsConfigAdapter.FC_PROFILE_FILE)
+            self.kfdir, DconfConfigAdapter.FC_PROFILE_FILE)
         self.dbpath = os.path.join(
             self.dbdir, '%s%s' % (
-                GSettingsConfigAdapter.FC_DB_FILE, unicode(self.TEST_UID)))
+                DconfConfigAdapter.FC_DB_FILE, unicode(self.TEST_UID)))
 
-        self.ca = GSettingsConfigAdapter(
+        self.ca = DconfConfigAdapter(
             os.path.join(self.test_directory, 'profile'),
             os.path.join(self.test_directory, 'db'),
         )

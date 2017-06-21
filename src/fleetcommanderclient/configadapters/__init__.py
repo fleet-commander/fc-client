@@ -20,6 +20,6 @@
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
 
-from fleetcommanderclient.configadapters.gsettings import GSettingsConfigAdapter
+from fleetcommanderclient.configadapters.dconf import DconfConfigAdapter
 from fleetcommanderclient.configadapters.goa import GOAConfigAdapter
 from fleetcommanderclient.configadapters.networkmanager import NetworkManagerConfigAdapter

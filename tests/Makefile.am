@@ -1,5 +1,5 @@
 TESTS_ENVIRONMENT = export PATH=$(abs_top_srcdir)/tests/tools:$(PATH); export TOPSRCDIR=$(abs_top_srcdir); export FC_TESTING=true;
-TESTS = 01_mergers.py 02_settingscompiler.py 03_configadapter_goa.py 04_configadapter_nm.py 05_configadapter_gsettings.py 06_configloader.py 07_fcclient.sh
+TESTS = 01_mergers.py 02_settingscompiler.py 03_configadapter_goa.py 04_configadapter_nm.py 05_configadapter_dconf.py 06_configloader.py 07_fcclient.sh
 
 EXTRA_DIST = \
 	$(TESTS) \
