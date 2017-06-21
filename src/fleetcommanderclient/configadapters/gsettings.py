@@ -37,7 +37,7 @@ class GSettingsConfigAdapter(BaseConfigAdapter):
 
     NAMESPACE = 'org.gnome.gsettings'
     FC_PROFILE_FILE = 'fleet-commander-dconf.conf'
-    FC_DB_FILE = 'fleet-commander-'
+    FC_DB_FILE = 'fleet-commander-dconf'
 
     def __init__(self, dconf_profile_path, dconf_db_path):
         self.dconf_profile_path = dconf_profile_path
@@ -46,9 +46,9 @@ class GSettingsConfigAdapter(BaseConfigAdapter):
     def get_paths_for_uid(self, uid):
         profile_path = os.path.join(self.dconf_profile_path, unicode(uid))
         keyfile_dir = os.path.join(
-            self.dconf_db_path, 'fleet-commander-%s.d' % unicode(uid))
+            self.dconf_db_path, '%s%s.d' % (self.FC_DB_FILE, unicode(uid)))
         db_path = os.path.join(
-            self.dconf_db_path, 'fleet-commander-%s' % unicode(uid))
+            self.dconf_db_path, '%s%s' % (self.FC_DB_FILE, unicode(uid)))
         return (profile_path, keyfile_dir, db_path)
 
     def remove_path(self, path, throw=False):
@@ -122,7 +122,8 @@ class GSettingsConfigAdapter(BaseConfigAdapter):
         except Exception:
             pass
         try:
-            profile_data = 'user-db:user\n\nsystem-db:fleet-commander-%s' % uid
+            profile_data = 'user-db:user\n\nsystem-db:%s%s' % (
+                self.FC_DB_FILE, uid)
             fd = open(profile_path, 'wb')
             fd.write(profile_data)
             fd.close()

@@ -59,14 +59,15 @@ class TestGSettingsConfigAdapter(unittest.TestCase):
 
         self.profiledir = os.path.join(self.test_directory, 'profile')
         self.dbdir = os.path.join(self.test_directory, 'db')
-        self.kfdir = os.path.join(
-            self.dbdir, 'fleet-commander-%s.d' % unicode(self.TEST_UID))
+        self.kfdir = os.path.join(self.dbdir, '%s%s.d' % (
+            GSettingsConfigAdapter.FC_DB_FILE, unicode(self.TEST_UID)))
         self.profilepath = os.path.join(
             self.profiledir, unicode(self.TEST_UID))
         self.kfpath = os.path.join(
-            self.kfdir, 'fleet-commander-dconf.conf')
+            self.kfdir, GSettingsConfigAdapter.FC_PROFILE_FILE)
         self.dbpath = os.path.join(
-            self.dbdir, 'fleet-commander-%s' % unicode(self.TEST_UID))
+            self.dbdir, '%s%s' % (
+                GSettingsConfigAdapter.FC_DB_FILE, unicode(self.TEST_UID)))
 
         self.ca = GSettingsConfigAdapter(
             os.path.join(self.test_directory, 'profile'),
