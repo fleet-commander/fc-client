@@ -62,4 +62,4 @@ class TestConfigLoader(unittest.TestCase):
         self.assertEqual(result, config.DEFAULTS['debug_level'])
         # Read existent key
         result = config.get_value('goa_run_path')
-        self.assertEqual(result, '/run/goa-custom-path-1.0')
+        self.assertEqual(result, '/run/goa-1.0')
