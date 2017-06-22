@@ -37,7 +37,7 @@ class DconfConfigAdapter(BaseConfigAdapter):
 
     NAMESPACE = 'org.gnome.gsettings'
     FC_PROFILE_FILE = 'fleet-commander-dconf.conf'
-    FC_DB_FILE = 'fleet-commander-dconf'
+    FC_DB_FILE = 'fleet-commander-dconf-'
 
     def __init__(self, dconf_profile_path, dconf_db_path):
         self.dconf_profile_path = dconf_profile_path
