@@ -110,6 +110,14 @@ class FleetCommanderClientDbusService(dbus.service.Object):
         self.register_config_adapter(
             configadapters.NetworkManagerConfigAdapter)
 
+        self.register_config_adapter(
+            configadapters.ChromiumConfigAdapter,
+            self.config.get_value('chromium_policies_path'))
+
+        self.register_config_adapter(
+            configadapters.ChromeConfigAdapter,
+            self.config.get_value('chrome_policies_path'))
+
         # Parent initialization
         super(FleetCommanderClientDbusService, self).__init__()
 

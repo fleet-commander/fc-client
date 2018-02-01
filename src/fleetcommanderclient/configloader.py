@@ -31,6 +31,8 @@ class ConfigLoader(object):
         'dconf_db_path': '/etc/dconf/db',
         'dconf_profile_path': '/run/dconf/user',
         'goa_run_path': '/run/goa-1.0',
+        'chromium_policies_path': '/etc/chromium/policies/managed',
+        'chrome_policies_path': '/etc/opt/chrome/policies/managed',
         'log_level': 'info',
     }
 
