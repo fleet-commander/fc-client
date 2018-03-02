@@ -20,19 +20,19 @@
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
 import os
-import time
-import shutil
 import logging
-
+import uuid
+import pwd
 import dbus
 
 import gi
+gi.require_version('NM', '1.0')
 from gi.repository import Gio
 from gi.repository import GLib
+from gi.repository import NM
 
 
 from fleetcommanderclient.configadapters.base import BaseConfigAdapter
-
 
 class NetworkManagerDbusHelper(object):
     """
@@ -45,23 +45,19 @@ class NetworkManagerDbusHelper(object):
 
     def __init__(self):
         self.bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+        self.client = NM.Client.new(None)
 
-    def variant_parse(self, serialized_data):
-        return GLib.Variant.parse(None, serialized_data, None, None)
+    def get_user_name(self, uid):
+        return pwd.getpwuid(uid).pw_name
 
-    def get_connection_path_by_uuid(self, uuid):
+    def get_connection_path_by_uuid(self, conn_uuid):
         """
         Returns connection path as an string
         """
-        return self.bus.call_sync(
-            self.BUS_NAME,
-            self.DBUS_OBJECT_PATH,
-            self.DBUS_INTERFACE_NAME,
-            "GetConnectionByUuid",
-            GLib.Variant.new_tuple(
-                GLib.Variant.new_string(uuid)),
-            GLib.VariantType("(o)"),
-            Gio.DBusCallFlags.NONE, -1, None)[0]
+        conn = self.client.get_connection_by_uuid(conn_uuid)
+        if conn:
+            return conn.get_path()
+        return None
 
     def add_connection(self, connection_data):
         return self.bus.call_sync(
@@ -83,7 +79,6 @@ class NetworkManagerDbusHelper(object):
             GLib.VariantType("()"),
             Gio.DBusCallFlags.NONE, -1, None)
 
-
 class NetworkManagerConfigAdapter(BaseConfigAdapter):
     """
     Configuration adapter for Network Manager
@@ -94,28 +89,45 @@ class NetworkManagerConfigAdapter(BaseConfigAdapter):
     def bootstrap(self, uid):
         self.nmhelper = NetworkManagerDbusHelper()
 
+    def add_connection_metadata (self, serialized_data, uname, conn_uuid):
+        sc = NM.SimpleConnection.new_from_dbus(GLib.Variant.parse(None, serialized_data, None, None))
+        setu = sc.get_setting(NM.SettingUser)
+        if not setu:
+            sc.add_setting(NM.SettingUser())
+            setu = sc.get_setting(NM.SettingUser)
+
+        setc = sc.get_setting(NM.SettingConnection)
+
+        hashed_uuid = str(uuid.uuid5(uuid.UUID(conn_uuid), uname))
+
+        setu.set_data('org.fleet-commander.connection', 'true')
+        setu.set_data('org.fleet-commander.connection.uuid', conn_uuid)
+        setc.set_property("uuid", hashed_uuid)
+        setc.add_permission ("user", uname, None)
+
+        return (sc.to_dbus(NM.ConnectionSerializationFlags.NO_SECRETS), hashed_uuid)
+
     def update(self, uid, data):
+        uname = self.nmhelper.get_user_name(uid)
         for connection in data:
-            uuid = connection['uuid']
-            connection_data = self.nmhelper.variant_parse(connection['data'])
-            logging.debug('Checking connection %s' % uuid)
+            conn_uuid = connection['uuid']
+            connection_data, hashed_uuid = self.add_connection_metadata(connection['data'], uname, conn_uuid)
+
+            logging.debug('Checking connection %s + %s -> %s' % (conn_uuid, uname, hashed_uuid))
             # Check if connection already exist
-            try:
-                path = self.nmhelper.get_connection_path_by_uuid(uuid)
-            except Exception, e:
-                path = None
+            path = self.nmhelper.get_connection_path_by_uuid(hashed_uuid)
 
             if path is not None:
                 try:
                     self.nmhelper.update_connection(path, connection_data)
-                except Exception, e:
+                except Exception as e:
                     logging.error('Error updating connection %s: %s' % (
-                        uuid, e))
+                        conn_uuid, e))
             else:
                 # Connection does not exist. Add it
                 try:
                     self.nmhelper.add_connection(connection_data)
-                except Exception, e:
+                except Exception as e:
                     # Error adding connection
                     logging.error('Error adding connection %s: %s' % (
-                        uuid, e))
+                        conn_uuid, e))

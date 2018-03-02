@@ -44,6 +44,7 @@ AC_PYTHON_MODULE([dbus], [mandatory])
 AC_PYTHON_MODULE([gobject], [mandatory])
 AC_PYTHON_MODULE([gi], [mandatory])
 AC_PYTHON_MODULE([dbusmock])
+AC_PYTHON_MODULE([mock])
 
 # libexecdir expansion for .desktop file
 # TODO: Make xdgconfigdir parametric

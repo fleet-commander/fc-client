@@ -39,8 +39,44 @@ sys.path.append(PYTHONPATH)
 # Fleet commander imports
 from fleetcommanderclient import fcclient
 
+class FleetCommanderClientDbusClient(object):
+    """
+    Fleet commander client dbus client
+    """
 
-class TestDbusClient(fcclient.FleetCommanderClientDbusClient):
+    DEFAULT_BUS = dbus.SessionBus
+    CONNECTION_TIMEOUT = 2
+
+    def __init__(self, bus=None):
+        """
+        Class initialization
+        """
+        if bus is None:
+            bus = self.DEFAULT_BUS()
+        self.bus = bus
+
+        t = time.time()
+        while time.time() - t < self.CONNECTION_TIMEOUT:
+            try:
+                self.obj = self.bus.get_object(fcclient.DBUS_BUS_NAME, fcclient.DBUS_OBJECT_PATH)
+                self.iface = dbus.Interface(
+                    self.obj, dbus_interface=fcclient.DBUS_INTERFACE_NAME)
+                return
+            except:
+                pass
+        raise Exception(
+            'Timed out connecting to fleet commander client dbus service')
+
+    def process_sssd_files(self, uid, directory, policy):
+        """
+        Types:
+            uid: Unsigned 32 bit integer (Real local user ID)
+            directory: String (Path where the files has been deployed by SSSD)
+            policy: Unsigned 16 bit integer (as specified in FreeIPA)
+        """
+        return self.iface.ProcessSSSDFiles(uid, directory, policy)
+
+class TestDbusClient(FleetCommanderClientDbusClient):
     DEFAULT_BUS = dbus.SessionBus
 
     def test_service_alive(self):
@@ -99,7 +135,7 @@ class TestDbusService(unittest.TestCase):
         print('-------- END DBUS SERVICE STDERR --------')
 
     def get_client(self):
-        return fcclient.FleetCommanderClientDbusClient()
+        return TestDbusClient()
 
     def test_00_process_sssd_files(self):
         c = self.get_client()
