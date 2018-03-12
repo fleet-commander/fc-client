@@ -24,3 +24,4 @@ from fleetcommanderclient.configadapters.dconf import DconfConfigAdapter
 from fleetcommanderclient.configadapters.goa import GOAConfigAdapter
 from fleetcommanderclient.configadapters.networkmanager import NetworkManagerConfigAdapter
 from fleetcommanderclient.configadapters.chromium import ChromiumConfigAdapter, ChromeConfigAdapter
+from fleetcommanderclient.configadapters.firefox import FirefoxConfigAdapter

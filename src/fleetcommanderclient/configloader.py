@@ -33,6 +33,7 @@ class ConfigLoader(object):
         'goa_run_path': '/run/goa-1.0',
         'chromium_policies_path': '/etc/chromium/policies/managed',
         'chrome_policies_path': '/etc/opt/chrome/policies/managed',
+        'firefox_prefs_path': '/etc/firefox/pref',
         'log_level': 'info',
     }
 

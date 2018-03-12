@@ -4,6 +4,7 @@ fc_client_confadapt_py_SCRIPTS = \
 	fleetcommanderclient/configadapters/base.py \
 	fleetcommanderclient/configadapters/goa.py \
 	fleetcommanderclient/configadapters/chromium.py \
+	fleetcommanderclient/configadapters/firefox.py \
 	fleetcommanderclient/configadapters/networkmanager.py \
 	fleetcommanderclient/configadapters/dconf.py
 

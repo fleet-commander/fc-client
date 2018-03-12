@@ -65,6 +65,13 @@ class LibreOfficeMerger(BaseMerger):
     """
     pass
 
+class FirefoxMerger(BaseMerger):
+    """
+    Firefox setting merger class
+
+    Policy: Overwrite same key with new value, create new keys
+    """
+    pass
 
 class NetworkManagerMerger(BaseMerger):
     """

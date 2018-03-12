@@ -41,6 +41,7 @@ class SettingsCompiler(object):
             'org.gnome.gsettings': mergers.GSettingsMerger(),
             'org.libreoffice.registry': mergers.LibreOfficeMerger(),
             'org.gnome.online-accounts': mergers.GOAMerger(),
+            'org.mozilla.firefox': mergers.FirefoxMerger(),
             'org.freedesktop.NetworkManager': mergers.NetworkManagerMerger(),
         }
 
