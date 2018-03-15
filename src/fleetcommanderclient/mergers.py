@@ -19,6 +19,8 @@
 # Authors: Alberto Ruiz <aruiz@redhat.com>
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
+# Python imports
+import logging
 
 class BaseMerger(object):
     """
@@ -65,6 +67,51 @@ class LibreOfficeMerger(BaseMerger):
     """
     pass
 
+
+class ChromiumMerger(BaseMerger):
+    """
+    Chromium setting merger class
+
+    Policy: Overwrite same key with new value, create new keys
+    Except: ManagedBookmarks key: Merge contents
+    """
+    def merge(self, *args):
+        """
+        Merge settings in the given order
+        """
+        index = {}
+        bookmarks = []
+        for settings in args:
+            for setting in settings:
+                key = self.get_key(setting)
+                if key == 'ManagedBookmarks':
+                    bookmarks = self.merge_bookmarks(bookmarks, setting['value'])
+                    setting = {self.KEY_NAME: key, 'value': bookmarks}
+                index[key] = setting
+        return index.values()
+
+    def merge_bookmarks(self, a, b):
+        for elem_b in b:
+            logging.debug('Processing %s' % elem_b)
+            if 'children' in elem_b:
+                merged = False
+                for elem_a in a:
+                    if elem_a['name'] == elem_b['name'] and 'children' in elem_a:
+                        logging.debug(
+                            'Processing children of %s' % elem_b['name'])
+                        elem_a['children'] = self.merge_bookmarks(
+                            elem_a['children'], elem_b['children'])
+                        merged = True
+                        break
+                if not merged:
+                    a.append(elem_b)
+            else:
+                if elem_b not in a:
+                    a.append(elem_b)
+        logging.debug('Returning %s' % a)
+        return a
+
+
 class FirefoxMerger(BaseMerger):
     """
     Firefox setting merger class
@@ -72,6 +119,7 @@ class FirefoxMerger(BaseMerger):
     Policy: Overwrite same key with new value, create new keys
     """
     pass
+
 
 class NetworkManagerMerger(BaseMerger):
     """

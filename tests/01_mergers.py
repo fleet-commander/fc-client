@@ -237,5 +237,103 @@ class TestGOAMerger(unittest.TestCase):
         self.assertEqual(result, self.TEST_SETTINGS_MERGED)
 
 
+class TestChromiumMerger(unittest.TestCase):
+
+    maxDiff = None
+
+    merger_class = mergers.ChromiumMerger
+
+    TEST_SETTINGS_A = [
+        {
+            'key': 'ShutUpAndTakeMyMoney',
+            'value': 'FullMoney'
+        },
+        {
+            'key': 'FooBarBaz',
+            'value': 'BooFarFaz'
+        },
+        {
+            'key': 'ManagedBookmarks',
+            'value': [
+                {'name': 'Fedora', 'children': [
+                    {'name': 'Get Fedora', 'url': 'https://getfedora.org/'},
+                    {'name': 'Fedora Project', 'url': 'https://start.fedoraproject.org/'}
+                    ]
+                },
+                {'name':'FreeIPA','url':'http://freeipa.org'},
+                {'name':'Fleet Commander Github','url':'https://github.com/fleet-commander/'}
+            ]
+        }
+    ]
+
+    TEST_SETTINGS_B = [
+        {
+            'key': 'ShutUpAndTakeMyMoney',
+            'value': 'NoMoney'
+        },
+        {
+            'key': 'AllWorkAndNoPlay',
+            'value': 'MakesJackADullBoy'
+        },
+        {
+            'key': 'ManagedBookmarks',
+            'value': [
+                {'name':'Fedora','children': [
+                    {'name':'Get Fedora NOW!!!','url':'https://getfedora.org/'},
+                    {'name':'Fedora Project','url':'https://start.fedoraproject.org/'},
+                    {'name':'The Chromium Projects','url':'https://www.chromium.org/'},
+                    {'name':'SSSD','url':'pagure.org/SSSD'}
+                    ]
+                },
+                {'name':'FreeIPA','url':'http://freeipa.org'},
+                {'name':'Fleet Commander Docs','url':'http://fleet-commander.org/documentation.html'}
+            ]
+        }
+    ]
+
+    TEST_SETTINGS_MERGED = [
+        {
+            'key': 'ShutUpAndTakeMyMoney',
+            'value': 'NoMoney'
+        },
+        {
+            'key': 'FooBarBaz',
+            'value': 'BooFarFaz'
+        },
+        {
+            'key': 'AllWorkAndNoPlay',
+            'value': 'MakesJackADullBoy'
+        },
+        {
+            'key': 'ManagedBookmarks',
+            'value': [
+                {'name':'Fedora','children': [
+                    {'name': 'Get Fedora', 'url': 'https://getfedora.org/'},
+                    {'name':'Fedora Project','url':'https://start.fedoraproject.org/'},
+                    {'name':'Get Fedora NOW!!!','url':'https://getfedora.org/'},
+                    {'name':'The Chromium Projects','url':'https://www.chromium.org/'},
+                    {'name':'SSSD','url':'pagure.org/SSSD'}
+                    ]
+                },
+                {'name':'FreeIPA','url':'http://freeipa.org'},
+                {'name':'Fleet Commander Github','url':'https://github.com/fleet-commander/'},
+                {'name':'Fleet Commander Docs','url':'http://fleet-commander.org/documentation.html'}
+            ]
+        }
+    ]
+
+    def setUp(self):
+        self.merger = self.merger_class()
+        self.TEST_SETTINGS_MERGED.sort()
+
+    def test_00_get_key(self):
+        result = self.merger.get_key(self.TEST_SETTINGS_A[0])
+        self.assertEqual(result, self.TEST_SETTINGS_A[0][self.merger.KEY_NAME])
+
+    def test_01_merge(self):
+        result = self.merger.merge(self.TEST_SETTINGS_A, self.TEST_SETTINGS_B)
+        result.sort()
+        self.assertEqual(result, self.TEST_SETTINGS_MERGED)
+
 if __name__ == '__main__':
     unittest.main()
