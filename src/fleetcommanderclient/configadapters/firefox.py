@@ -50,6 +50,7 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
             pass
 
     def update(self, uid, data):
+        logging.debug('Updating %s. Data received: %s' % (self.NAMESPACE, data))
         filename = self.PREFS_FILENAME % uid
         path = os.path.join(self.preferences_path, filename)
         # Create preferences path
@@ -63,7 +64,7 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
             if 'key' in item and 'value' in item:
                 # TODO: Check for locked settings and use lockPref inst
                 preferences.append(self.PREF_TEMPLATE % (
-                    item['key'], item['value']))
+                    item['key'], json.dumps(item['value'])))
         # Write preferences data
         logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
         with open(path, 'wb') as fd:
