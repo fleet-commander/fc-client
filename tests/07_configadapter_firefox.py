@@ -26,6 +26,7 @@ import tempfile
 import shutil
 import json
 import unittest
+import logging
 
 import gi
 from gi.repository import GLib
@@ -35,12 +36,14 @@ sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
 import fleetcommanderclient.configadapters.firefox
 from fleetcommanderclient.configadapters.firefox import FirefoxConfigAdapter
 
-PREFS_FILE_CONTENTS = """pref("accessibility.typeaheadfind.flashBar", 0);
+# Set logging to debug
+logging.basicConfig(level=logging.DEBUG)
+
+PROFILE_FILE_CONTENTS = r"""{"org.mozilla.firefox": [{"value": 0, "key": "accessibility.typeaheadfind.flashBar"}, {"value": false, "key": "beacon.enabled"}, {"value": "{\"placements\":{\"widget-overflow-fixed-list\":[],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"back-button\",\"forward-button\",\"stop-reload-button\",\"home-button\",\"customizableui-special-spring1\",\"urlbar-container\",\"customizableui-special-spring2\",\"downloads-button\",\"library-button\",\"sidebar-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[\"developer-button\"],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\"],\"currentVersion\":12,\"newElementCount\":2}", "key": "browser.uiCustomization.state"}], "com.google.chrome.Policies": [], "org.chromium.Policies": [], "org.gnome.gsettings": [], "org.libreoffice.registry": [], "org.freedesktop.NetworkManager": []}"""
+
+PREFS_FILE_CONTENTS = r"""pref("accessibility.typeaheadfind.flashBar", 0);
 pref("beacon.enabled", false);
-pref("browser.bookmarks.restore_default_bookmarks", false);
-pref("browser.newtabpage.enhanced", false);
-pref("browser.newtabpage.introShown", true);
-pref("browser.newtabpage.storageVersion", 1);"""
+pref("browser.uiCustomization.state", "{\"placements\":{\"widget-overflow-fixed-list\":[],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"back-button\",\"forward-button\",\"stop-reload-button\",\"home-button\",\"customizableui-special-spring1\",\"urlbar-container\",\"customizableui-special-spring2\",\"downloads-button\",\"library-button\",\"sidebar-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[\"developer-button\"],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\"],\"currentVersion\":12,\"newElementCount\":2}");"""
 
 def universal_function(*args, **kwargs):
     pass
@@ -52,14 +55,7 @@ class TestFirefoxConfigAdapter(unittest.TestCase):
 
     TEST_UID = 1002
 
-    TEST_DATA = [
-        {'key': 'accessibility.typeaheadfind.flashBar', 'value': '0'},
-        {'key': 'beacon.enabled', 'value': 'false'},
-        {'key': 'browser.bookmarks.restore_default_bookmarks', 'value': 'false'},
-        {'key': 'browser.newtabpage.enhanced', 'value': 'false'},
-        {'key': 'browser.newtabpage.introShown', 'value': 'true'},
-        {'key': 'browser.newtabpage.storageVersion', 'value': '1'},
-    ]
+    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox']
 
     def setUp(self):
         self.test_directory = tempfile.mkdtemp(
@@ -96,7 +92,6 @@ class TestFirefoxConfigAdapter(unittest.TestCase):
         with open(self.policies_file_path, 'rb') as fd:
             data = fd.read()
             fd.close()
-        print data
         # Check file contents are ok
         self.assertEqual(PREFS_FILE_CONTENTS, data)
 
