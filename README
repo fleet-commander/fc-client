@@ -33,4 +33,4 @@ read from in /etc/xdg/fleet-commander.conf, this is an example:
 
 After any configuration changes you must restart the daemon:
 
-	# systemctl restart fleet-commander
+	# systemctl reload-or-restart fleet-commander
