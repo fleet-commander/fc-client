@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=4 sw=4 sts=4
 
@@ -33,6 +33,24 @@ sys.path.append(PYTHONPATH)
 # Fleet commander imports
 from fleetcommanderclient import fcclient
 from fleetcommanderclient.configloader import ConfigLoader
+from fleetcommanderclient.configadapters import networkmanager
+
+USER_NAME = "myuser"
+
+
+def mocked_uname(uid):
+    """
+    This is a mock for os.pwd.getpwuid
+    """
+    class MockPwd:
+        pw_name = USER_NAME
+    if uid == 1002:
+        return MockPwd()
+    raise Exception("Unknown UID: %d" % uid)
+
+
+# Mock networkmanager pwd.getpwuid
+networkmanager.pwd.getpwuid = mocked_uname
 
 
 class TestConfigLoader(ConfigLoader):

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=2 sw=2 sts=2
 
@@ -60,14 +60,14 @@ class TestDconfConfigAdapter(unittest.TestCase):
         self.profiledir = os.path.join(self.test_directory, 'profile')
         self.dbdir = os.path.join(self.test_directory, 'db')
         self.kfdir = os.path.join(self.dbdir, '%s%s.d' % (
-            DconfConfigAdapter.FC_DB_FILE, unicode(self.TEST_UID)))
+            DconfConfigAdapter.FC_DB_FILE, str(self.TEST_UID)))
         self.profilepath = os.path.join(
-            self.profiledir, unicode(self.TEST_UID))
+            self.profiledir, str(self.TEST_UID))
         self.kfpath = os.path.join(
             self.kfdir, DconfConfigAdapter.FC_PROFILE_FILE)
         self.dbpath = os.path.join(
             self.dbdir, '%s%s' % (
-                DconfConfigAdapter.FC_DB_FILE, unicode(self.TEST_UID)))
+                DconfConfigAdapter.FC_DB_FILE, str(self.TEST_UID)))
 
         self.ca = DconfConfigAdapter(
             os.path.join(self.test_directory, 'profile'),
@@ -85,9 +85,15 @@ class TestDconfConfigAdapter(unittest.TestCase):
         os.makedirs(self.profiledir)
         os.makedirs(self.dbdir)
         os.makedirs(self.kfdir)
-        open(self.profilepath, 'wb').write('PROFILE_FILE')
-        open(self.kfpath, 'wb').write('KEY_FILE')
-        open(self.dbpath, 'wb').write('DB_FILE')
+        with open(self.profilepath, 'w') as fd:
+            fd.write('PROFILE_FILE')
+            fd.close()
+        with open(self.kfpath, 'w') as fd:
+            fd.write('KEY_FILE')
+            fd.close()
+        with open(self.dbpath, 'w') as fd:
+            fd.write('DB_FILE')
+            fd.close()
         self.assertTrue(os.path.isdir(self.profiledir))
         self.assertTrue(os.path.isdir(self.kfdir))
         self.assertTrue(os.path.isdir(self.dbdir))
@@ -124,7 +130,9 @@ class TestDconfConfigAdapter(unittest.TestCase):
 
         # Check db file has been compiled
         self.assertTrue(os.path.exists(self.dbpath))
-        data = open(self.dbpath, 'rb').read()
+        with open(self.dbpath, 'r') as fd:
+            data = fd.read()
+            fd.close()
         self.assertEqual(data, 'COMPILED\n')
 
 

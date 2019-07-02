@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=4 sw=4 sts=4
 
@@ -28,8 +28,6 @@ import tempfile
 import subprocess
 import time
 import unittest
-import json
-import urllib2
 
 import dbus
 
@@ -38,6 +36,7 @@ sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
 from fleetcommanderclient import fcclient
+
 
 class FleetCommanderClientDbusClient(object):
     """
@@ -62,7 +61,7 @@ class FleetCommanderClientDbusClient(object):
                 self.iface = dbus.Interface(
                     self.obj, dbus_interface=fcclient.DBUS_INTERFACE_NAME)
                 return
-            except:
+            except Exception:
                 pass
         raise Exception(
             'Timed out connecting to fleet commander client dbus service')
@@ -75,6 +74,7 @@ class FleetCommanderClientDbusClient(object):
             policy: Unsigned 16 bit integer (as specified in FreeIPA)
         """
         return self.iface.ProcessSSSDFiles(uid, directory, policy)
+
 
 class TestDbusClient(FleetCommanderClientDbusClient):
     DEFAULT_BUS = dbus.SessionBus
@@ -110,7 +110,7 @@ class TestDbusService(unittest.TestCase):
                 c = self.get_client()
                 c.test_service_alive()
                 break
-            except Exception, e:
+            except Exception as e:
                 checks += 1
                 if checks < self.MAX_DBUS_CHECKS:
                     time.sleep(0.1)
@@ -124,7 +124,7 @@ class TestDbusService(unittest.TestCase):
         # Kill service
         self.service.kill()
         self.print_dbus_service_output()
-        # shutil.rmtree(self.test_directory)
+        shutil.rmtree(self.test_directory)
 
     def print_dbus_service_output(self):
         print('------- BEGIN DBUS SERVICE STDOUT -------')

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=2 sw=2 sts=2
 
@@ -35,11 +35,14 @@ sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
 import fleetcommanderclient.configadapters.chromium
 from fleetcommanderclient.configadapters.chromium import ChromiumConfigAdapter
 
+
 def universal_function(*args, **kwargs):
     pass
 
+
 # Monkey patch chown function in os module for chromium config adapter
 fleetcommanderclient.configadapters.chromium.os.chown = universal_function
+
 
 class TestChromiumConfigAdapter(unittest.TestCase):
 
@@ -68,7 +71,9 @@ class TestChromiumConfigAdapter(unittest.TestCase):
         self.ca.bootstrap(self.TEST_UID)
         # Run bootstrap with existing directories
         os.makedirs(self.policies_path)
-        open(self.policies_file_path, 'wb').write('POLICIES')
+        with open(self.policies_file_path, 'w') as fd:
+            fd.write('POLICIES')
+            fd.close()
         self.assertTrue(os.path.isdir(self.policies_path))
         self.assertTrue(os.path.exists(self.policies_file_path))
         self.ca.bootstrap(self.TEST_UID)
@@ -82,15 +87,14 @@ class TestChromiumConfigAdapter(unittest.TestCase):
         # Check file has been written
         self.assertTrue(os.path.exists(self.policies_file_path))
         # Read file
-        with open(self.policies_file_path, 'rb') as fd:
+        with open(self.policies_file_path, 'r') as fd:
             data = json.loads(fd.read())
             fd.close()
-        print data
         # Check file contents are ok
         for item in self.TEST_DATA:
-            print item
             self.assertTrue(item['key'] in data)
             self.assertEqual(item['value'], data[item['key']])
+
 
 if __name__ == '__main__':
     unittest.main()

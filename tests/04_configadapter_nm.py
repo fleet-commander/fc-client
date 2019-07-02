@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=2 sw=2 sts=2
 
@@ -24,6 +24,7 @@ import os
 import sys
 import unittest
 import uuid
+import logging
 
 import dbus.service
 import dbus.mainloop.glib
@@ -44,7 +45,14 @@ sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
 
 from fleetcommanderclient.configadapters import NetworkManagerConfigAdapter
 
+
+# Set log level to debug
+logging.basicConfig(level=logging.DEBUG)
+
+
 USER_NAME = "myuser"
+
+
 def mocked_uname(uid):
     """
     This is a mock for os.pwd.getpwuid
@@ -54,6 +62,7 @@ def mocked_uname(uid):
     if uid == 1002:
         return MockPwd()
     raise Exception("Unknown UID: %d" % uid)
+
 
 class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
     TEST_UID = 1002
@@ -81,9 +90,12 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
         self.p_mock, self.obj_nm = self.spawn_server_template(
                 'networkmanager',
                 {'NetworkingEnabled': True})
-        self.settings = dbus.Interface(self.dbus_con.get_object(MANAGER_IFACE,
-                                                                SETTINGS_OBJ),
-                                       SETTINGS_IFACE)
+        self.settings = dbus.Interface(
+            self.dbus_con.get_object(
+                MANAGER_IFACE,
+                SETTINGS_OBJ),
+            SETTINGS_IFACE)
+
     def tearDown(self):
         self.p_mock.terminate()
         self.p_mock.wait()
@@ -98,7 +110,7 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
         hashed_uuid1 = str(uuid.uuid5(uuid.UUID(uuid1), USER_NAME))
         hashed_uuid2 = str(uuid.uuid5(uuid.UUID(uuid2), USER_NAME))
 
-        #We add an existin connection to trigger an Update method
+        # We add an existing connection to trigger an Update method
         self.settings.AddConnection(
           dbus.Dictionary({
             'connection': dbus.Dictionary({
@@ -106,7 +118,8 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
                 'uuid': hashed_uuid1,
                 'type': '802-11-wireless'}, signature='sv'),
             '802-11-wireless': dbus.Dictionary({
-                'ssid': dbus.ByteArray('The_SSID'.encode('UTF-8'))}, signature='sv')
+                'ssid': dbus.ByteArray(
+                    'The_SSID'.encode('UTF-8'))}, signature='sv')
           })
         )
 
@@ -114,19 +127,24 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
         ca.bootstrap(self.TEST_UID)
         ca.update(self.TEST_UID, self.TEST_DATA)
 
+        conns = self.settings.ListConnections()
+
+        logging.debug('Connections: {}'.format(conns))
+
+        self.assertEqual(len(conns), 2)
+
         path1 = self.settings.GetConnectionByUuid(hashed_uuid1)
         path2 = self.settings.GetConnectionByUuid(hashed_uuid2)
-
-        conns = self.settings.ListConnections()
-        self.assertEqual(len(conns), 2)
 
         self.assertIn(path1, conns)
         self.assertIn(path2, conns)
 
-        conn1 = dbus.Interface(self.dbus_con.get_object(MANAGER_IFACE, path1),
-                               'org.freedesktop.NetworkManager.Settings.Connection')
-        conn2 = dbus.Interface(self.dbus_con.get_object(MANAGER_IFACE, path2),
-                               'org.freedesktop.NetworkManager.Settings.Connection')
+        conn1 = dbus.Interface(
+            self.dbus_con.get_object(MANAGER_IFACE, path1),
+            'org.freedesktop.NetworkManager.Settings.Connection')
+        conn2 = dbus.Interface(
+            self.dbus_con.get_object(MANAGER_IFACE, path2),
+            'org.freedesktop.NetworkManager.Settings.Connection')
 
         conn1_sett = conn1.GetSettings()
         conn2_sett = conn2.GetSettings()
@@ -134,14 +152,26 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
         self.assertEqual(conn1_sett['connection']['uuid'], hashed_uuid1)
         self.assertEqual(conn2_sett['connection']['uuid'], hashed_uuid2)
 
-        self.assertEqual(conn1_sett['connection']['permissions'], ['user:%s:' % USER_NAME,])
-        self.assertEqual(conn2_sett['connection']['permissions'], ['user:%s:' % USER_NAME,])
+        self.assertEqual(
+            conn1_sett['connection']['permissions'],
+            ['user:%s:' % USER_NAME, ])
+        self.assertEqual(
+            conn2_sett['connection']['permissions'],
+            ['user:%s:' % USER_NAME, ])
 
-        self.assertEqual(conn1_sett['user']['data']['org.fleet-commander.connection'], 'true')
-        self.assertEqual(conn1_sett['user']['data']['org.fleet-commander.connection.uuid'], uuid1)
+        self.assertEqual(
+            conn1_sett['user']['data']['org.fleet-commander.connection'],
+            'true')
+        self.assertEqual(
+            conn1_sett['user']['data']['org.fleet-commander.connection.uuid'],
+            uuid1)
 
-        self.assertEqual(conn2_sett['user']['data']['org.fleet-commander.connection'], 'true')
-        self.assertEqual(conn2_sett['user']['data']['org.fleet-commander.connection.uuid'], uuid2)
+        self.assertEqual(
+            conn2_sett['user']['data']['org.fleet-commander.connection'],
+            'true')
+        self.assertEqual(
+            conn2_sett['user']['data']['org.fleet-commander.connection.uuid'],
+            uuid2)
 
 if __name__ == '__main__':
     unittest.main()

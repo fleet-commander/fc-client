@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=2 sw=2 sts=2
 
@@ -66,7 +66,7 @@ class TestGOAConfigAdapter(unittest.TestCase):
         shutil.rmtree(self.test_directory)
 
     def test_00_bootstrap(self):
-        dirpath = os.path.join(self.test_directory, unicode(self.TEST_UID))
+        dirpath = os.path.join(self.test_directory, str(self.TEST_UID))
         # Run bootstrap with no directory created should continue and warn
         self.ca.bootstrap(self.TEST_UID)
         # Run bootstrap with a existing directory
@@ -80,7 +80,7 @@ class TestGOAConfigAdapter(unittest.TestCase):
         self.ca.bootstrap(self.TEST_UID)
         self.ca.update(self.TEST_UID, self.TEST_DATA)
         keyfile_path = os.path.join(
-            self.test_directory, unicode(self.TEST_UID), self.ca.FC_ACCOUNTS_FILE)
+            self.test_directory, str(self.TEST_UID), self.ca.FC_ACCOUNTS_FILE)
         # Check keyfile has been written
         self.assertTrue(os.path.exists(keyfile_path))
         # Read keyfile
@@ -89,10 +89,9 @@ class TestGOAConfigAdapter(unittest.TestCase):
 
         # Check section list
         accounts = self.TEST_DATA.keys()
-        accounts.sort()
         accounts_keyfile = keyfile.get_groups()[0]
         accounts_keyfile.sort()
-        self.assertEqual(accounts, accounts_keyfile)
+        self.assertEqual(sorted(accounts), accounts_keyfile)
 
         # Check all sections
         for account, accountdata in self.TEST_DATA.items():

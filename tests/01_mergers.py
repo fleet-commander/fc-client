@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=4 sw=4 sts=4
 
@@ -24,6 +24,7 @@
 import os
 import sys
 import unittest
+import json
 
 sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
 
@@ -36,6 +37,8 @@ class TestBaseMerger(unittest.TestCase):
     maxDiff = None
 
     merger_class = mergers.BaseMerger
+
+    KEY_NAME = 'key'
 
     TEST_SETTINGS_A = [
         {
@@ -90,7 +93,6 @@ class TestBaseMerger(unittest.TestCase):
 
     def setUp(self):
         self.merger = self.merger_class()
-        self.TEST_SETTINGS_MERGED.sort()
 
     def test_00_get_key(self):
         result = self.merger.get_key(self.TEST_SETTINGS_A[0])
@@ -98,13 +100,20 @@ class TestBaseMerger(unittest.TestCase):
 
     def test_01_merge(self):
         result = self.merger.merge(self.TEST_SETTINGS_A, self.TEST_SETTINGS_B)
-        result.sort()
-        self.assertEqual(result, self.TEST_SETTINGS_MERGED)
+        result = sorted(
+            result,
+            key=lambda item: item[self.KEY_NAME])
+        expected = sorted(
+            self.TEST_SETTINGS_MERGED,
+            key=lambda item: item[self.KEY_NAME])
+        self.assertEqual(result, expected)
 
 
 class TestNetworkManagerMerger(TestBaseMerger):
 
     merger_class = mergers.NetworkManagerMerger
+
+    KEY_NAME = 'id'
 
     TEST_SETTINGS_A = [
         {
@@ -260,8 +269,8 @@ class TestChromiumMerger(unittest.TestCase):
                     {'name': 'Fedora Project', 'url': 'https://start.fedoraproject.org/'}
                     ]
                 },
-                {'name':'FreeIPA','url':'http://freeipa.org'},
-                {'name':'Fleet Commander Github','url':'https://github.com/fleet-commander/'}
+                {'name': 'FreeIPA', 'url': 'http://freeipa.org'},
+                {'name': 'Fleet Commander Github', 'url': 'https://github.com/fleet-commander/'}
             ]
         }
     ]
@@ -278,15 +287,15 @@ class TestChromiumMerger(unittest.TestCase):
         {
             'key': 'ManagedBookmarks',
             'value': [
-                {'name':'Fedora','children': [
-                    {'name':'Get Fedora NOW!!!','url':'https://getfedora.org/'},
-                    {'name':'Fedora Project','url':'https://start.fedoraproject.org/'},
-                    {'name':'The Chromium Projects','url':'https://www.chromium.org/'},
-                    {'name':'SSSD','url':'pagure.org/SSSD'}
+                {'name': 'Fedora', 'children': [
+                    {'name': 'Get Fedora NOW!!!', 'url': 'https://getfedora.org/'},
+                    {'name': 'Fedora Project', 'url': 'https://start.fedoraproject.org/'},
+                    {'name': 'The Chromium Projects', 'url': 'https://www.chromium.org/'},
+                    {'name': 'SSSD', 'url': 'pagure.org/SSSD'}
                     ]
                 },
-                {'name':'FreeIPA','url':'http://freeipa.org'},
-                {'name':'Fleet Commander Docs','url':'http://fleet-commander.org/documentation.html'}
+                {'name': 'FreeIPA', 'url': 'http://freeipa.org'},
+                {'name': 'Fleet Commander Docs', 'url': 'http://fleet-commander.org/documentation.html'}
             ]
         }
     ]
@@ -307,24 +316,23 @@ class TestChromiumMerger(unittest.TestCase):
         {
             'key': 'ManagedBookmarks',
             'value': [
-                {'name':'Fedora','children': [
+                {'name': 'Fedora', 'children': [
                     {'name': 'Get Fedora', 'url': 'https://getfedora.org/'},
-                    {'name':'Fedora Project','url':'https://start.fedoraproject.org/'},
-                    {'name':'Get Fedora NOW!!!','url':'https://getfedora.org/'},
-                    {'name':'The Chromium Projects','url':'https://www.chromium.org/'},
-                    {'name':'SSSD','url':'pagure.org/SSSD'}
+                    {'name': 'Fedora Project', 'url': 'https://start.fedoraproject.org/'},
+                    {'name': 'Get Fedora NOW!!!', 'url': 'https://getfedora.org/'},
+                    {'name': 'The Chromium Projects', 'url': 'https://www.chromium.org/'},
+                    {'name': 'SSSD', 'url': 'pagure.org/SSSD'}
                     ]
                 },
-                {'name':'FreeIPA','url':'http://freeipa.org'},
-                {'name':'Fleet Commander Github','url':'https://github.com/fleet-commander/'},
-                {'name':'Fleet Commander Docs','url':'http://fleet-commander.org/documentation.html'}
+                {'name': 'FreeIPA', 'url': 'http://freeipa.org'},
+                {'name': 'Fleet Commander Github', 'url': 'https://github.com/fleet-commander/'},
+                {'name': 'Fleet Commander Docs', 'url': 'http://fleet-commander.org/documentation.html'}
             ]
         }
     ]
 
     def setUp(self):
         self.merger = self.merger_class()
-        self.TEST_SETTINGS_MERGED.sort()
 
     def test_00_get_key(self):
         result = self.merger.get_key(self.TEST_SETTINGS_A[0])
@@ -332,8 +340,11 @@ class TestChromiumMerger(unittest.TestCase):
 
     def test_01_merge(self):
         result = self.merger.merge(self.TEST_SETTINGS_A, self.TEST_SETTINGS_B)
-        result.sort()
-        self.assertEqual(result, self.TEST_SETTINGS_MERGED)
+        result = sorted(result, key=lambda item: item['key'])
+        expected = sorted(self.TEST_SETTINGS_MERGED, key=lambda item: item['key'])
+        self.assertEqual(
+            result, expected)
+
 
 if __name__ == '__main__':
     unittest.main()

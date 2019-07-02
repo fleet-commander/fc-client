@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=2 sw=2 sts=2
 
@@ -45,11 +45,14 @@ PREFS_FILE_CONTENTS = r"""pref("accessibility.typeaheadfind.flashBar", 0);
 pref("beacon.enabled", false);
 pref("browser.uiCustomization.state", "{\"placements\":{\"widget-overflow-fixed-list\":[],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"back-button\",\"forward-button\",\"stop-reload-button\",\"home-button\",\"customizableui-special-spring1\",\"urlbar-container\",\"customizableui-special-spring2\",\"downloads-button\",\"library-button\",\"sidebar-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[\"developer-button\"],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\"],\"currentVersion\":12,\"newElementCount\":2}");"""
 
+
 def universal_function(*args, **kwargs):
     pass
 
+
 # Monkey patch chown function in os module for firefox config adapter
 fleetcommanderclient.configadapters.firefox.os.chown = universal_function
+
 
 class TestFirefoxConfigAdapter(unittest.TestCase):
 
@@ -75,7 +78,9 @@ class TestFirefoxConfigAdapter(unittest.TestCase):
         self.ca.bootstrap(self.TEST_UID)
         # Run bootstrap with existing directories
         os.makedirs(self.policies_path)
-        open(self.policies_file_path, 'wb').write('PREFS')
+        with open(self.policies_file_path, 'w') as fd:
+            fd.write('PREFS')
+            fd.close()
         self.assertTrue(os.path.isdir(self.policies_path))
         self.assertTrue(os.path.exists(self.policies_file_path))
         self.ca.bootstrap(self.TEST_UID)
@@ -89,11 +94,12 @@ class TestFirefoxConfigAdapter(unittest.TestCase):
         # Check file has been written
         self.assertTrue(os.path.exists(self.policies_file_path))
         # Read file
-        with open(self.policies_file_path, 'rb') as fd:
+        with open(self.policies_file_path, 'r') as fd:
             data = fd.read()
             fd.close()
         # Check file contents are ok
         self.assertEqual(PREFS_FILE_CONTENTS, data)
+
 
 if __name__ == '__main__':
     unittest.main()

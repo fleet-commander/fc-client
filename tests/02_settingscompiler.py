@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-wrapper.sh
 # -*- coding: utf-8 -*-
 # vi:ts=4 sw=4 sts=4
 
@@ -24,6 +24,7 @@
 import os
 import sys
 import unittest
+import json
 
 PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
 sys.path.append(PYTHONPATH)
@@ -255,12 +256,18 @@ class TestSettingsCompiler(unittest.TestCase):
         # Read from invalid filename
         result = self.sc.merge_profile_settings(
             self.PROFILE_1_SETTINGS, self.PROFILE_2_SETTINGS)
-        self.assertEqual(result, self.PROFILE_SETTINGS_MERGED)
+        result = sorted(result)
+        expected = sorted(
+            self.PROFILE_SETTINGS_MERGED)
+        self.assertEqual(result, expected)
 
     def test_03_compile_settings(self):
         # Read from invalid filename
         result = self.sc.compile_settings()
-        self.assertEqual(result, self.COMPILED_SETTINGS)
+        self.assertEqual(
+            json.dumps(sorted(result), sort_keys=True),
+            json.dumps(sorted(self.COMPILED_SETTINGS), sort_keys=True))
+
 
 if __name__ == '__main__':
     unittest.main()
