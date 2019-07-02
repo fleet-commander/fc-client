@@ -1,5 +1,5 @@
-AC_INIT(fleet-commander-client, 0.10.2, aruiz@redhat.com)
-AC_COPYRIGHT([Copyright 2014,2015,2016,2017,2018 Red Hat, Inc.])
+AC_INIT(fleet-commander-client, 0.14.0, aruiz@redhat.com)
+AC_COPYRIGHT([Copyright 2014,2015,2016,2017,2018,2019 Red Hat, Inc.])
 
 AC_PREREQ(2.64)
 AM_INIT_AUTOMAKE([no-dist-gzip dist-xz])
@@ -15,8 +15,9 @@ if test x$RUNUSER = x ; then
 fi
 
 PKG_PROG_PKG_CONFIG
+
 AC_ARG_WITH([systemdsystemunitdir],
-     [AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files])],,
+     [AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd system service files])],,
      [with_systemdsystemunitdir=auto])
 AS_IF([test "x$with_systemdsystemunitdir" = "xyes" -o "x$with_systemdsystemunitdir" = "xauto"], [
      def_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
@@ -34,15 +35,35 @@ if test "x$with_systemdsystemunitdir" = "xno"; then
   AC_MSG_ERROR([systemd support is mandatory])
 fi
 
+AC_ARG_WITH([systemduserunitdir],
+     [AS_HELP_STRING([--with-systemduserunitdir=DIR], [Directory for systemd user service files])],,
+     [with_systemduserunitdir=auto])
+AS_IF([test "x$with_systemduserunitdir" = "xyes" -o "x$with_systemduserunitdir" = "xauto"], [
+     def_systemduserunitdir=$($PKG_CONFIG --variable=systemduserunitdir systemd)
+
+     AS_IF([test "x$def_systemduserunitdir" = "x"],
+   [AS_IF([test "x$with_systemduserunitdir" = "xyes"],
+    [AC_MSG_ERROR([systemd support requested but pkg-config unable to query systemd package])])
+    with_systemduserunitdir=no],
+   [with_systemduserunitdir="$def_systemduserunitdir"])])
+AS_IF([test "x$with_systemduserunitdir" != "xno"],
+      [AC_SUBST([systemduserunitdir], [$with_systemduserunitdir])])
+AM_CONDITIONAL([HAVE_SYSTEMD], [test "x$with_systemduserunitdir" != "xno"])
+
+if test "x$with_systemduserunitdir" = "xno"; then
+  AC_MSG_ERROR([systemd support is mandatory])
+fi
+
 
 ################
 # Dependencies #
 ################
 
 AM_PATH_PYTHON([2],, [:])
-AC_PYTHON_MODULE([dbus], [mandatory])
-AC_PYTHON_MODULE([gobject], [mandatory])
+#AC_PYTHON_MODULE([dbus], [mandatory])
 AC_PYTHON_MODULE([gi], [mandatory])
+# AC_PYTHON_MODULE([ldap], [mandatory])
+# AC_PYTHON_MODULE([samba], [mandatory])
 AC_PYTHON_MODULE([dbusmock])
 AC_PYTHON_MODULE([mock])
 
@@ -74,5 +95,6 @@ data/Makefile
 tests/Makefile
 src/Makefile
 data/fleet-commander-client.service
+data/fleet-commander-adclient.service
 data/org.freedesktop.FleetCommanderClient.service
 ])
