@@ -59,11 +59,12 @@ class SettingsCompiler(object):
         """
         filepath = os.path.join(self.path, filename)
         try:
-            fd = open(filepath, 'r')
-            contents = fd.read()
-            data = json.loads(contents)
-            return data
-        except Exception, e:
+            with open(filepath, 'r') as fd:
+                contents = fd.read()
+                data = json.loads(contents)
+                fd.close()
+                return data
+        except Exception as e:
             logging.error(
                 'ProfileGenerator: Ignoring profile data from %(f)s: %(e)s' % {
                     'f': filepath,

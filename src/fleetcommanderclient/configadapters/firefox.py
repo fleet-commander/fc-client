@@ -67,7 +67,7 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
                     item['key'], json.dumps(item['value'])))
         # Write preferences data
         logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
-        with open(path, 'wb') as fd:
+        with open(path, 'w') as fd:
             fd.write('\n'.join(preferences))
             fd.close()
         # Change permissions and ownership permisions

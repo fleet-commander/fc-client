@@ -41,21 +41,21 @@ class GOAConfigAdapter(BaseConfigAdapter):
         self.goa_runtime_path = goa_runtime_path
 
     def bootstrap(self, uid):
-        runtime_path = os.path.join(self.goa_runtime_path, unicode(uid))
+        runtime_path = os.path.join(self.goa_runtime_path, str(uid))
         logging.debug('Removing runtime path for GOA: "%s"' % runtime_path)
         try:
             shutil.rmtree(runtime_path)
-        except Exception, e:
+        except Exception as e:
             logging.warning('Error removing GOA runtime path "%s": %s' % (
                 runtime_path, e))
 
     def update(self, uid, data):
         # Create runtime path
-        runtime_path = os.path.join(self.goa_runtime_path, unicode(uid))
+        runtime_path = os.path.join(self.goa_runtime_path, str(uid))
         logging.debug('Creating runtime path for GOA: "%s"' % runtime_path)
         try:
             os.makedirs(runtime_path)
-        except Exception, e:
+        except Exception as e:
             logging.error('Error creating GOA runtime path "%s": %s' % (
                 runtime_path, e))
             return
@@ -75,7 +75,7 @@ class GOAConfigAdapter(BaseConfigAdapter):
         logging.debug('Saving GOA keyfile to "%s"' % keyfile_path)
         try:
             keyfile.save_to_file(keyfile_path)
-        except Exception, e:
+        except Exception as e:
             logging.error('Error saving GOA keyfile at "%s": %s' % (
                 keyfile_path, e))
             return

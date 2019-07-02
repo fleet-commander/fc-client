@@ -22,6 +22,7 @@
 # Python imports
 import logging
 
+
 class BaseMerger(object):
     """
     Base merger class
@@ -47,7 +48,7 @@ class BaseMerger(object):
             for setting in settings:
                 key = self.get_key(setting)
                 index[key] = setting
-        return index.values()
+        return list(index.values())
 
 
 class GSettingsMerger(BaseMerger):
@@ -88,7 +89,7 @@ class ChromiumMerger(BaseMerger):
                     bookmarks = self.merge_bookmarks(bookmarks, setting['value'])
                     setting = {self.KEY_NAME: key, 'value': bookmarks}
                 index[key] = setting
-        return index.values()
+        return list(index.values())
 
     def merge_bookmarks(self, a, b):
         for elem_b in b:

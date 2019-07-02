@@ -44,11 +44,11 @@ class DconfConfigAdapter(BaseConfigAdapter):
         self.dconf_db_path = dconf_db_path
 
     def get_paths_for_uid(self, uid):
-        profile_path = os.path.join(self.dconf_profile_path, unicode(uid))
+        profile_path = os.path.join(self.dconf_profile_path, str(uid))
         keyfile_dir = os.path.join(
-            self.dconf_db_path, '%s%s.d' % (self.FC_DB_FILE, unicode(uid)))
+            self.dconf_db_path, '%s%s.d' % (self.FC_DB_FILE, str(uid)))
         db_path = os.path.join(
-            self.dconf_db_path, '%s%s' % (self.FC_DB_FILE, unicode(uid)))
+            self.dconf_db_path, '%s%s' % (self.FC_DB_FILE, str(uid)))
         return (profile_path, keyfile_dir, db_path)
 
     def remove_path(self, path, throw=False):
@@ -59,7 +59,7 @@ class DconfConfigAdapter(BaseConfigAdapter):
                     shutil.rmtree(path)
                 else:
                     os.remove(path)
-        except Exception, e:
+        except Exception as e:
             if throw:
                 logging.error('Error removing path "%s": %s' % (
                     path, e))
@@ -102,7 +102,7 @@ class DconfConfigAdapter(BaseConfigAdapter):
         logging.debug('Saving dconf keyfile to "%s"' % keyfile_path)
         try:
             keyfile.save_to_file(keyfile_path)
-        except Exception, e:
+        except Exception as e:
             logging.error('Error saving dconf keyfile at "%s": %s' % (
                 keyfile_path, e))
             return
@@ -110,7 +110,7 @@ class DconfConfigAdapter(BaseConfigAdapter):
         # Compile dconf database
         try:
             self._compile_dconf_db(uid)
-        except Exception, e:
+        except Exception as e:
             logging.error('Error compiling dconf data to "%s": %s' % (
                 db_path, e))
             return
@@ -124,10 +124,10 @@ class DconfConfigAdapter(BaseConfigAdapter):
         try:
             profile_data = 'user-db:user\n\nsystem-db:%s%s' % (
                 self.FC_DB_FILE, uid)
-            fd = open(profile_path, 'wb')
-            fd.write(profile_data)
-            fd.close()
-        except Exception, e:
+            with open(profile_path, 'w') as fd:
+                fd.write(profile_data)
+                fd.close()
+        except Exception as e:
             logging.error('Error saving dconf profile at "%s": %s' % (
                 profile_path, e))
             return
@@ -150,5 +150,7 @@ class DconfConfigAdapter(BaseConfigAdapter):
         cmd.wait()
         out = cmd.stdout.read()
         err = cmd.stderr.read()
+        cmd.stdout.close()
+        cmd.stderr.close()
         if cmd.returncode != 0:
             raise Exception('%s\n%s' % (out, err))

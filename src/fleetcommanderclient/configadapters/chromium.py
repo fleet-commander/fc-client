@@ -63,7 +63,7 @@ class ChromiumConfigAdapter(BaseConfigAdapter):
                 policies[item['key']] = item['value']
         # Write policies data
         logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
-        with open(path, 'wb') as fd:
+        with open(path, 'w') as fd:
             fd.write(json.dumps(policies))
             fd.close()
         # Change permissions and ownership permisions

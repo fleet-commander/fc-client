@@ -42,7 +42,7 @@ class ConfigLoader(object):
             self.configfile = configfile
             self.keyfile = GLib.KeyFile.new()
             self.keyfile.load_from_file(configfile, GLib.KeyFileFlags.NONE)
-        except Exception, e:
+        except Exception as e:
             logging.warning(
                 'Can not load config file %s. Using defaults. %s' % (
                     configfile, e))
@@ -50,7 +50,7 @@ class ConfigLoader(object):
     def get_value(self, key):
         try:
             return self.keyfile.get_string('fleet-commander', key)
-        except Exception, e:
+        except Exception as e:
             if key in self.DEFAULTS.keys():
                 return self.DEFAULTS[key]
             else:

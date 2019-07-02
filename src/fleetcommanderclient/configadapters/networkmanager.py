@@ -19,20 +19,21 @@
 # Authors: Alberto Ruiz <aruiz@redhat.com>
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
-import os
+
 import logging
 import uuid
 import pwd
-import dbus
 
 import gi
+
 gi.require_version('NM', '1.0')
+
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import NM
 
-
 from fleetcommanderclient.configadapters.base import BaseConfigAdapter
+
 
 class NetworkManagerDbusHelper(object):
     """
@@ -79,6 +80,7 @@ class NetworkManagerDbusHelper(object):
             GLib.VariantType("()"),
             Gio.DBusCallFlags.NONE, -1, None)
 
+
 class NetworkManagerConfigAdapter(BaseConfigAdapter):
     """
     Configuration adapter for Network Manager
@@ -89,8 +91,9 @@ class NetworkManagerConfigAdapter(BaseConfigAdapter):
     def bootstrap(self, uid):
         self.nmhelper = NetworkManagerDbusHelper()
 
-    def add_connection_metadata (self, serialized_data, uname, conn_uuid):
-        sc = NM.SimpleConnection.new_from_dbus(GLib.Variant.parse(None, serialized_data, None, None))
+    def add_connection_metadata(self, serialized_data, uname, conn_uuid):
+        sc = NM.SimpleConnection.new_from_dbus(
+            GLib.Variant.parse(None, serialized_data, None, None))
         setu = sc.get_setting(NM.SettingUser)
         if not setu:
             sc.add_setting(NM.SettingUser())
@@ -103,17 +106,22 @@ class NetworkManagerConfigAdapter(BaseConfigAdapter):
         setu.set_data('org.fleet-commander.connection', 'true')
         setu.set_data('org.fleet-commander.connection.uuid', conn_uuid)
         setc.set_property("uuid", hashed_uuid)
-        setc.add_permission ("user", uname, None)
+        setc.add_permission("user", uname, None)
 
-        return (sc.to_dbus(NM.ConnectionSerializationFlags.NO_SECRETS), hashed_uuid)
+        return (sc.to_dbus(
+                    NM.ConnectionSerializationFlags.NO_SECRETS),
+                hashed_uuid)
 
     def update(self, uid, data):
         uname = self.nmhelper.get_user_name(uid)
         for connection in data:
             conn_uuid = connection['uuid']
-            connection_data, hashed_uuid = self.add_connection_metadata(connection['data'], uname, conn_uuid)
+            connection_data, hashed_uuid = self.add_connection_metadata(
+                connection['data'], uname, conn_uuid)
 
-            logging.debug('Checking connection %s + %s -> %s' % (conn_uuid, uname, hashed_uuid))
+            logging.debug(
+                'Checking connection %s + %s -> %s' % (
+                    conn_uuid, uname, hashed_uuid))
             # Check if connection already exist
             path = self.nmhelper.get_connection_path_by_uuid(hashed_uuid)
 
