@@ -31,13 +31,12 @@ PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
 sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
-from fleetcommanderclient import fcclient
+from fleetcommanderclient import fcclientad
 from fleetcommanderclient.configloader import ConfigLoader
-from fleetcommanderclient.configadapters import networkmanager
+from fleetcommanderclient.adapters import nm, goa
 
 USER_NAME = "myuser"
 USER_UID = 55555
-
 
 def mocked_uname(uid):
     """
@@ -52,16 +51,21 @@ def mocked_uname(uid):
     raise Exception("Unknown UID: %d" % uid)
 
 
-# Mock networkmanager pwd.getpwuid
-networkmanager.pwd.getpwuid = mocked_uname
+def universal_function(*args, **kwargs):
+    pass
+
+# Monkey patch chown function in os module for chromium config adapter
+goa.os.chown = universal_function
 
 
 class TestConfigLoader(ConfigLoader):
     pass
 
 
-class TestFleetCommanderClientDbusService(
-        fcclient.FleetCommanderClientDbusService):
+class TestFleetCommanderClientADDbusService(
+        fcclientad.FleetCommanderClientADDbusService):
+
+    TEST_UUID = 55555
 
     def __init__(self):
 
@@ -75,17 +79,22 @@ class TestFleetCommanderClientDbusService(
             'log_level': 'info',
         }
 
-        fcclient.ConfigLoader = TestConfigLoader
+        fcclientad.ConfigLoader = TestConfigLoader
 
-        super(TestFleetCommanderClientDbusService, self).__init__(configfile='NON_EXISTENT')
+        super(TestFleetCommanderClientADDbusService, self).__init__(configfile='NON_EXISTENT')
 
+        # Put all adapters in test mode
+        for namespace, adapter in self.adapters.items():
+            adapter._TEST_CACHE_PATH = os.path.join(self.tmpdir, 'cache')
 
-    @dbus.service.method(fcclient.DBUS_INTERFACE_NAME,
+    def get_peer_uid(self, sender):
+        return self.TEST_UUID
+
+    @dbus.service.method(fcclientad.DBUS_INTERFACE_NAME,
                          in_signature='', out_signature='b')
     def TestServiceAlive(self):
         return True
 
 
 if __name__ == '__main__':
-    TestFleetCommanderClientDbusService().run(sessionbus=True)
-    
+    TestFleetCommanderClientADDbusService().run(sessionbus=True)

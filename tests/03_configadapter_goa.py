@@ -37,7 +37,7 @@ from fleetcommanderclient.configadapters.goa import GOAConfigAdapter
 
 class TestGOAConfigAdapter(unittest.TestCase):
 
-    TEST_UID = 1002
+    TEST_UID = 55555
 
     TEST_DATA = {
         "Template account_fc_1490729747_0": {

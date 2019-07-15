@@ -1,0 +1,7 @@
+# Fleet Commander Client AD DBus service activation config
+[D-BUS Service]
+Name=org.freedesktop.FleetCommanderClientAD
+Environment=PYTHONPATH=@FCPYTHONDIR@
+Exec=@PYTHON@ -m fleetcommanderclient.fcclientad --configuration @XDGCONFIGDIR@/fleet-commander-client.conf
+User=root
+SystemdService=fleet-commander-clientad.service

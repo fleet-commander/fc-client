@@ -4,7 +4,7 @@ Description=Fleet Commander Client Active Directory service
 [Service]
 Type=simple
 Environment=PYTHONPATH=@FCPYTHONDIR@
-ExecStart=@PYTHON@ -m fleetcommanderclient.fcadclient --configuration @XDGCONFIGDIR@/fleet-commander-client.conf
+ExecStart=@PYTHON@ -m fleetcommanderclient.fcadretriever --configuration @XDGCONFIGDIR@/fleet-commander-client.conf
 StandardOutput=syslog
 StandardError=inherit
 

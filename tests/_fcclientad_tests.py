@@ -35,10 +35,10 @@ PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
 sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
-from fleetcommanderclient import fcclient
+from fleetcommanderclient import fcclientad
 
 
-class FleetCommanderClientDbusClient(object):
+class FleetCommanderClientADDbusClient(object):
     """
     Fleet commander client dbus client
     """
@@ -57,41 +57,37 @@ class FleetCommanderClientDbusClient(object):
         t = time.time()
         while time.time() - t < self.CONNECTION_TIMEOUT:
             try:
-                self.obj = self.bus.get_object(fcclient.DBUS_BUS_NAME, fcclient.DBUS_OBJECT_PATH)
+                self.obj = self.bus.get_object(fcclientad.DBUS_BUS_NAME, fcclientad.DBUS_OBJECT_PATH)
                 self.iface = dbus.Interface(
-                    self.obj, dbus_interface=fcclient.DBUS_INTERFACE_NAME)
+                    self.obj, dbus_interface=fcclientad.DBUS_INTERFACE_NAME)
                 return
             except Exception:
                 pass
         raise Exception(
             'Timed out connecting to fleet commander client dbus service')
 
-    def process_sssd_files(self, uid, directory, policy):
-        """
-        Types:
-            uid: Unsigned 32 bit integer (Real local user ID)
-            directory: String (Path where the files has been deployed by SSSD)
-            policy: Unsigned 16 bit integer (as specified in FreeIPA)
-        """
-        return self.iface.ProcessSSSDFiles(uid, directory, policy)
+    def process_files(self):
+        return self.iface.ProcessFiles()
 
 
-class TestDbusClient(FleetCommanderClientDbusClient):
+class TestDbusClient(FleetCommanderClientADDbusClient):
     DEFAULT_BUS = dbus.SessionBus
 
     def test_service_alive(self):
         return self.iface.TestServiceAlive()
 
 # Mock dbus client
-fcclient.FleetCommanderClientDbusClient = TestDbusClient
+fcclientad.FleetCommanderClientADDbusClient = TestDbusClient
 
 
 class TestDbusService(unittest.TestCase):
 
     maxDiff = None
     MAX_DBUS_CHECKS = 1
-    TEST_UID = 55555
-    TEST_POLICY = 23
+
+    CACHE_FILEPATHS = [
+        'org.gnome.online-accounts/fleet-commander-accounts.conf',
+    ]
 
     def setUp(self):
         self.test_directory = tempfile.mkdtemp()
@@ -100,7 +96,7 @@ class TestDbusService(unittest.TestCase):
         self.service = subprocess.Popen([
             os.path.join(
                 os.environ['TOPSRCDIR'],
-                'tests/test_fcclient_service.py'),
+                'tests/test_fcclientad_service.py'),
             self.test_directory,
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -124,7 +120,7 @@ class TestDbusService(unittest.TestCase):
         # Kill service
         self.service.kill()
         self.print_dbus_service_output()
-        shutil.rmtree(self.test_directory)
+        #shutil.rmtree(self.test_directory)
 
     def print_dbus_service_output(self):
         print('------- BEGIN DBUS SERVICE STDOUT -------')
@@ -137,25 +133,24 @@ class TestDbusService(unittest.TestCase):
     def get_client(self):
         return TestDbusClient()
 
-    def test_00_process_sssd_files(self):
+    def test_00_process_files(self):
         c = self.get_client()
-        directory = os.path.join(
-            os.environ['TOPSRCDIR'],
-            'tests/data/sampleprofiledata/')
-        c.process_sssd_files(self.TEST_UID, directory, self.TEST_POLICY)
 
-        # Check dconf settings db has been deployed
-        self.assertTrue(os.path.isfile(
-            os.path.join(self.test_directory, 'etc/dconf/db/fleet-commander-dconf-55555')))
-        # Check dconf user database config has been deployed
-        self.assertTrue(os.path.isfile(
-            os.path.join(self.test_directory, 'run/dconf/user/55555')))
+        # Create fake compiled files where dbus service expect them
+        for fpath in self.CACHE_FILEPATHS:
+            fname = os.path.join(self.test_directory, 'cache', fpath)
+            fdir = os.path.dirname(fname)
+            if not os.path.isdir(fdir):
+                os.makedirs(fdir)
+            with open(fname, 'w') as fd:
+                fd.write('{}')
+                fd.close()
+
+        c.process_files()
+
         # Check GOA accounts file has been deployed
         self.assertTrue(os.path.isfile(
             os.path.join(self.test_directory, 'run/goa-1.0/55555/fleet-commander-accounts.conf')))
-
-        self.assertEqual(True, True)
-
 
 if __name__ == '__main__':
     unittest.main()

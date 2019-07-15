@@ -46,7 +46,7 @@ fleetcommanderclient.configadapters.chromium.os.chown = universal_function
 
 class TestChromiumConfigAdapter(unittest.TestCase):
 
-    TEST_UID = 1002
+    TEST_UID = 55555
 
     TEST_DATA = [
         {"value": True, "key": "ShowHomeButton"},

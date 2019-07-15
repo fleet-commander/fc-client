@@ -25,8 +25,9 @@ fc_client_py_SCRIPTS = \
 	fleetcommanderclient/configloader.py \
 	fleetcommanderclient/mergers.py \
 	fleetcommanderclient/settingscompiler.py \
-	fleetcommanderclient/fcadclient.py \
-	fleetcommanderclient/fcclient.py
+	fleetcommanderclient/fcadretriever.py \
+	fleetcommanderclient/fcclient.py \
+	fleetcommanderclient/fcclientad.py
 
 
 EXTRA_DIST = \

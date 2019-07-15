@@ -56,7 +56,7 @@ fleetcommanderclient.configadapters.firefox.os.chown = universal_function
 
 class TestFirefoxConfigAdapter(unittest.TestCase):
 
-    TEST_UID = 1002
+    TEST_UID = 55555
 
     TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox']
 

@@ -42,7 +42,7 @@ import smbmock
 sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
 
 # Fleet commander imports
-from fleetcommanderclient import fcadclient
+from fleetcommanderclient import fcadretriever
 
 # Set logging level to debug
 log = logging.getLogger()
@@ -50,9 +50,9 @@ level = logging.getLevelName('DEBUG')
 log.setLevel(level)
 
 # Mocking assignments
-fcadclient.ldap = ldapmock
-fcadclient.ldap.sasl = ldapmock.sasl
-fcadclient.smb = smbmock
+fcadretriever.ldap = ldapmock
+fcadretriever.ldap.sasl = ldapmock.sasl
+fcadretriever.smb = smbmock
 
 
 # DNS resolver mock
@@ -65,7 +65,7 @@ class DNSResolverMock(object):
         return (self.DNSResolverResult, )
 
 
-fcadclient.dns.resolver = DNSResolverMock()
+fcadretriever.dns.resolver = DNSResolverMock()
 
 
 class TestSettingsCompiler(dbusmock.DBusTestCase):
@@ -105,7 +105,7 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
 
     def setUp(self):               
         self._quit = False
-        self.fcad = fcadclient.FleetCommanderADProfileRetriever()
+        self.fcad = fcadretriever.FleetCommanderADProfileRetriever()
         self.p_mock = None
         self.p_mock2 = None
 
@@ -353,7 +353,7 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
         self.fcad.DOMAIN = 'fcrealm.ad'
         # Create temporary directory
         userdir = tempfile.mkdtemp()
-        fcadclient.smb.TEMP_DIR = userdir
+        fcadretriever.smb.TEMP_DIR = userdir
         # Save profile data
         self._save_test_cifs_data(userdir)
         # Process profile using that directory

@@ -95,6 +95,8 @@ data/Makefile
 tests/Makefile
 src/Makefile
 data/fleet-commander-client.service
-data/fleet-commander-adclient.service
+data/fleet-commander-clientad.service
+data/fleet-commander-adretriever.service
 data/org.freedesktop.FleetCommanderClient.service
+data/org.freedesktop.FleetCommanderClientAD.service
 ])

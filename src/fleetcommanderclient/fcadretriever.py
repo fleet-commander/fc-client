@@ -307,25 +307,25 @@ class FleetCommanderADProfileRetriever(object):
         return self.CACHED_DOMAIN_DN
 
     def _get_server_name(self):
-        logging.debug('FCADClient: Getting LDAP service machine name')
+        logging.debug('FCADRetriever: Getting LDAP service machine name')
         # Resolve LDAP service machine
         if self.CACHED_SERVER_NAME is None:
             result = dns.resolver.query(
                 '_ldap._tcp.dc._msdcs.%s' % self.DOMAIN.lower(),
                 'SRV')
             self.CACHED_SERVER_NAME = str(result[0].target)[:-1]
-        logging.debug('FCADClient: LDAP server: %s' % self.CACHED_SERVER_NAME)
+        logging.debug('FCADRetriever: LDAP server: %s' % self.CACHED_SERVER_NAME)
         return self.CACHED_SERVER_NAME
 
     def _ldap_connect(self):
         """
         Connect to AD server
         """
-        logging.debug('FCADClient: Connecting to AD LDAP server')
+        logging.debug('FCADRetriever: Connecting to AD LDAP server')
         server_name = self._get_server_name()
         # Connect to LDAP using Kerberos
         logging.debug(
-            'FCADClient: Initializing LDAP connection to %s' % server_name)
+            'FCADRetriever: Initializing LDAP connection to %s' % server_name)
         self.connection = ldap.initialize('ldap://%s' % server_name)
         self.connection.set_option(ldap.OPT_REFERRALS, 0)
         sasl_auth = ldap.sasl.sasl({}, 'GSSAPI')
@@ -337,7 +337,7 @@ class FleetCommanderADProfileRetriever(object):
             ('%c%c%c%c%c' % (48, 3, 2, 1, sdflags)).encode())
         self.connection.set_option(ldap.OPT_SERVER_CONTROLS, [control, ])
         self.connection.protocol_version = 3
-        logging.debug('FCADClient: Binding LDAP connection')
+        logging.debug('FCADRetriever: Binding LDAP connection')
         self.connection.sasl_interactive_bind_s("", sasl_auth)
 
     def _get_smb_connection(self, service='SysVol'):
@@ -386,7 +386,7 @@ class FleetCommanderADProfileRetriever(object):
 
     def get_profile(self, filter):
         logging.debug(
-            'FCADClient: Getting profile from AD LDAP. filter: %s' % filter)
+            'FCADRetriever: Getting profile from AD LDAP. filter: %s' % filter)
         base_dn = "CN=Policies,CN=System,%s" % self._get_domain_dn()
         attrs = ['cn', 'displayName', 'gPCFileSysPath', 'nTSecurityDescriptor']
         resultlist = self.connection.search_s(
@@ -399,7 +399,7 @@ class FleetCommanderADProfileRetriever(object):
 
     def get_profiles(self):
         logging.debug(
-            'FCADClient: Retrieving profiles')
+            'FCADRetriever: Retrieving profiles')
         profiles = []
         base_dn = "CN=Policies,CN=System,%s" % self._get_domain_dn()
         filter = '(objectclass=groupPolicyContainer)'
@@ -410,24 +410,24 @@ class FleetCommanderADProfileRetriever(object):
             resdata = res[1]
             if resdata:
                 logging.debug(
-                    'FCADClient: Reading profile data: {}'.format(resdata))
+                    'FCADRetriever: Reading profile data: {}'.format(resdata))
                 profile = self._read_profile_data(resdata)
                 if profile is not None:
                     profiles.append(profile)
         logging.debug(
-            'FCADClient: Read profiles: {}'.format(profiles))
+            'FCADRetriever: Read profiles: {}'.format(profiles))
         return profiles
 
     def get_profile_cifs_data(self, cn):
-        logging.debug('FCADClient: Getting CIFs data for profile %s' % cn)
+        logging.debug('FCADRetriever: Getting CIFs data for profile %s' % cn)
         conn = self._get_smb_connection()
         furi = '%s\\Policies\\%s\\fleet-commander.json' % (
             self.DOMAIN, cn)
-        logging.debug('FCADClient: Reading CIFs data from %s' % furi)
+        logging.debug('FCADRetriever: Reading CIFs data from %s' % furi)
         try:
             return conn.loadfile(furi)
         except Exception as e:
-            logging.error('FCADClient: Failed reading CIFs data from {}: {}'.format(furi, e))
+            logging.error('FCADRetriever: Failed reading CIFs data from {}: {}'.format(furi, e))
         return None
 
     def get_global_policy(self):
@@ -438,7 +438,7 @@ class FleetCommanderADProfileRetriever(object):
         profile = self.get_profile(ldap_filter)
         if profile is not None:
             logging.debug(
-                'FCADClient: Found global policy profile. Reading data.')
+                'FCADRetriever: Found global policy profile. Reading data.')
             data = self.get_profile_cifs_data(profile['cn'])
             jsondata = json.loads(data)
             global_policy = jsondata['settings'][FC_GLOBAL_POLICY_NS].get(
@@ -446,7 +446,7 @@ class FleetCommanderADProfileRetriever(object):
         return global_policy
 
     def check_realm(self):
-        logging.debug('FCADClient: Checking realm configuration')
+        logging.debug('FCADRetriever: Checking realm configuration')
         sssd_provider = Gio.DBusProxy.new_for_bus_sync(
             self.REALMD_BUS,
             Gio.DBusProxyFlags.NONE,
@@ -458,7 +458,7 @@ class FleetCommanderADProfileRetriever(object):
         realms = sssd_provider.get_cached_property('Realms')
         if len(realms) > 0:
             logging.debug(
-                'FCADClient: realmd queried. Realm object {}'.format(
+                'FCADRetriever: realmd queried. Realm object {}'.format(
                     realms[0]))
             realm = Gio.DBusProxy.new_for_bus_sync(
                 self.REALMD_BUS,
@@ -474,15 +474,15 @@ class FleetCommanderADProfileRetriever(object):
             }
             server = details.get('server-software', 'not-ad')
             logging.debug(
-                'FCADClient: Realm details: {} ({})'.format(domain, server))
+                'FCADRetriever: Realm details: {} ({})'.format(domain, server))
             if server != 'active-directory':
                 logging.debug(
-                    'FCADClient: Realm is not an Active Directory. Exiting.')
+                    'FCADRetriever: Realm is not an Active Directory. Exiting.')
                 self.quit()
             return domain
         else:
             logging.debug(
-                'FCADClient: This computer is not part of any realm. Exiting.')
+                'FCADRetriever: This computer is not part of any realm. Exiting.')
             self.quit()
 
     def check_elements_in_list(self, elements, element_list):
@@ -559,7 +559,7 @@ class FleetCommanderADProfileRetriever(object):
                 fd.close()
 
     def call_fc_client(self):
-        logging.debug('FCADClient: Calling FC client')
+        logging.debug('FCADRetriever: Calling FC client')
         fc = Gio.DBusProxy.new_for_bus_sync(
             self.FC_BUS,
             Gio.DBusProxyFlags.NONE,
@@ -581,17 +581,17 @@ class FleetCommanderADProfileRetriever(object):
         # Connect to LDAP
         try:
             self._ldap_connect()
-            logging.debug('FCADClient: LDAP connection succesful')
+            logging.debug('FCADRetriever: LDAP connection succesful')
         except Exception as e:
-            logging.error('FCADClient: LDAP connection failed. {}'.format(e))
+            logging.error('FCADRetriever: LDAP connection failed. {}'.format(e))
             sys.exit(1)
 
         # First of all, execute a deployment with existing data so we can
         # take our time in downloading new data from server
-        logging.debug('FCADClient: Deploying existing cache data')
+        logging.debug('FCADRetriever: Deploying existing cache data')
         self.call_fc_client()
 
-        logging.debug('FCADClient: Resuming AD profile processing')
+        logging.debug('FCADRetriever: Resuming AD profile processing')
         # Get current user name
         username = pwd.getpwuid(os.getuid()).pw_name.split('@')[0]
         # Get current user UID
@@ -606,7 +606,7 @@ class FleetCommanderADProfileRetriever(object):
         # Get global policy
         global_policy = self.get_global_policy()
         # Generate user dir with base user dir path and UID
-        logging.debug('FCADClient: Generating user cache directory')
+        logging.debug('FCADRetriever: Generating user cache directory')
         userdir = os.path.join(
             os.path.expanduser('~/.cache/fleet-commander-client'), str(uid))
         profilesdir = os.path.join(userdir, 'profiles')
@@ -615,7 +615,7 @@ class FleetCommanderADProfileRetriever(object):
         os.makedirs(profilesdir)
         
         # Read all profiles
-        logging.debug('FCADClient: Reading and processing profiles')
+        logging.debug('FCADRetriever: Reading and processing profiles')
         profiles = self.get_profiles()
         # Process each profile
         for profile in profiles:
@@ -624,7 +624,7 @@ class FleetCommanderADProfileRetriever(object):
                 username, groups, hostname, global_policy)
 
         # Compile profiles data
-        logging.debug('FCADClient: Compiling settings data')
+        logging.debug('FCADRetriever: Compiling settings data')
         sc = SettingsCompiler(profilesdir)
         compiled_settings = sc.compile_settings()
 
@@ -638,7 +638,7 @@ class FleetCommanderADProfileRetriever(object):
                 adapter.cleanup_cache()
 
         # Call FC client dbus service giving user directory and user UID
-        logging.debug('FCADClient: Deploying AD profiles')
+        logging.debug('FCADRetriever: Deploying AD profiles')
         self.call_fc_client()
 
 

@@ -32,14 +32,15 @@ from gi.repository import GObject
 
 from fleetcommanderclient.configloader import ConfigLoader
 from fleetcommanderclient import configadapters
+from fleetcommanderclient import adapters
 from fleetcommanderclient.settingscompiler import SettingsCompiler
 
-DBUS_BUS_NAME = 'org.freedesktop.FleetCommanderClient'
-DBUS_OBJECT_PATH = '/org/freedesktop/FleetCommanderClient'
-DBUS_INTERFACE_NAME = 'org.freedesktop.FleetCommanderClient'
+DBUS_BUS_NAME = 'org.freedesktop.FleetCommanderClientAD'
+DBUS_OBJECT_PATH = '/org/freedesktop/FleetCommanderClientAD'
+DBUS_INTERFACE_NAME = 'org.freedesktop.FleetCommanderClientAD'
 
 
-class FleetCommanderClientDbusService(dbus.service.Object):
+class FleetCommanderClientADDbusService(dbus.service.Object):
 
     """
     Fleet commander client d-bus service class
@@ -57,35 +58,36 @@ class FleetCommanderClientDbusService(dbus.service.Object):
         loglevel = getattr(logging, self.log_level.upper())
         logging.basicConfig(level=loglevel)
 
-        # Configuration adapters (old)
-        self.config_adapters = {}
+        # Configuration adapters
+        self.adapters = {}
 
-        self.register_config_adapter(
-            configadapters.DconfConfigAdapter,
+        self.register_adapter(
+            adapters.DconfAdapter,
             self.config.get_value('dconf_profile_path'),
             self.config.get_value('dconf_db_path'))
 
-        self.register_config_adapter(
-            configadapters.GOAConfigAdapter,
+        self.register_adapter(
+            adapters.GOAAdapter,
             self.config.get_value('goa_run_path'))
 
-        self.register_config_adapter(
-            configadapters.NetworkManagerConfigAdapter)
+        self.register_adapter(
+            adapters.NetworkManagerAdapter)
 
-        self.register_config_adapter(
-            configadapters.ChromiumConfigAdapter,
+        self.register_adapter(
+            adapters.ChromiumAdapter,
             self.config.get_value('chromium_policies_path'))
 
-        self.register_config_adapter(
-            configadapters.ChromeConfigAdapter,
+        self.register_adapter(
+            adapters.ChromeAdapter,
             self.config.get_value('chrome_policies_path'))
 
-        self.register_config_adapter(
-            configadapters.FirefoxConfigAdapter,
+        self.register_adapter(
+            adapters.FirefoxAdapter,
             self.config.get_value('firefox_prefs_path'))
 
+
         # Parent initialization
-        super(FleetCommanderClientDbusService, self).__init__()
+        super(FleetCommanderClientADDbusService, self).__init__()
 
     def run(self, sessionbus=False):
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -103,39 +105,36 @@ class FleetCommanderClientDbusService(dbus.service.Object):
     def quit(self):
         self._loop.quit()
 
-    def register_config_adapter(self, adapterclass, *args, **kwargs):
-        self.config_adapters[adapterclass.NAMESPACE] = adapterclass(*args, **kwargs)
+    def register_adapter(self, adapterclass, *args, **kwargs):
+        self.adapters[adapterclass.NAMESPACE] = adapterclass(*args, **kwargs)
+
+    def get_peer_uid(self, sender):
+        proxy = dbus.SystemBus().get_object('org.freedesktop.DBus', '/')
+        interface = dbus.Interface(
+            proxy, dbus_interface='org.freedesktop.DBus')
+        return interface.GetConnectionUnixUser(sender)
 
     @dbus.service.method(DBUS_INTERFACE_NAME,
-                         in_signature='usq', out_signature='')
-    def ProcessSSSDFiles(self, uid, directory, policy):
-        """
-        Types:
-            uid: Unsigned 32 bit integer (Real local user ID)
-            directory: String (Path where the files has been deployed by SSSD)
-            policy: Unsigned 16 bit integer (as specified in FreeIPA)
-        """
+                         in_signature='', out_signature='',
+                         message_keyword='dbusmessage')
+    def ProcessFiles(self, dbusmessage):
 
         logging.debug(
-            'FC Client: SSSD Data received - %(u)s - %(d)s - %(p)s' % {
-                'u': uid,
-                'd': directory,
-                'p': policy,
-            })
+            'FC Client: Applying user configuration')
 
-        # Compile settings
-        sc = SettingsCompiler(directory)
-        logging.debug('FC Client: Compiling settings')
-        compiled_settings = sc.compile_settings()
-        # Send data to configuration adapters
-        logging.debug('FC Client: Applying settings')
-        for namespace in compiled_settings:
-            logging.debug('FC Client: Checking adapters for namespace %s' % namespace)
-            if namespace in self.config_adapters:
-                logging.debug('FC Client: Applying settings for namespace %s' % namespace)
-                self.config_adapters[namespace].bootstrap(uid)
-                data = compiled_settings[namespace]
-                self.config_adapters[namespace].update(uid, data)
+        # Get peer UID for security
+        uid = self.get_peer_uid(dbusmessage.get_sender())
+
+        logging.debug(
+            'FC Client: Got peer UID: {}'.format(uid))
+
+        # Cycle through configuration adapters and deploy existing data
+        for namespace, adapter in self.adapters.items():
+            logging.debug(
+                'FC Client: Deploying configuration for namespace {}'.format(
+                    namespace))
+
+            adapter.deploy(uid)
         self.quit()
 
     @dbus.service.method(DBUS_INTERFACE_NAME,
@@ -145,5 +144,5 @@ class FleetCommanderClientDbusService(dbus.service.Object):
 
 
 if __name__ == '__main__':
-    svc = FleetCommanderClientDbusService()
+    svc = FleetCommanderClientADDbusService()
     svc.run()
