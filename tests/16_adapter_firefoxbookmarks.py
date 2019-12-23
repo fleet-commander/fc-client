@@ -30,42 +30,66 @@ import unittest
 
 sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
 
-import fleetcommanderclient.adapters.firefox
-from fleetcommanderclient.adapters.firefox import FirefoxAdapter
+import fleetcommanderclient.adapters.firefoxbookmarks
+from fleetcommanderclient.adapters.firefoxbookmarks import FirefoxBookmarksAdapter
 
 
 def universal_function(*args, **kwargs):
     pass
 
 # Monkey patch chown function in os module
-fleetcommanderclient.adapters.firefox.os.chown = universal_function
+fleetcommanderclient.adapters.firefoxbookmarks.os.chown = universal_function
 
 
 # Set log level to debug
 logging.basicConfig(level=logging.DEBUG)
 
-PROFILE_FILE_CONTENTS = r"""{"org.mozilla.firefox": [{"value": 0, "key": "accessibility.typeaheadfind.flashBar"}, {"value": false, "key": "beacon.enabled"}, {"value": "{\"placements\":{\"widget-overflow-fixed-list\":[],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"back-button\",\"forward-button\",\"stop-reload-button\",\"home-button\",\"customizableui-special-spring1\",\"urlbar-container\",\"customizableui-special-spring2\",\"downloads-button\",\"library-button\",\"sidebar-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[\"developer-button\"],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\"],\"currentVersion\":12,\"newElementCount\":2}", "key": "browser.uiCustomization.state"}], "com.google.chrome.Policies": [], "org.chromium.Policies": [], "org.gnome.gsettings": [], "org.libreoffice.registry": [], "org.freedesktop.NetworkManager": []}"""
+PROFILE_FILE_CONTENTS = r"""{
+    "org.mozilla.firefox.Bookmarks": [
+        {
+            "key": "blah",
+            "value": {
+                "Title": "Test bookmark",
+                "URL": "https://example.com",
+                "Favicon": "https://example.com/favicon.ico",
+                "Placement": "toolbar",
+                "Folder": "FolderName"
+            }
+        }
+    ]
+}"""
 
-PREFS_FILE_CONTENTS = r"""pref("accessibility.typeaheadfind.flashBar", 0);
-pref("beacon.enabled", false);
-pref("browser.uiCustomization.state", "{\"placements\":{\"widget-overflow-fixed-list\":[],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"back-button\",\"forward-button\",\"stop-reload-button\",\"home-button\",\"customizableui-special-spring1\",\"urlbar-container\",\"customizableui-special-spring2\",\"downloads-button\",\"library-button\",\"sidebar-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[\"developer-button\"],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\"],\"currentVersion\":12,\"newElementCount\":2}");"""
+POLICIES_FILE_CONTENTS = {
+    "policies": {
+        "Bookmarks": [
+            {
+                "Title": "Test bookmark",
+                "URL": "https://example.com",
+                "Favicon": "https://example.com/favicon.ico",
+                "Placement": "toolbar",
+                "Folder": "FolderName"
+            }
+        ]
+    }
+}
 
 
 class TestFirefoxAdapter(unittest.TestCase):
 
     TEST_UID = 55555
 
-    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox']
+    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox.Bookmarks']
 
     def setUp(self):
         self.test_directory = tempfile.mkdtemp(
-            prefix='fc-client-firefox-test')
-        self.prefs_path = self.test_directory
+            prefix='fc-client-firefoxbookmarks-test')
+        policies_path_template = os.path.join(self.test_directory, '{}/firefox')
+        self.policies_path = policies_path_template.format(self.TEST_UID)
         self.cache_path = os.path.join(self.test_directory, 'cache')
-        self.prefs_file_path = os.path.join(
-            self.prefs_path,
-            FirefoxAdapter.PREFS_FILENAME.format(self.TEST_UID))
-        self.ca = FirefoxAdapter(self.prefs_path)
+        self.policies_file_path = os.path.join(
+            self.policies_path,
+            FirefoxBookmarksAdapter.POLICIES_FILENAME)
+        self.ca = FirefoxBookmarksAdapter(policies_path_template)
         self.ca._TEST_CACHE_PATH = self.cache_path
 
     def tearDown(self):
@@ -84,9 +108,11 @@ class TestFirefoxAdapter(unittest.TestCase):
         self.assertTrue(os.path.exists(filepath))
         # Check configuration file contents
         with open(filepath, 'r') as fd:
-            data = fd.read()
+            data = json.loads(fd.read())
             fd.close()
-        self.assertEqual(data, PREFS_FILE_CONTENTS)
+        self.assertEqual(
+            json.dumps(POLICIES_FILE_CONTENTS, sort_keys=True),
+            json.dumps(data, sort_keys=True))
 
     def test_01_deploy(self):
         # Generate config files in cache
@@ -94,12 +120,9 @@ class TestFirefoxAdapter(unittest.TestCase):
         # Execute deployment
         self.ca.deploy(self.TEST_UID)
         # Check file has been copied to policies path
-        deployed_file_path = os.path.join(
-            self.prefs_path,
-            FirefoxAdapter.PREFS_FILENAME.format(self.TEST_UID))
-        self.assertTrue(os.path.isfile(deployed_file_path))
+        self.assertTrue(os.path.isfile(self.policies_file_path))
         # Check both files content is the same
-        with open(deployed_file_path, 'r') as fd:
+        with open(self.policies_file_path, 'r') as fd:
             data1 = fd.read()
             fd.close()
         cached_file_path = os.path.join(
