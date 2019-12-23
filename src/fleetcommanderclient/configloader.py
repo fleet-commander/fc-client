@@ -34,6 +34,7 @@ class ConfigLoader(object):
         'chromium_policies_path': '/etc/chromium/policies/managed',
         'chrome_policies_path': '/etc/opt/chrome/policies/managed',
         'firefox_prefs_path': '/etc/firefox/pref',
+        'firefox_policies_path': '/run/user/{}/firefox',
         'log_level': 'info',
     }
 

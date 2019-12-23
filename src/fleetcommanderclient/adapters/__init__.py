@@ -27,3 +27,4 @@ from fleetcommanderclient.adapters.nm import NetworkManagerAdapter
 from fleetcommanderclient.adapters.chromium import ChromiumAdapter
 from fleetcommanderclient.adapters.chromium import ChromeAdapter
 from fleetcommanderclient.adapters.firefox import FirefoxAdapter
+from fleetcommanderclient.adapters.firefoxbookmarks import FirefoxBookmarksAdapter

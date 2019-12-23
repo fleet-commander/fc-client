@@ -84,6 +84,10 @@ class FleetCommanderClientDbusService(dbus.service.Object):
             configadapters.FirefoxConfigAdapter,
             self.config.get_value('firefox_prefs_path'))
 
+        self.register_config_adapter(
+            configadapters.FirefoxBookmarksConfigAdapter,
+            self.config.get_value('firefox_policies_path'))
+
         # Parent initialization
         super(FleetCommanderClientDbusService, self).__init__()
 

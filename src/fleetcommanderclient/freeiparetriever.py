@@ -34,10 +34,6 @@ import ldap
 import ldap.sasl
 import ldap.modlist
 
-from samba import param, smb
-from samba.credentials import Credentials, MUST_USE_KERBEROS
-from samba.ndr import ndr_unpack
-from samba.dcerpc import security
 
 from gi.repository import Gio
 from gi.repository import GLib
@@ -56,7 +52,6 @@ FC_DEFAULT_PROFILE_DATA = json.dumps({
 })
 
 FC_GLOBAL_POLICY_NS = 'org.freedesktop.FleetCommander'
-FC_GLOBAL_POLICY_PROFILE_NAME = 'GLOBAL_POLICY__DO_NOT_MODIFY'
 FC_GLOBAL_POLICY_DEFAULT = 1
 FC_GLOBAL_POLICY_MAPPINGS = [
     'ughx',
@@ -85,168 +80,8 @@ FC_GLOBAL_POLICY_MAPPINGS = [
     'xhgu',
 ]
 
-FC_NO_MATCH_PRIORITY = '00000'
 
-
-GPO_APPLY_GROUP_POLICY_CAR = 'edacfd8f-ffb3-11d1-b41d-00a0c968f939'
-
-
-class SecurityDescriptorHelper(object):
-
-    def __init__(self, sd, connector):
-        self.connector = connector
-        self.dacl_flags = ''
-        self.dacls = []
-        self.sacl_flags = ''
-        self.sacls = []
-        if isinstance(sd, security.descriptor):
-            # Get the SDDL and parse
-            sddl = sd.as_sddl()
-        else:
-            try:
-                # Try to unpack data, then get SDDL and parse
-                sd = ndr_unpack(security.descriptor, sd)
-                sddl = sd.as_sddl()
-            except Exception:
-                sddl = sd
-        self.parse_sddl(sddl)
-
-    def parse_sddl(self, sddl):
-        logging.debug(
-            'Parsing SDDL for security descriptor. Given SDDL: %s' % sddl)
-        # SACLs
-        if 'S:' in sddl:    
-            sacl_index = sddl.index('S:')
-            sacl_data = sddl[sacl_index + 2:]
-            if '(' in sacl_data:
-                self.sacl_flags = sacl_data[:sacl_data.index('(')]
-                sacl_aces = sacl_data[sacl_data.index('('):]
-                self.sacls = [
-                    ACEHelper(x) for x in sacl_aces[1:][:-1].split(')(')]
-            else:
-                self.sacl_flags = sacl_data
-        else:
-            sacl_index = len(sddl) - 1
-        # DACLs
-        if 'D:' in sddl:
-            dacl_index = sddl.index('D:')
-            dacl_data = sddl[dacl_index + 2:sacl_index]
-            if '(' in dacl_data:
-                self.dacl_flags = dacl_data[:dacl_data.index('(')]
-                dacl_aces = dacl_data[dacl_data.index('('):]
-                self.dacls = [
-                    ACEHelper(x) for x in dacl_aces[1:][:-1].split(')(')]
-            else:
-                self.dacl_flags = dacl_data
-        # Group
-        g_index = sddl.index('G:')
-        self.group_sid = sddl[g_index + 2:dacl_index]
-        logging.debug('SDDL parse finished')
-        # Owner
-        self.owner_sid = sddl[2:g_index]
-
-    def add_dacl_ace(self, ace):
-        logging.debug('Adding ACE to security descriptor: %s')
-        if ace not in self.dacls:
-            self.dacls.append(ACEHelper(str(ace)))
-        else:
-            logging.debug('ACE %s already exists for this security descriptor')
-
-    def get_fc_applies(self):
-        logging.debug('Getting applies from security descriptor ACEs')
-        users = set()
-        groups = set()
-        hosts = set()
-
-        for ace in self.dacls:
-            # Manage GPO object ACEs only
-            if ace.object_guid == GPO_APPLY_GROUP_POLICY_CAR:
-                # Manage ACEs that apply to an user
-                obj = self.connector.get_object_by_sid(ace.account_sid)
-                if obj is not None:
-                    if b'user' in obj['objectClass']:
-                        users.add(obj['cn'].decode())
-                    elif b'group' in obj['objectClass']:
-                        groups.add(obj['cn'].decode())
-                    elif b'computer' in obj['objectClass']:
-                        hosts.add(obj['cn'].decode())
-        applies = {
-            'users': sorted(list(users)),
-            'groups': sorted(list(groups)),
-            'hosts': sorted(list(hosts)),
-            'hostgroups': [],
-        }
-        logging.debug('Retrieved applies: %s' % applies)
-        return applies
-
-    def to_sddl(self):
-        return 'O:%sG:%sD:%sS:%s' % (
-            self.owner_sid,
-            self.group_sid,
-            '%s%s' % (
-                self.dacl_flags,
-                ''.join([str(x) for x in self.dacls]),
-            ),
-            '%s%s' % (
-                self.sacl_flags,
-                ''.join([str(x) for x in self.sacls]),
-            ),
-        )
-
-    def to_sd(self):
-        logging.debug('Generating security descriptor')
-        sddl = self.to_sddl()
-        logging.debug('SDDL for security descriptor generation: %s' % sddl)
-        domain_sid = self.connector.get_domain_sid()
-        sd = security.descriptor.from_sddl(sddl, domain_sid)
-        return sd
-
-
-class ACEHelper(object):
-
-    def __init__(self, ace_string):
-        # Remove parenthesis from ACE string
-        ace_string = ace_string.replace('(', '').replace(')', '')
-        # Split data
-        data = ace_string.split(';')
-        self.type = data[0]
-        self.flags = data[1]
-        self.rights = data[2]
-        self.object_guid = data[3]
-        self.inherit_object_guid = data[4]
-        self.account_sid = data[5]
-        # Resource attribute is optional
-        if len(data) > 6:
-            self.resource_attribute = data[6]
-        else:
-            self.resource_attribute = None
-
-    @property
-    def ace_string(self):
-        data = [
-            self.type,
-            self.flags,
-            self.rights,
-            self.object_guid,
-            self.inherit_object_guid,
-            self.account_sid,
-        ]
-        if self.resource_attribute is not None:
-            data.append(self.resource_attribute)
-        return '(%s)' % ';'.join(data)
-
-    def __eq__(self, other):
-        ace_str = str(other)
-        return ace_str == self.ace_string
-
-    def __repr__(self):
-        return 'ACEHelper%s' % self.ace_string
-
-    def __str__(self):
-        return self.ace_string
-
-
-class FleetCommanderADProfileRetriever(object):
+class FleetCommanderIPARetriever(object):
     """
     Fleet commander Active Directory profile retriever
     """
@@ -296,10 +131,6 @@ class FleetCommanderADProfileRetriever(object):
             adapters.FirefoxAdapter,
             self.config.get_value('firefox_prefs_path'))
 
-
-        self.register_adapter(
-            adapters.FirefoxBookmarksAdapter,
-            self.config.get_value('firefox_policies_path'))
 
     def register_adapter(self, adapterclass, *args, **kwargs):
         self.adapters[adapterclass.NAMESPACE] = adapterclass(*args, **kwargs)
