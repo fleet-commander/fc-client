@@ -27,6 +27,7 @@ import platform
 import logging
 import json
 import shutil
+import optparse
 
 import dns.resolver
 
@@ -34,10 +35,18 @@ import ldap
 import ldap.sasl
 import ldap.modlist
 
-from samba import param, smb
+import samba.getopt as options
 from samba.credentials import Credentials, MUST_USE_KERBEROS
 from samba.ndr import ndr_unpack
 from samba.dcerpc import security
+from samba.samba3 import param as s3param
+
+try:
+    from samba.samba3 import libsmb
+    logging.debug('Using SAMBA 3 SMB connection')
+except ImportError:
+    from samba.samba3 import libsmb_samba_internal as libsmb
+    logging.debug('Using SAMBA 3 SMB connection (Internal)')
 
 from gi.repository import Gio
 from gi.repository import GLib
@@ -345,12 +354,22 @@ class FleetCommanderADProfileRetriever(object):
         self.connection.sasl_interactive_bind_s("", sasl_auth)
 
     def _get_smb_connection(self, service='SysVol'):
-        # Connect to SMB using kerberos
-        parm = param.LoadParm()
+        # Create options like if we were using command line
+        parser = optparse.OptionParser()
+        sambaopts = options.SambaOptions(parser)
+        # Samba options
+        parm = sambaopts.get_loadparm()
+        s3_lp = s3param.get_context()
+        s3_lp.load(parm.configfile)
+        # Build credentials from credential options
         creds = Credentials()
+        # Credentials need username and realm to be not empty strings to work
+        creds.set_username('NOTEMPTY')
+        creds.set_realm('NOTEMPTY')
+        # Connect to SMB using kerberos
         creds.set_kerberos_state(MUST_USE_KERBEROS)
-        creds.guess(parm)
-        conn = smb.SMB(self._get_server_name(), service, lp=parm, creds=creds)
+        # Create connection
+        conn = libsmb.Conn(self._get_server_name(), service, lp=parm, creds=creds, sign=False)
         return conn
 
     def _read_profile_data(self, ldap_data):
