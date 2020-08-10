@@ -63,6 +63,9 @@ class FirefoxBookmarksConfigAdapter(BaseConfigAdapter):
         bookmarks = []
         for item in data:
             if 'key' in item and 'value' in item:
+                for fld, val in item['value'].items():
+                    if val is None:
+                        item['value'][fld] = ''
                 bookmarks.append(item['value'])
         policies_data = {"policies": {'Bookmarks': bookmarks}}
         # Write preferences data
