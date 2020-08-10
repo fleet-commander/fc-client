@@ -68,8 +68,7 @@ class FirefoxBookmarksConfigAdapter(BaseConfigAdapter):
         # Write preferences data
         logging.debug('Writing {} data to: "{}"'.format(self.NAMESPACE, path))
         with open(path, 'w') as fd:
+            # Change permissions and ownership permisions
+            self._set_perms(fd, uid, -1, 0o640)
             fd.write(json.dumps(policies_data))
             fd.close()
-        # Change permissions and ownership permisions
-        os.chown(path, uid, -1)
-        os.chmod(path, stat.S_IREAD)
