@@ -27,6 +27,7 @@ import shutil
 import json
 import unittest
 import logging
+import stat
 
 import gi
 from gi.repository import GLib
@@ -56,7 +57,7 @@ fleetcommanderclient.configadapters.firefox.os.chown = universal_function
 
 class TestFirefoxConfigAdapter(unittest.TestCase):
 
-    TEST_UID = 55555
+    TEST_UID = os.getuid()
 
     TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox']
 
@@ -93,6 +94,8 @@ class TestFirefoxConfigAdapter(unittest.TestCase):
         self.ca.update(self.TEST_UID, self.TEST_DATA)
         # Check file has been written
         self.assertTrue(os.path.exists(self.policies_file_path))
+        # Change file mod because test user haven't root privilege
+        os.chmod(self.policies_file_path, stat.S_IRUSR)
         # Read file
         with open(self.policies_file_path, 'r') as fd:
             data = fd.read()
