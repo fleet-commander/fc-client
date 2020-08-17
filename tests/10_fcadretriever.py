@@ -52,7 +52,7 @@ log.setLevel(level)
 # Mocking assignments
 fcadretriever.ldap = ldapmock
 fcadretriever.ldap.sasl = ldapmock.sasl
-fcadretriever.smb = smbmock
+fcadretriever.libsmb.Conn = smbmock.SMBMock
 
 
 # DNS resolver mock
@@ -353,7 +353,7 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
         self.fcad.DOMAIN = 'fcrealm.ad'
         # Create temporary directory
         userdir = tempfile.mkdtemp()
-        fcadretriever.smb.TEMP_DIR = userdir
+        smbmock.TEMP_DIR = userdir
         # Save profile data
         self._save_test_cifs_data(userdir)
         # Process profile using that directory

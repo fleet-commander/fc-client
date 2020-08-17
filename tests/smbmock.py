@@ -30,7 +30,7 @@ TEMP_DIR = None
 
 class SMBMock(object):
 
-    def __init__(self, servername, service, lp, creds):
+    def __init__(self, servername, service, lp, creds, sign=False):
         logging.debug(
             'SMBMock: Mocking SMB at \\\\%s\\%s' % (servername, service))
         self.tempdir = TEMP_DIR
