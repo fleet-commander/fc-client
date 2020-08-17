@@ -68,8 +68,7 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
         # Write preferences data
         logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
         with open(path, 'w') as fd:
+            # Change permissions and ownership permisions
+            self._set_perms(fd, uid, -1, 0o640)
             fd.write('\n'.join(preferences))
             fd.close()
-        # Change permissions and ownership permisions
-        os.chown(path, uid, -1)
-        os.chmod(path, stat.S_IREAD)

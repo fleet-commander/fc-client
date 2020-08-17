@@ -27,6 +27,7 @@ import shutil
 import json
 import unittest
 import logging
+import stat
 
 import gi
 from gi.repository import GLib
@@ -78,8 +79,7 @@ fleetcommanderclient.configadapters.firefoxbookmarks.os.chown = universal_functi
 
 
 class TestFirefoxBookmarksConfigAdapter(unittest.TestCase):
-
-    TEST_UID = 55555
+    TEST_UID = os.getuid()
 
     TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox.Bookmarks']
 
@@ -98,7 +98,6 @@ class TestFirefoxBookmarksConfigAdapter(unittest.TestCase):
         shutil.rmtree(self.test_directory)
 
     def test_00_bootstrap(self):
-
         logging.debug('Paths do not exist yet')
         self.assertFalse(os.path.exists(self.policies_file_path))
         self.assertFalse(os.path.isdir(self.policies_path))
@@ -130,6 +129,8 @@ class TestFirefoxBookmarksConfigAdapter(unittest.TestCase):
         self.assertTrue(os.path.exists(self.policies_file_path))
         
         logging.debug('Check file contents')
+        # Change file mod because test user haven't root privilege
+        os.chmod(self.policies_file_path, stat.S_IRUSR)
         with open(self.policies_file_path, 'r') as fd:
             data = json.loads(fd.read())
             fd.close()

@@ -64,11 +64,11 @@ class ChromiumConfigAdapter(BaseConfigAdapter):
         # Write policies data
         logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
         with open(path, 'w') as fd:
+            # Change permissions and ownership permisions
+            self._set_perms(fd, uid, -1, 0o640)
             fd.write(json.dumps(policies))
             fd.close()
-        # Change permissions and ownership permisions
-        os.chown(path, uid, -1)
-        os.chmod(path, stat.S_IREAD)
+
 
 class ChromeConfigAdapter(ChromiumConfigAdapter):
     """

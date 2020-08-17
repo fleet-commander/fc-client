@@ -19,6 +19,8 @@
 # Authors: Alberto Ruiz <aruiz@redhat.com>
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
+import os
+
 
 class BaseConfigAdapter(object):
     """
@@ -39,3 +41,11 @@ class BaseConfigAdapter(object):
         Update configuration for given user
         """
         raise NotImplementedError('You must implement update method')
+
+    @staticmethod
+    def _set_perms(fd, uid, gid, perms):
+        """
+        Set owner and file mode for given file descriptor
+        """
+        os.fchown(fd.fileno(), gid, uid)
+        os.fchmod(fd.fileno(), perms)

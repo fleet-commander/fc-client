@@ -26,6 +26,7 @@ import tempfile
 import shutil
 import json
 import unittest
+import stat
 
 import gi
 from gi.repository import GLib
@@ -45,8 +46,7 @@ fleetcommanderclient.configadapters.chromium.os.chown = universal_function
 
 
 class TestChromiumConfigAdapter(unittest.TestCase):
-
-    TEST_UID = 55555
+    TEST_UID = os.getuid()
 
     TEST_DATA = [
         {"value": True, "key": "ShowHomeButton"},
@@ -86,6 +86,8 @@ class TestChromiumConfigAdapter(unittest.TestCase):
         self.ca.update(self.TEST_UID, self.TEST_DATA)
         # Check file has been written
         self.assertTrue(os.path.exists(self.policies_file_path))
+        # Change file mod because test user haven't root privilege
+        os.chmod(self.policies_file_path, stat.S_IRUSR)
         # Read file
         with open(self.policies_file_path, 'r') as fd:
             data = json.loads(fd.read())
