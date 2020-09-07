@@ -1,3 +1,5 @@
+dist/
+rpmbuild/
 Makefile
 Makefile.in
 */Makefile
