@@ -31,13 +31,15 @@ class FirefoxBookmarksConfigAdapter(BaseConfigAdapter):
     Firefox Bookmarks config adapter
     """
 
-    NAMESPACE = 'org.mozilla.firefox.Bookmarks'
-    POLICIES_FILENAME = 'policies.json'
+    NAMESPACE = "org.mozilla.firefox.Bookmarks"
+    POLICIES_FILENAME = "policies.json"
 
     def __init__(self, policies_path):
         logging.debug(
-            'Initialized firefox bookmarks config adapter with policies path {}'.format(
-                policies_path))
+            "Initialized firefox bookmarks config adapter with policies path {}".format(
+                policies_path
+            )
+        )
         self.policies_path = policies_path
 
     def bootstrap(self, uid):
@@ -47,11 +49,13 @@ class FirefoxBookmarksConfigAdapter(BaseConfigAdapter):
         try:
             os.remove(path)
         except Exception as e:
-            logging.debug('Error removing previous policies file "{}": {}'.format(path, e))
+            logging.debug(
+                'Error removing previous policies file "{}": {}'.format(path, e)
+            )
             pass
 
     def update(self, uid, data):
-        logging.debug('Updating {}. Data received: {}'.format(self.NAMESPACE, data))
+        logging.debug("Updating {}. Data received: {}".format(self.NAMESPACE, data))
         directory = self.policies_path.format(uid)
         path = os.path.join(directory, self.POLICIES_FILENAME)
         # Create directory
@@ -62,12 +66,12 @@ class FirefoxBookmarksConfigAdapter(BaseConfigAdapter):
         # Prepare data
         bookmarks = []
         for item in data:
-            if 'key' in item and 'value' in item:
-                bookmarks.append(item['value'])
-        policies_data = {"policies": {'Bookmarks': bookmarks}}
+            if "key" in item and "value" in item:
+                bookmarks.append(item["value"])
+        policies_data = {"policies": {"Bookmarks": bookmarks}}
         # Write preferences data
         logging.debug('Writing {} data to: "{}"'.format(self.NAMESPACE, path))
-        with open(path, 'w') as fd:
+        with open(path, "w") as fd:
             # Change permissions and ownership permisions
             self._set_perms(fd, uid, -1, 0o640)
             fd.write(json.dumps(policies_data))

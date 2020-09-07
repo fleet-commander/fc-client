@@ -25,6 +25,7 @@ import pwd
 import shutil
 import logging
 
+
 class BaseAdapter(object):
     """
     Base configuration adapter class
@@ -39,23 +40,17 @@ class BaseAdapter(object):
     def _get_cache_path(self, uid=None):
         # Use test cache path while testing
         if self._TEST_CACHE_PATH is not None:
-            return os.path.join(
-                self._TEST_CACHE_PATH,
-                self.NAMESPACE)
+            return os.path.join(self._TEST_CACHE_PATH, self.NAMESPACE)
 
         if uid is None:
             # Use current user home cache directory
             return os.path.join(
-                os.path.expanduser('~'),
-                '.cache/fleet-commander',
-                self.NAMESPACE)
+                os.path.expanduser("~"), ".cache/fleet-commander", self.NAMESPACE
+            )
         else:
             # Get user directory from password database
             homedir = pwd.getpwuid(uid).pw_dir
-            return os.path.join(
-                homedir,
-                '.cache/fleet-commander/',
-                self.NAMESPACE)
+            return os.path.join(homedir, ".cache/fleet-commander/", self.NAMESPACE)
 
     def cleanup_cache(self, namespace_cache_path=None):
         """
@@ -63,8 +58,7 @@ class BaseAdapter(object):
         """
         if namespace_cache_path is None:
             namespace_cache_path = self._get_cache_path()
-        logging.debug('Cleaning up cache path {}'.format(
-            namespace_cache_path))
+        logging.debug("Cleaning up cache path {}".format(namespace_cache_path))
         if os.path.exists(namespace_cache_path):
             shutil.rmtree(namespace_cache_path)
 
@@ -76,11 +70,11 @@ class BaseAdapter(object):
         # Cleaning up cache path
         self.cleanup_cache(namespace_cache_path)
         # Create namespace cache path
-        logging.debug('Creating cache path {}'.format(
-            namespace_cache_path))
+        logging.debug("Creating cache path {}".format(namespace_cache_path))
         os.makedirs(namespace_cache_path)
-        logging.debug('Processing data configuration for namespace {}'.format(
-            self.NAMESPACE))
+        logging.debug(
+            "Processing data configuration for namespace {}".format(self.NAMESPACE)
+        )
         self.process_config_data(config_data, namespace_cache_path)
 
     def deploy(self, uid):
@@ -95,13 +89,11 @@ class BaseAdapter(object):
         Process configuration data and save cache files to be deployed.
         This method needs to be defined by each configuration adapter.
         """
-        raise NotImplementedError(
-            'You must implement generate_config_data method')
+        raise NotImplementedError("You must implement generate_config_data method")
 
     def deploy_files(self, namespace_cache_path, uid):
         """
         File deployment method to be defined by each configuration adapter.
         This method will be called by privileged process
         """
-        raise NotImplementedError(
-            'You must implement deploy_files method')
+        raise NotImplementedError("You must implement deploy_files method")

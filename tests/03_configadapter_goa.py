@@ -29,7 +29,7 @@ import unittest
 import gi
 from gi.repository import GLib
 
-sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
+sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 
 from fleetcommanderclient.configadapters.goa import GOAConfigAdapter
@@ -48,17 +48,17 @@ class TestGOAConfigAdapter(unittest.TestCase):
             "Provider": "google",
             "DocumentsEnabled": False,
             "PrintersEnabled": True,
-            "MailEnabled": True
+            "MailEnabled": True,
         },
         "Template account_fc_1490729585_0": {
             "PhotosEnabled": False,
             "Provider": "facebook",
-            "MapsEnabled": False
-        }
+            "MapsEnabled": False,
+        },
     }
 
     def setUp(self):
-        self.test_directory = tempfile.mkdtemp(prefix='fc-client-goa-test')
+        self.test_directory = tempfile.mkdtemp(prefix="fc-client-goa-test")
         self.ca = GOAConfigAdapter(self.test_directory)
 
     def tearDown(self):
@@ -80,7 +80,8 @@ class TestGOAConfigAdapter(unittest.TestCase):
         self.ca.bootstrap(self.TEST_UID)
         self.ca.update(self.TEST_UID, self.TEST_DATA)
         keyfile_path = os.path.join(
-            self.test_directory, str(self.TEST_UID), self.ca.FC_ACCOUNTS_FILE)
+            self.test_directory, str(self.TEST_UID), self.ca.FC_ACCOUNTS_FILE
+        )
         # Check keyfile has been written
         self.assertTrue(os.path.exists(keyfile_path))
         # Read keyfile
@@ -103,5 +104,6 @@ class TestGOAConfigAdapter(unittest.TestCase):
                     value_keyfile = keyfile.get_string(account, key)
                 self.assertEqual(value, value_keyfile)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -31,7 +31,7 @@ import unittest
 
 import dbus
 
-PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
+PYTHONPATH = os.path.join(os.environ["TOPSRCDIR"], "src")
 sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
@@ -57,14 +57,16 @@ class FleetCommanderClientADDbusClient(object):
         t = time.time()
         while time.time() - t < self.CONNECTION_TIMEOUT:
             try:
-                self.obj = self.bus.get_object(fcclientad.DBUS_BUS_NAME, fcclientad.DBUS_OBJECT_PATH)
+                self.obj = self.bus.get_object(
+                    fcclientad.DBUS_BUS_NAME, fcclientad.DBUS_OBJECT_PATH
+                )
                 self.iface = dbus.Interface(
-                    self.obj, dbus_interface=fcclientad.DBUS_INTERFACE_NAME)
+                    self.obj, dbus_interface=fcclientad.DBUS_INTERFACE_NAME
+                )
                 return
             except Exception:
                 pass
-        raise Exception(
-            'Timed out connecting to fleet commander client dbus service')
+        raise Exception("Timed out connecting to fleet commander client dbus service")
 
     def process_files(self):
         return self.iface.ProcessFiles()
@@ -76,6 +78,7 @@ class TestDbusClient(FleetCommanderClientADDbusClient):
     def test_service_alive(self):
         return self.iface.TestServiceAlive()
 
+
 # Mock dbus client
 fcclientad.FleetCommanderClientADDbusClient = TestDbusClient
 
@@ -86,19 +89,23 @@ class TestDbusService(unittest.TestCase):
     MAX_DBUS_CHECKS = 1
 
     CACHE_FILEPATHS = [
-        'org.gnome.online-accounts/fleet-commander-accounts.conf',
+        "org.gnome.online-accounts/fleet-commander-accounts.conf",
     ]
 
     def setUp(self):
         self.test_directory = tempfile.mkdtemp()
 
         # Execute dbus service
-        self.service = subprocess.Popen([
-            os.path.join(
-                os.environ['TOPSRCDIR'],
-                'tests/test_fcclientad_service.py'),
-            self.test_directory,
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.service = subprocess.Popen(
+            [
+                os.path.join(
+                    os.environ["TOPSRCDIR"], "tests/test_fcclientad_service.py"
+                ),
+                self.test_directory,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
 
         checks = 0
         while True:
@@ -114,21 +121,22 @@ class TestDbusService(unittest.TestCase):
                     self.service.kill()
                     self.print_dbus_service_output()
                     raise Exception(
-                        'DBUS service taking too much time to start: %s' % e)
+                        "DBUS service taking too much time to start: %s" % e
+                    )
 
     def tearDown(self):
         # Kill service
         self.service.kill()
         self.print_dbus_service_output()
-        #shutil.rmtree(self.test_directory)
+        # shutil.rmtree(self.test_directory)
 
     def print_dbus_service_output(self):
-        print('------- BEGIN DBUS SERVICE STDOUT -------')
+        print("------- BEGIN DBUS SERVICE STDOUT -------")
         print(self.service.stdout.read())
-        print('-------- END DBUS SERVICE STDOUT --------')
-        print('------- BEGIN DBUS SERVICE STDERR -------')
+        print("-------- END DBUS SERVICE STDOUT --------")
+        print("------- BEGIN DBUS SERVICE STDERR -------")
         print(self.service.stderr.read())
-        print('-------- END DBUS SERVICE STDERR --------')
+        print("-------- END DBUS SERVICE STDERR --------")
 
     def get_client(self):
         return TestDbusClient()
@@ -138,19 +146,26 @@ class TestDbusService(unittest.TestCase):
 
         # Create fake compiled files where dbus service expect them
         for fpath in self.CACHE_FILEPATHS:
-            fname = os.path.join(self.test_directory, 'cache', fpath)
+            fname = os.path.join(self.test_directory, "cache", fpath)
             fdir = os.path.dirname(fname)
             if not os.path.isdir(fdir):
                 os.makedirs(fdir)
-            with open(fname, 'w') as fd:
-                fd.write('{}')
+            with open(fname, "w") as fd:
+                fd.write("{}")
                 fd.close()
 
         c.process_files()
 
         # Check GOA accounts file has been deployed
-        self.assertTrue(os.path.isfile(
-            os.path.join(self.test_directory, 'run/goa-1.0/55555/fleet-commander-accounts.conf')))
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(
+                    self.test_directory,
+                    "run/goa-1.0/55555/fleet-commander-accounts.conf",
+                )
+            )
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

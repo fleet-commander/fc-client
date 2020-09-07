@@ -36,10 +36,10 @@ class DconfAdapter(BaseAdapter):
     """
 
     # Namespace this config adapter handles
-    NAMESPACE = 'org.gnome.gsettings'
+    NAMESPACE = "org.gnome.gsettings"
 
-    PROFILE_FILE = 'fleet-commander-dconf.conf'
-    DB_FILE = 'fleet-commander-dconf.db'
+    PROFILE_FILE = "fleet-commander-dconf.conf"
+    DB_FILE = "fleet-commander-dconf.db"
 
     def __init__(self, dconf_profile_path, dconf_db_path):
         self.dconf_profile_path = dconf_profile_path
@@ -49,9 +49,9 @@ class DconfAdapter(BaseAdapter):
         struid = str(uid)
         profile_path = os.path.join(self.dconf_profile_path, struid)
         keyfile_dir = os.path.join(
-            self.dconf_db_path, '{}-{}.d'.format(self.DB_FILE, struid))
-        db_path = os.path.join(
-            self.dconf_db_path, '{}-{}'.format(self.DB_FILE, struid))
+            self.dconf_db_path, "{}-{}.d".format(self.DB_FILE, struid)
+        )
+        db_path = os.path.join(self.dconf_db_path, "{}-{}".format(self.DB_FILE, struid))
         return (profile_path, keyfile_dir, db_path)
 
     def _compile_dconf_db(self, keyfiles_dir, db_file):
@@ -59,22 +59,26 @@ class DconfAdapter(BaseAdapter):
         Compiles dconf database
         """
         # Execute dbus service
-        cmd = subprocess.Popen([
-            'dconf',
-            'compile',
-            db_file,
-            keyfiles_dir,
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            [
+                "dconf",
+                "compile",
+                db_file,
+                keyfiles_dir,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         cmd.wait()
         out = cmd.stdout.read()
         err = cmd.stderr.read()
         cmd.stdout.close()
         cmd.stderr.close()
         if cmd.returncode != 0:
-            raise Exception('{}\n{}'.format(out, err))
+            raise Exception("{}\n{}".format(out, err))
 
     def _remove_path(self, path, throw=False):
-        logging.debug('Removing path: {}'.format(path))
+        logging.debug("Removing path: {}".format(path))
         try:
             if os.path.exists(path):
                 if os.path.isdir(path):
@@ -83,12 +87,10 @@ class DconfAdapter(BaseAdapter):
                     os.remove(path)
         except Exception as e:
             if throw:
-                logging.error('Error removing path {}: {}'.format(
-                    path, e))
+                logging.error("Error removing path {}: {}".format(path, e))
                 raise e
             else:
-                logging.warning('Error removing path {}: {}'.format(
-                    path, e))
+                logging.warning("Error removing path {}: {}".format(path, e))
 
     def process_config_data(self, config_data, cache_path):
         """
@@ -97,34 +99,31 @@ class DconfAdapter(BaseAdapter):
         """
 
         # Create keyfile path
-        keyfiles_dir = os.path.join(cache_path, 'keyfiles')
-        logging.debug(
-            'Creating keyfiles directory {}'.format(keyfiles_dir))
+        keyfiles_dir = os.path.join(cache_path, "keyfiles")
+        logging.debug("Creating keyfiles directory {}".format(keyfiles_dir))
         try:
             os.makedirs(keyfiles_dir)
         except Exception as e:
-            logging.error('Error creating keyfiles path {}: {}'.format(
-                keyfiles_dir, e))
+            logging.error("Error creating keyfiles path {}: {}".format(keyfiles_dir, e))
             return
 
         # Prepare data for saving it in keyfile
-        logging.debug('Preparing dconf data for saving to keyfile')
+        logging.debug("Preparing dconf data for saving to keyfile")
         keyfile = GLib.KeyFile.new()
         for item in config_data:
-            if 'key' in item and 'value' in item:
-                keysplit = item['key'][1:].split('/')
-                keypath = '/'.join(keysplit[:-1])
+            if "key" in item and "value" in item:
+                keysplit = item["key"][1:].split("/")
+                keypath = "/".join(keysplit[:-1])
                 keyname = keysplit[-1]
-                keyfile.set_string(keypath, keyname, item['value'])
+                keyfile.set_string(keypath, keyname, item["value"])
 
         # Save keyfile
         keyfile_path = os.path.join(keyfiles_dir, self.PROFILE_FILE)
-        logging.debug('Saving dconf keyfile to {}'.format(keyfile_path))
+        logging.debug("Saving dconf keyfile to {}".format(keyfile_path))
         try:
             keyfile.save_to_file(keyfile_path)
         except Exception as e:
-            logging.error('Error saving dconf keyfile at "%s": %s' % (
-                keyfile_path, e))
+            logging.error('Error saving dconf keyfile at "%s": %s' % (keyfile_path, e))
             return
 
         # Compile dconf database
@@ -132,8 +131,7 @@ class DconfAdapter(BaseAdapter):
         try:
             self._compile_dconf_db(keyfiles_dir, db_path)
         except Exception as e:
-            logging.error('Error compiling dconf data to {}: {}'.format(
-                cache_path, e))
+            logging.error("Error compiling dconf data to {}: {}".format(cache_path, e))
             return
 
     def deploy_files(self, cache_path, uid):
@@ -142,22 +140,22 @@ class DconfAdapter(BaseAdapter):
         This method will be called by privileged process
         """
 
-        cached_db_file_path = os.path.join(
-            cache_path, self.DB_FILE)
+        cached_db_file_path = os.path.join(cache_path, self.DB_FILE)
 
         if os.path.isfile(cached_db_file_path):
             logging.debug(
-                'Deploying dconf settings from database file {}'.format(
-                    cached_db_file_path))
+                "Deploying dconf settings from database file {}".format(
+                    cached_db_file_path
+                )
+            )
             profile_path, keyfile_dir, db_path = self._get_paths_for_uid(uid)
-            
+
             # Remove old paths
             for path in [profile_path, keyfile_dir, db_path]:
                 self._remove_path(path)
 
             # Create runtime path
-            logging.debug(
-                'Creating profile path for dconf {}'.format(profile_path))
+            logging.debug("Creating profile path for dconf {}".format(profile_path))
             try:
                 os.makedirs(self.dconf_profile_path)
             except Exception:
@@ -165,22 +163,25 @@ class DconfAdapter(BaseAdapter):
 
             # Copy db file from cache to db path
             deploy_db_file_path = os.path.join(
-                self.dconf_db_path, '{}-{}'.format(self.DB_FILE, uid))
+                self.dconf_db_path, "{}-{}".format(self.DB_FILE, uid)
+            )
             shutil.copyfile(cached_db_file_path, deploy_db_file_path)
 
             # Save runtime file
             try:
-                profile_data = 'user-db:user\n\nsystem-db:{}-{}'.format(
-                    self.DB_FILE, uid)
-                with open(profile_path, 'w') as fd:
+                profile_data = "user-db:user\n\nsystem-db:{}-{}".format(
+                    self.DB_FILE, uid
+                )
+                with open(profile_path, "w") as fd:
                     fd.write(profile_data)
                     fd.close()
             except Exception as e:
-                logging.error('Error saving dconf profile at {}: {}'.format(
-                    profile_path, e))
+                logging.error(
+                    "Error saving dconf profile at {}: {}".format(profile_path, e)
+                )
                 return
 
-            logging.info('Processed dconf configuration for UID %s')
+            logging.info("Processed dconf configuration for UID %s")
 
             # # Change permissions and ownership for accounts file
             # os.chown(deploy_file_path, uid, -1)
@@ -192,6 +193,7 @@ class DconfAdapter(BaseAdapter):
 
         else:
             logging.debug(
-                'Dconf settings database file {} not present. Ignoring.'.format(
-                    cached_db_file_path))
-
+                "Dconf settings database file {} not present. Ignoring.".format(
+                    cached_db_file_path
+                )
+            )

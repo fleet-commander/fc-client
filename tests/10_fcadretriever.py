@@ -39,14 +39,14 @@ from samba.dcerpc import security
 import ldapmock
 import smbmock
 
-sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
+sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 # Fleet commander imports
 from fleetcommanderclient import fcadretriever
 
 # Set logging level to debug
 log = logging.getLogger()
-level = logging.getLevelName('DEBUG')
+level = logging.getLevelName("DEBUG")
 log.setLevel(level)
 
 # Mocking assignments
@@ -57,12 +57,11 @@ fcadretriever.libsmb.Conn = smbmock.SMBMock
 
 # DNS resolver mock
 class DNSResolverMock(object):
-
     class DNSResolverResult(object):
-        target = 'FC.AD/'
+        target = "FC.AD/"
 
     def query(self, name, querytype):
-        return (self.DNSResolverResult, )
+        return (self.DNSResolverResult,)
 
 
 fcadretriever.dns.resolver = DNSResolverMock()
@@ -72,30 +71,44 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
 
     maxDiff = None
 
-    TEST_USERNAME = 'myuser'
-    TEST_GROUPS = ['mygroup1', 'mygroup2']
-    TEST_HOSTNAME = 'myhost'
+    TEST_USERNAME = "myuser"
+    TEST_GROUPS = ["mygroup1", "mygroup2"]
+    TEST_HOSTNAME = "myhost"
     TEST_GLOBAL_POLICY = 1
     TEST_PROFILE = {
-        'cn': '',
-        'name': 'Test Profile',
-        'description': 'My test profile',
-        'priority': 100,
-        'settings': {
-            'org.freedesktop.NetworkManager': [],
-            'org.gnome.gsettings': [
+        "cn": "",
+        "name": "Test Profile",
+        "description": "My test profile",
+        "priority": 100,
+        "settings": {
+            "org.freedesktop.NetworkManager": [],
+            "org.gnome.gsettings": [
                 {
-                    'schema': 'org.gnome.desktop.notifications.application',
-                    'key': '/org/gnome/desktop/notifications/application/abrt-applet/application-id',
-                    'value': "'abrt-applet.desktop'",
-                    'signature': 's',
+                    "schema": "org.gnome.desktop.notifications.application",
+                    "key": "/org/gnome/desktop/notifications/application/abrt-applet/application-id",
+                    "value": "'abrt-applet.desktop'",
+                    "signature": "s",
                 }
             ],
         },
-        'users': sorted(['guest', 'admin', ]),
-        'groups': sorted(['admins', 'editors', ]),
-        'hosts': sorted(['client1', ]),
-        'hostgroups': [],
+        "users": sorted(
+            [
+                "guest",
+                "admin",
+            ]
+        ),
+        "groups": sorted(
+            [
+                "admins",
+                "editors",
+            ]
+        ),
+        "hosts": sorted(
+            [
+                "client1",
+            ]
+        ),
+        "hostgroups": [],
     }
 
     @classmethod
@@ -103,7 +116,7 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
         klass.start_system_bus()
         klass.dbus_con = klass.get_dbus(system_bus=True)
 
-    def setUp(self):               
+    def setUp(self):
         self._quit = False
         self.fcad = fcadretriever.FleetCommanderADProfileRetriever()
         self.p_mock = None
@@ -117,68 +130,75 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
             self.p_mock2.terminate()
             self.p_mock2.wait()
 
-    def setupRealmdDbusMock(
-            self, domain='fc.domain', server='active-directory'):
+    def setupRealmdDbusMock(self, domain="fc.domain", server="active-directory"):
 
-        self.p_mock = self.spawn_server('org.freedesktop.realmd',
-                                        '/org/freedesktop/realmd/Sssd',
-                                        'org.freedesktop.realmd.Provider',
-                                        system_bus=True,
-                                        stdout=subprocess.PIPE)
+        self.p_mock = self.spawn_server(
+            "org.freedesktop.realmd",
+            "/org/freedesktop/realmd/Sssd",
+            "org.freedesktop.realmd.Provider",
+            system_bus=True,
+            stdout=subprocess.PIPE,
+        )
 
         self.dbus_realmd_provider_mock = self.dbus_con.get_object(
-            'org.freedesktop.realmd',
-            '/org/freedesktop/realmd/Sssd',
-            dbusmock.MOCK_IFACE)
+            "org.freedesktop.realmd",
+            "/org/freedesktop/realmd/Sssd",
+            dbusmock.MOCK_IFACE,
+        )
 
         self.dbus_realmd_provider_mock.AddProperty(
-            'org.freedesktop.realmd.Provider',
-            'Realms',
-            ['/org/freedesktop/realmd/Sssd/fc_realm_X'])
+            "org.freedesktop.realmd.Provider",
+            "Realms",
+            ["/org/freedesktop/realmd/Sssd/fc_realm_X"],
+        )
 
         self.dbus_realmd_provider_mock.AddObject(
-            '/org/freedesktop/realmd/Sssd/fc_realm_X',
-            'org.freedesktop.realmd.Realm',
+            "/org/freedesktop/realmd/Sssd/fc_realm_X",
+            "org.freedesktop.realmd.Realm",
             {
-                'Name': dbus.String(domain, variant_level=1),
-                'Details': [
-                    ('server-software', server),
-                    ('client-software', 'sssd')
-                ]
+                "Name": dbus.String(domain, variant_level=1),
+                "Details": [("server-software", server), ("client-software", "sssd")],
             },
             [
-                ('EmptyMethod', 's', '', ''),
-            ])
+                ("EmptyMethod", "s", "", ""),
+            ],
+        )
 
     def setupFCClientDbusMock(self):
-        self.p_mock = self.spawn_server('org.freedesktop.FleetCommanderClient',
-                                        '/org/freedesktop/FleetCommanderClient',
-                                        'org.freedesktop.FleetCommanderClient',
-                                        system_bus=True,
-                                        stdout=subprocess.PIPE)
+        self.p_mock = self.spawn_server(
+            "org.freedesktop.FleetCommanderClient",
+            "/org/freedesktop/FleetCommanderClient",
+            "org.freedesktop.FleetCommanderClient",
+            system_bus=True,
+            stdout=subprocess.PIPE,
+        )
         self.dbus_fcclient_mock = dbus.Interface(
             self.dbus_con.get_object(
-                'org.freedesktop.FleetCommanderClient', '/org/freedesktop/FleetCommanderClient'),
-            dbusmock.MOCK_IFACE)
+                "org.freedesktop.FleetCommanderClient",
+                "/org/freedesktop/FleetCommanderClient",
+            ),
+            dbusmock.MOCK_IFACE,
+        )
 
         self.dbus_fcclient_mock.AddMethod(
-            'org.freedesktop.FleetCommanderClient', 'ProcessSSSDFiles', 'tsu', '', '')
+            "org.freedesktop.FleetCommanderClient", "ProcessSSSDFiles", "tsu", "", ""
+        )
 
         self.dbus_fcclient_mock.AddMethod(
-            'org.freedesktop.FleetCommanderClient', 'ProcessFiles', '', '', '')
-
+            "org.freedesktop.FleetCommanderClient", "ProcessFiles", "", "", ""
+        )
 
     def _save_test_cifs_data(self, userdir):
-        dirpath = os.path.join(
-            userdir,
-            'fcrealm.ad/Policies/profile-cn')
+        dirpath = os.path.join(userdir, "fcrealm.ad/Policies/profile-cn")
         os.makedirs(dirpath)
-        filepath = os.path.join(dirpath, 'fleet-commander.json')
-        with open(filepath, 'w') as fd:
-            data = json.dumps({
-                'priority': self.TEST_PROFILE['priority'],
-                'settings': self.TEST_PROFILE['settings']
-            })
+        filepath = os.path.join(dirpath, "fleet-commander.json")
+        with open(filepath, "w") as fd:
+            data = json.dumps(
+                {
+                    "priority": self.TEST_PROFILE["priority"],
+                    "settings": self.TEST_PROFILE["settings"],
+                }
+            )
             fd.write(data)
             fd.close()
 
@@ -189,7 +209,7 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
         # Monkeypatch module
         self.fcad.quit = self._quit_mock
         # Spawn realmd dbusmock server template
-        self.setupRealmdDbusMock(server='ipa')
+        self.setupRealmdDbusMock(server="ipa")
         # Check realm with something not AD
         self.fcad.check_realm()
         self.assertTrue(self._quit)
@@ -198,159 +218,230 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
         # Monkeypatch module
         self.fcad.quit = self._quit_mock
         # Spawn realmd dbusmock server template
-        self.setupRealmdDbusMock(server='active-directory')
+        self.setupRealmdDbusMock(server="active-directory")
         # Check realm with an AD
         self.fcad.check_realm()
         self.assertFalse(self._quit)
 
     def test_03_check_elements_in_list(self):
         # Single element present
-        self.assertTrue(
-            self.fcad.check_elements_in_list(
-                [1], [2, 3, 1, 4, 5]
-            ))
+        self.assertTrue(self.fcad.check_elements_in_list([1], [2, 3, 1, 4, 5]))
         # Multiple elements present
-        self.assertTrue(
-            self.fcad.check_elements_in_list(
-                [5, 4], [2, 3, 1, 4, 5]
-            ))
+        self.assertTrue(self.fcad.check_elements_in_list([5, 4], [2, 3, 1, 4, 5]))
         # Single element not present
-        self.assertFalse(
-            self.fcad.check_elements_in_list(
-                [0], [2, 3, 1, 4, 5]
-            ))
+        self.assertFalse(self.fcad.check_elements_in_list([0], [2, 3, 1, 4, 5]))
         # Multiple elements not present
-        self.assertFalse(
-            self.fcad.check_elements_in_list(
-                [6, 0], [2, 3, 1, 4, 5]
-            ))
+        self.assertFalse(self.fcad.check_elements_in_list([6, 0], [2, 3, 1, 4, 5]))
 
     def test_04_generate_priority_applies(self):
 
-        priority = str(self.TEST_PROFILE['priority']).zfill(5)
+        priority = str(self.TEST_PROFILE["priority"]).zfill(5)
 
         # Only from user
         profile = self.TEST_PROFILE.copy()
-        profile.update({
-            'users': ['guest', 'myuser', 'admin', ],
-            'groups': ['admins', 'editors', ],
-            'hosts': ['client1', ],
-        })
+        profile.update(
+            {
+                "users": [
+                    "guest",
+                    "myuser",
+                    "admin",
+                ],
+                "groups": [
+                    "admins",
+                    "editors",
+                ],
+                "hosts": [
+                    "client1",
+                ],
+            }
+        )
         result = self.fcad.generate_priority_applies(
             self.TEST_USERNAME,
             self.TEST_GROUPS,
             self.TEST_HOSTNAME,
             priority,
             self.TEST_GLOBAL_POLICY,
-            profile)
-        self.assertEqual(
-            result, '00100_00000_00000_00000')
+            profile,
+        )
+        self.assertEqual(result, "00100_00000_00000_00000")
 
         # Only from group
         profile = self.TEST_PROFILE.copy()
-        profile.update({
-            'users': ['guest', 'admin', ],
-            'groups': ['admins', 'mygroup2', 'editors', ],
-            'hosts': ['client1', ],
-        })
+        profile.update(
+            {
+                "users": [
+                    "guest",
+                    "admin",
+                ],
+                "groups": [
+                    "admins",
+                    "mygroup2",
+                    "editors",
+                ],
+                "hosts": [
+                    "client1",
+                ],
+            }
+        )
         result = self.fcad.generate_priority_applies(
             self.TEST_USERNAME,
             self.TEST_GROUPS,
             self.TEST_HOSTNAME,
             priority,
             self.TEST_GLOBAL_POLICY,
-            profile)
-        self.assertEqual(
-            result, '00000_00100_00000_00000')
+            profile,
+        )
+        self.assertEqual(result, "00000_00100_00000_00000")
 
         # Only from host
         profile = self.TEST_PROFILE.copy()
-        profile.update({
-            'users': ['guest', 'admin', ],
-            'groups': ['admins', 'editors', ],
-            'hosts': ['client1', 'myhost', ],
-        })
+        profile.update(
+            {
+                "users": [
+                    "guest",
+                    "admin",
+                ],
+                "groups": [
+                    "admins",
+                    "editors",
+                ],
+                "hosts": [
+                    "client1",
+                    "myhost",
+                ],
+            }
+        )
         result = self.fcad.generate_priority_applies(
             self.TEST_USERNAME,
             self.TEST_GROUPS,
             self.TEST_HOSTNAME,
             priority,
             self.TEST_GLOBAL_POLICY,
-            profile)
-        self.assertEqual(
-            result, '00000_00000_00100_00000')
+            profile,
+        )
+        self.assertEqual(result, "00000_00000_00100_00000")
 
         # From user and group
         profile = self.TEST_PROFILE.copy()
-        profile.update({
-            'users': ['myuser', 'guest', 'admin', ],
-            'groups': ['admins', 'editors', 'mygroup1', ],
-            'hosts': ['client1', ],
-        })
+        profile.update(
+            {
+                "users": [
+                    "myuser",
+                    "guest",
+                    "admin",
+                ],
+                "groups": [
+                    "admins",
+                    "editors",
+                    "mygroup1",
+                ],
+                "hosts": [
+                    "client1",
+                ],
+            }
+        )
         result = self.fcad.generate_priority_applies(
             self.TEST_USERNAME,
             self.TEST_GROUPS,
             self.TEST_HOSTNAME,
             priority,
             self.TEST_GLOBAL_POLICY,
-            profile)
-        self.assertEqual(
-            result, '00100_00100_00000_00000')
+            profile,
+        )
+        self.assertEqual(result, "00100_00100_00000_00000")
 
         # From user and host
         profile = self.TEST_PROFILE.copy()
-        profile.update({
-            'users': ['guest', 'admin', 'myuser', ],
-            'groups': ['admins', 'editors', ],
-            'hosts': ['myhost', 'client1', ],
-        })
+        profile.update(
+            {
+                "users": [
+                    "guest",
+                    "admin",
+                    "myuser",
+                ],
+                "groups": [
+                    "admins",
+                    "editors",
+                ],
+                "hosts": [
+                    "myhost",
+                    "client1",
+                ],
+            }
+        )
         result = self.fcad.generate_priority_applies(
             self.TEST_USERNAME,
             self.TEST_GROUPS,
             self.TEST_HOSTNAME,
             priority,
             self.TEST_GLOBAL_POLICY,
-            profile)
-        self.assertEqual(
-            result, '00100_00000_00100_00000')
+            profile,
+        )
+        self.assertEqual(result, "00100_00000_00100_00000")
 
         # From group and host
         profile = self.TEST_PROFILE.copy()
-        profile.update({
-            'users': ['guest', 'admin', ],
-            'groups': ['admins', 'mygroup1', 'editors', ],
-            'hosts': ['client1', 'myhost', 'client2', ],
-        })
+        profile.update(
+            {
+                "users": [
+                    "guest",
+                    "admin",
+                ],
+                "groups": [
+                    "admins",
+                    "mygroup1",
+                    "editors",
+                ],
+                "hosts": [
+                    "client1",
+                    "myhost",
+                    "client2",
+                ],
+            }
+        )
         result = self.fcad.generate_priority_applies(
             self.TEST_USERNAME,
             self.TEST_GROUPS,
             self.TEST_HOSTNAME,
             priority,
             self.TEST_GLOBAL_POLICY,
-            profile)
-        self.assertEqual(
-            result, '00000_00100_00100_00000')
+            profile,
+        )
+        self.assertEqual(result, "00000_00100_00100_00000")
 
         # From all
         profile = self.TEST_PROFILE.copy()
-        profile.update({
-            'users': ['myuser', 'guest', 'admin', ],
-            'groups': ['admins', 'mygroup2', 'editors', ],
-            'hosts': ['client1', 'myhost', ],
-        })
+        profile.update(
+            {
+                "users": [
+                    "myuser",
+                    "guest",
+                    "admin",
+                ],
+                "groups": [
+                    "admins",
+                    "mygroup2",
+                    "editors",
+                ],
+                "hosts": [
+                    "client1",
+                    "myhost",
+                ],
+            }
+        )
         result = self.fcad.generate_priority_applies(
             self.TEST_USERNAME,
             self.TEST_GROUPS,
             self.TEST_HOSTNAME,
             priority,
             self.TEST_GLOBAL_POLICY,
-            profile)
-        self.assertEqual(
-            result, '00100_00100_00100_00000')
+            profile,
+        )
+        self.assertEqual(result, "00100_00100_00100_00000")
 
     def test_05_process_profile(self):
         # Set domain in fcad instance
-        self.fcad.DOMAIN = 'fcrealm.ad'
+        self.fcad.DOMAIN = "fcrealm.ad"
         # Create temporary directory
         userdir = tempfile.mkdtemp()
         smbmock.TEMP_DIR = userdir
@@ -358,28 +449,32 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
         self._save_test_cifs_data(userdir)
         # Process profile using that directory
         profile = self.TEST_PROFILE.copy()
-        profile['cn'] = 'profile-cn'
+        profile["cn"] = "profile-cn"
         self.fcad.process_profile(
             profile,
             userdir,
             self.TEST_USERNAME,
             self.TEST_GROUPS,
             self.TEST_HOSTNAME,
-            self.TEST_GLOBAL_POLICY)
+            self.TEST_GLOBAL_POLICY,
+        )
         # Check file exists
         filename = os.path.join(
-            userdir,
-            'fcrealm.ad/Policies/profile-cn/fleet-commander.json')
+            userdir, "fcrealm.ad/Policies/profile-cn/fleet-commander.json"
+        )
         self.assertTrue(os.path.isfile(filename))
         # Check file contents
-        with open(filename, 'rb') as fd:
+        with open(filename, "rb") as fd:
             data = fd.read()
             fd.close()
         jsondata = json.loads(data)
-        self.assertEqual(jsondata, {
-            'priority': self.TEST_PROFILE['priority'],
-            'settings': self.TEST_PROFILE['settings']
-        })
+        self.assertEqual(
+            jsondata,
+            {
+                "priority": self.TEST_PROFILE["priority"],
+                "settings": self.TEST_PROFILE["settings"],
+            },
+        )
 
     def test_06_call_fc_client(self):
         # Setup dbusmock
@@ -387,5 +482,6 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
         # Call client method
         self.fcad.call_fc_client()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

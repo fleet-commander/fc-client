@@ -34,8 +34,8 @@ class FirefoxBookmarksAdapter(BaseAdapter):
     """
 
     # Namespace this config adapter handles
-    NAMESPACE = 'org.mozilla.firefox.Bookmarks'
-    POLICIES_FILENAME = 'policies.json'
+    NAMESPACE = "org.mozilla.firefox.Bookmarks"
+    POLICIES_FILENAME = "policies.json"
 
     def __init__(self, policies_path):
         self.policies_path = policies_path
@@ -48,13 +48,13 @@ class FirefoxBookmarksAdapter(BaseAdapter):
         # Prepare data
         bookmarks = []
         for item in config_data:
-            if 'key' in item and 'value' in item:
-                bookmarks.append(item['value'])
-        policies_data = {"policies": {'Bookmarks': bookmarks }}
+            if "key" in item and "value" in item:
+                bookmarks.append(item["value"])
+        policies_data = {"policies": {"Bookmarks": bookmarks}}
         # Write preferences data
-        path = os.path.join(cache_path, 'fleet-commander')
-        logging.debug('Writing preferences data to {}'.format(path))
-        with open(path, 'w') as fd:
+        path = os.path.join(cache_path, "fleet-commander")
+        logging.debug("Writing preferences data to {}".format(path))
+        with open(path, "w") as fd:
             fd.write(json.dumps(policies_data))
             fd.close()
 
@@ -63,31 +63,31 @@ class FirefoxBookmarksAdapter(BaseAdapter):
         Copy cached policies file to policies directory
         This method will be called by privileged process
         """
-        cached_file_path = os.path.join(
-            cache_path, 'fleet-commander')
+        cached_file_path = os.path.join(cache_path, "fleet-commander")
         if os.path.isfile(cached_file_path):
-            logging.debug(
-                'Deploying preferences at {}.'.format(cached_file_path))
+            logging.debug("Deploying preferences at {}.".format(cached_file_path))
             directory = self.policies_path.format(uid)
             path = os.path.join(directory, self.POLICIES_FILENAME)
             # Remove previous preferences file
-            logging.debug('Removing previous policies file {}'.format(path))
+            logging.debug("Removing previous policies file {}".format(path))
             try:
                 os.remove(path)
             except Exception as e:
                 logging.debug(
-                    'Failed to remove previous policies file {}: {}'.format(
-                        path, e))
+                    "Failed to remove previous policies file {}: {}".format(path, e)
+                )
             # Create directory
             try:
                 os.makedirs(directory)
             except Exception:
                 pass
             # Deploy new policies file
-            logging.debug('Copying policies file at {} to {}'.format(cached_file_path, path))
+            logging.debug(
+                "Copying policies file at {} to {}".format(cached_file_path, path)
+            )
             shutil.copyfile(cached_file_path, path)
             # Change permissions and ownership
             os.chown(path, uid, -1)
             os.chmod(path, stat.S_IREAD)
         else:
-            logging.debug('No policies file at {}. Ignoring.'.format(cached_file_path))
+            logging.debug("No policies file at {}. Ignoring.".format(cached_file_path))

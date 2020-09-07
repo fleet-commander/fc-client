@@ -27,7 +27,7 @@ import logging
 
 import dbus
 
-PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
+PYTHONPATH = os.path.join(os.environ["TOPSRCDIR"], "src")
 sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
@@ -38,10 +38,12 @@ from fleetcommanderclient.adapters import nm, goa
 USER_NAME = "myuser"
 USER_UID = 55555
 
+
 def mocked_uname(uid):
     """
     This is a mock for os.pwd.getpwuid
     """
+
     class MockPwd:
         pw_name = USER_NAME
         pw_dir = sys.argv[1]
@@ -54,6 +56,7 @@ def mocked_uname(uid):
 def universal_function(*args, **kwargs):
     pass
 
+
 # Monkey patch chown function in os module for chromium config adapter
 goa.os.chown = universal_function
 
@@ -63,7 +66,8 @@ class TestConfigLoader(ConfigLoader):
 
 
 class TestFleetCommanderClientADDbusService(
-        fcclientad.FleetCommanderClientADDbusService):
+    fcclientad.FleetCommanderClientADDbusService
+):
 
     TEST_UUID = 55555
 
@@ -73,28 +77,31 @@ class TestFleetCommanderClientADDbusService(
         self.tmpdir = sys.argv[1]
 
         TestConfigLoader.DEFAULTS = {
-            'dconf_db_path': os.path.join(self.tmpdir, 'etc/dconf/db'),
-            'dconf_profile_path': os.path.join(self.tmpdir, 'run/dconf/user'),
-            'goa_run_path': os.path.join(self.tmpdir, 'run/goa-1.0'),
-            'log_level': 'info',
+            "dconf_db_path": os.path.join(self.tmpdir, "etc/dconf/db"),
+            "dconf_profile_path": os.path.join(self.tmpdir, "run/dconf/user"),
+            "goa_run_path": os.path.join(self.tmpdir, "run/goa-1.0"),
+            "log_level": "info",
         }
 
         fcclientad.ConfigLoader = TestConfigLoader
 
-        super(TestFleetCommanderClientADDbusService, self).__init__(configfile='NON_EXISTENT')
+        super(TestFleetCommanderClientADDbusService, self).__init__(
+            configfile="NON_EXISTENT"
+        )
 
         # Put all adapters in test mode
         for namespace, adapter in self.adapters.items():
-            adapter._TEST_CACHE_PATH = os.path.join(self.tmpdir, 'cache')
+            adapter._TEST_CACHE_PATH = os.path.join(self.tmpdir, "cache")
 
     def get_peer_uid(self, sender):
         return self.TEST_UUID
 
-    @dbus.service.method(fcclientad.DBUS_INTERFACE_NAME,
-                         in_signature='', out_signature='b')
+    @dbus.service.method(
+        fcclientad.DBUS_INTERFACE_NAME, in_signature="", out_signature="b"
+    )
     def TestServiceAlive(self):
         return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     TestFleetCommanderClientADDbusService().run(sessionbus=True)

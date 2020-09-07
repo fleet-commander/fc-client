@@ -34,9 +34,9 @@ class ChromiumAdapter(BaseAdapter):
     """
 
     # Namespace this config adapter handles
-    NAMESPACE = 'org.chromium.Policies'
+    NAMESPACE = "org.chromium.Policies"
 
-    POLICIES_FILENAME = 'fleet-commander-{}.json'
+    POLICIES_FILENAME = "fleet-commander-{}.json"
 
     def __init__(self, policies_path):
         self.policies_path = policies_path
@@ -53,12 +53,12 @@ class ChromiumAdapter(BaseAdapter):
         # Prepare data
         policies = {}
         for item in config_data:
-            if 'key' in item and 'value' in item:
-                policies[item['key']] = item['value']
+            if "key" in item and "value" in item:
+                policies[item["key"]] = item["value"]
         # Write policies data
-        path = os.path.join(cache_path, 'fleet-commander.json')
-        logging.debug('Writing policies data to {}'.format(path))
-        with open(path, 'w') as fd:
+        path = os.path.join(cache_path, "fleet-commander.json")
+        logging.debug("Writing policies data to {}".format(path))
+        with open(path, "w") as fd:
             fd.write(json.dumps(policies))
             fd.close()
 
@@ -68,49 +68,51 @@ class ChromiumAdapter(BaseAdapter):
         This method will be called by privileged process
         """
 
-        cached_file_path = os.path.join(
-            cache_path, 'fleet-commander.json')
+        cached_file_path = os.path.join(cache_path, "fleet-commander.json")
 
         if os.path.isfile(cached_file_path):
-            logging.debug(
-                'Deploying policies at {}.'.format(cached_file_path))
+            logging.debug("Deploying policies at {}.".format(cached_file_path))
             # Create policies path if does not exist
             if not os.path.exists(self.policies_path):
-                logging.debug('Creating policies directory {}'.format(
-                    self.policies_path))
+                logging.debug(
+                    "Creating policies directory {}".format(self.policies_path)
+                )
                 try:
                     os.makedirs(self.policies_path)
                 except Exception as e:
                     logging.debug(
-                        'Failed to create policies directory {}: {}'.format(
-                            self.policies_path, e))
+                        "Failed to create policies directory {}: {}".format(
+                            self.policies_path, e
+                        )
+                    )
 
             # Delete any previous file at managed profiles
-            path = os.path.join(
-                self.policies_path,
-                self.POLICIES_FILENAME.format(uid))
+            path = os.path.join(self.policies_path, self.POLICIES_FILENAME.format(uid))
             if os.path.isfile(path):
-                logging.debug('Removing previous policies file {}'.format(path))
+                logging.debug("Removing previous policies file {}".format(path))
                 try:
                     os.remove(path)
                 except Exception as e:
                     logging.debug(
-                        'Failed to remove old policies file {}: {}'.format(
-                            path, e))
-            
+                        "Failed to remove old policies file {}: {}".format(path, e)
+                    )
+
             # Deploy new policies file
-            logging.debug('Copying policies file at {} to {}'.format(cached_file_path, path))
+            logging.debug(
+                "Copying policies file at {} to {}".format(cached_file_path, path)
+            )
             shutil.copyfile(cached_file_path, path)
 
             # Change permissions and ownership
             os.chown(path, uid, -1)
             os.chmod(path, stat.S_IREAD)
         else:
-            logging.debug('No policies file at {}. Ignoring.'.format(cached_file_path))
+            logging.debug("No policies file at {}. Ignoring.".format(cached_file_path))
 
 
 class ChromeAdapter(ChromiumAdapter):
     """
     Chrome config adapter
     """
-    NAMESPACE = 'org.google.chrome.Policies'
+
+    NAMESPACE = "org.google.chrome.Policies"

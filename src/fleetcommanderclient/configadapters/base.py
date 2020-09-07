@@ -34,13 +34,13 @@ class BaseConfigAdapter(object):
         """
         Prepare environment for a clean configuration deploy
         """
-        raise NotImplementedError('You must implement bootstrap method')
+        raise NotImplementedError("You must implement bootstrap method")
 
     def update(self, uid, data):
         """
         Update configuration for given user
         """
-        raise NotImplementedError('You must implement update method')
+        raise NotImplementedError("You must implement update method")
 
     @staticmethod
     def _set_perms(fd, uid, gid, perms):

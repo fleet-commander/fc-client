@@ -27,7 +27,7 @@ import json
 
 import gi
 
-gi.require_version('NM', '1.0')
+gi.require_version("NM", "1.0")
 
 from gi.repository import Gio
 from gi.repository import GLib
@@ -41,9 +41,9 @@ class NetworkManagerDbusHelper(object):
     Network manager dbus helper
     """
 
-    BUS_NAME = 'org.freedesktop.NetworkManager'
-    DBUS_OBJECT_PATH = '/org/freedesktop/NetworkManager/Settings'
-    DBUS_INTERFACE_NAME = 'org.freedesktop.NetworkManager.Settings'
+    BUS_NAME = "org.freedesktop.NetworkManager"
+    DBUS_OBJECT_PATH = "/org/freedesktop/NetworkManager/Settings"
+    DBUS_INTERFACE_NAME = "org.freedesktop.NetworkManager.Settings"
 
     def __init__(self):
         self.bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
@@ -69,17 +69,23 @@ class NetworkManagerDbusHelper(object):
             "AddConnection",
             GLib.Variant.new_tuple(connection_data),
             GLib.VariantType("(o)"),
-            Gio.DBusCallFlags.NONE, -1, None)
+            Gio.DBusCallFlags.NONE,
+            -1,
+            None,
+        )
 
     def update_connection(self, connection_path, connection_data):
         return self.bus.call_sync(
             self.BUS_NAME,
             connection_path,
-            self.DBUS_INTERFACE_NAME + '.Connection',
+            self.DBUS_INTERFACE_NAME + ".Connection",
             "Update",
             GLib.Variant.new_tuple(connection_data),
             GLib.VariantType("()"),
-            Gio.DBusCallFlags.NONE, -1, None)
+            Gio.DBusCallFlags.NONE,
+            -1,
+            None,
+        )
 
 
 class NetworkManagerAdapter(BaseAdapter):
@@ -87,11 +93,12 @@ class NetworkManagerAdapter(BaseAdapter):
     Configuration adapter for Network Manager
     """
 
-    NAMESPACE = 'org.freedesktop.NetworkManager'
+    NAMESPACE = "org.freedesktop.NetworkManager"
 
     def _add_connection_metadata(self, serialized_data, uname, conn_uuid):
         sc = NM.SimpleConnection.new_from_dbus(
-            GLib.Variant.parse(None, serialized_data, None, None))
+            GLib.Variant.parse(None, serialized_data, None, None)
+        )
         setu = sc.get_setting(NM.SettingUser)
         if not setu:
             sc.add_setting(NM.SettingUser())
@@ -101,23 +108,21 @@ class NetworkManagerAdapter(BaseAdapter):
 
         hashed_uuid = str(uuid.uuid5(uuid.UUID(conn_uuid), uname))
 
-        setu.set_data('org.fleet-commander.connection', 'true')
-        setu.set_data('org.fleet-commander.connection.uuid', conn_uuid)
+        setu.set_data("org.fleet-commander.connection", "true")
+        setu.set_data("org.fleet-commander.connection.uuid", conn_uuid)
         setc.set_property("uuid", hashed_uuid)
         setc.add_permission("user", uname, None)
 
-        return (sc.to_dbus(
-                    NM.ConnectionSerializationFlags.NO_SECRETS),
-                hashed_uuid)
+        return (sc.to_dbus(NM.ConnectionSerializationFlags.NO_SECRETS), hashed_uuid)
 
     def process_config_data(self, config_data, cache_path):
         """
         Process configuration data and save cache files to be deployed
         """
         # Write data as JSON
-        path = os.path.join(cache_path, 'fleet-commander')
-        logging.debug('Writing NM data to {}'.format(path))
-        with open(path, 'w') as fd:
+        path = os.path.join(cache_path, "fleet-commander")
+        logging.debug("Writing NM data to {}".format(path))
+        with open(path, "w") as fd:
             fd.write(json.dumps(config_data))
             fd.close()
 
@@ -126,25 +131,26 @@ class NetworkManagerAdapter(BaseAdapter):
         Create connections using NM dbus service
         This method will be called by privileged process
         """
-        path = os.path.join(cache_path, 'fleet-commander')
+        path = os.path.join(cache_path, "fleet-commander")
 
         if os.path.isfile(path):
-            logging.debug(
-                'Deploying connections from file {}'.format(path))
+            logging.debug("Deploying connections from file {}".format(path))
             nmhelper = NetworkManagerDbusHelper()
             uname = nmhelper.get_user_name(uid)
-            with open(path, 'r') as fd:
+            with open(path, "r") as fd:
                 data = json.loads(fd.read())
                 fd.close()
 
             for connection in data:
-                conn_uuid = connection['uuid']
+                conn_uuid = connection["uuid"]
                 connection_data, hashed_uuid = self._add_connection_metadata(
-                    connection['data'], uname, conn_uuid)
+                    connection["data"], uname, conn_uuid
+                )
 
                 logging.debug(
-                    'Checking connection %s + %s -> %s' % (
-                        conn_uuid, uname, hashed_uuid))
+                    "Checking connection %s + %s -> %s"
+                    % (conn_uuid, uname, hashed_uuid)
+                )
 
                 # Check if connection already exist
                 path = nmhelper.get_connection_path_by_uuid(hashed_uuid)
@@ -153,16 +159,15 @@ class NetworkManagerAdapter(BaseAdapter):
                     try:
                         nmhelper.update_connection(path, connection_data)
                     except Exception as e:
-                        logging.error('Error updating connection %s: %s' % (
-                            conn_uuid, e))
+                        logging.error(
+                            "Error updating connection %s: %s" % (conn_uuid, e)
+                        )
                 else:
                     # Connection does not exist. Add it
                     try:
                         nmhelper.add_connection(connection_data)
                     except Exception as e:
                         # Error adding connection
-                        logging.error('Error adding connection %s: %s' % (
-                            conn_uuid, e))
+                        logging.error("Error adding connection %s: %s" % (conn_uuid, e))
         else:
-            logging.debug(
-                'Connections file {} is not present. Ignoring.'.format(path))
+            logging.debug("Connections file {} is not present. Ignoring.".format(path))

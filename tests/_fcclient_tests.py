@@ -31,7 +31,7 @@ import unittest
 
 import dbus
 
-PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
+PYTHONPATH = os.path.join(os.environ["TOPSRCDIR"], "src")
 sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
@@ -57,14 +57,16 @@ class FleetCommanderClientDbusClient(object):
         t = time.time()
         while time.time() - t < self.CONNECTION_TIMEOUT:
             try:
-                self.obj = self.bus.get_object(fcclient.DBUS_BUS_NAME, fcclient.DBUS_OBJECT_PATH)
+                self.obj = self.bus.get_object(
+                    fcclient.DBUS_BUS_NAME, fcclient.DBUS_OBJECT_PATH
+                )
                 self.iface = dbus.Interface(
-                    self.obj, dbus_interface=fcclient.DBUS_INTERFACE_NAME)
+                    self.obj, dbus_interface=fcclient.DBUS_INTERFACE_NAME
+                )
                 return
             except Exception:
                 pass
-        raise Exception(
-            'Timed out connecting to fleet commander client dbus service')
+        raise Exception("Timed out connecting to fleet commander client dbus service")
 
     def process_sssd_files(self, uid, directory, policy):
         """
@@ -82,6 +84,7 @@ class TestDbusClient(FleetCommanderClientDbusClient):
     def test_service_alive(self):
         return self.iface.TestServiceAlive()
 
+
 # Mock dbus client
 fcclient.FleetCommanderClientDbusClient = TestDbusClient
 
@@ -97,12 +100,14 @@ class TestDbusService(unittest.TestCase):
         self.test_directory = tempfile.mkdtemp()
 
         # Execute dbus service
-        self.service = subprocess.Popen([
-            os.path.join(
-                os.environ['TOPSRCDIR'],
-                'tests/test_fcclient_service.py'),
-            self.test_directory,
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.service = subprocess.Popen(
+            [
+                os.path.join(os.environ["TOPSRCDIR"], "tests/test_fcclient_service.py"),
+                self.test_directory,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
 
         checks = 0
         while True:
@@ -118,7 +123,8 @@ class TestDbusService(unittest.TestCase):
                     self.service.kill()
                     self.print_dbus_service_output()
                     raise Exception(
-                        'DBUS service taking too much time to start: %s' % e)
+                        "DBUS service taking too much time to start: %s" % e
+                    )
 
     def tearDown(self):
         # Kill service
@@ -127,12 +133,12 @@ class TestDbusService(unittest.TestCase):
         shutil.rmtree(self.test_directory)
 
     def print_dbus_service_output(self):
-        print('------- BEGIN DBUS SERVICE STDOUT -------')
+        print("------- BEGIN DBUS SERVICE STDOUT -------")
         print(self.service.stdout.read())
-        print('-------- END DBUS SERVICE STDOUT --------')
-        print('------- BEGIN DBUS SERVICE STDERR -------')
+        print("-------- END DBUS SERVICE STDOUT --------")
+        print("------- BEGIN DBUS SERVICE STDERR -------")
         print(self.service.stderr.read())
-        print('-------- END DBUS SERVICE STDERR --------')
+        print("-------- END DBUS SERVICE STDERR --------")
 
     def get_client(self):
         return TestDbusClient()
@@ -140,22 +146,34 @@ class TestDbusService(unittest.TestCase):
     def test_00_process_sssd_files(self):
         c = self.get_client()
         directory = os.path.join(
-            os.environ['TOPSRCDIR'],
-            'tests/data/sampleprofiledata/')
+            os.environ["TOPSRCDIR"], "tests/data/sampleprofiledata/"
+        )
         c.process_sssd_files(self.TEST_UID, directory, self.TEST_POLICY)
 
         # Check dconf settings db has been deployed
-        self.assertTrue(os.path.isfile(
-            os.path.join(self.test_directory, 'etc/dconf/db/fleet-commander-dconf-55555')))
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(
+                    self.test_directory, "etc/dconf/db/fleet-commander-dconf-55555"
+                )
+            )
+        )
         # Check dconf user database config has been deployed
-        self.assertTrue(os.path.isfile(
-            os.path.join(self.test_directory, 'run/dconf/user/55555')))
+        self.assertTrue(
+            os.path.isfile(os.path.join(self.test_directory, "run/dconf/user/55555"))
+        )
         # Check GOA accounts file has been deployed
-        self.assertTrue(os.path.isfile(
-            os.path.join(self.test_directory, 'run/goa-1.0/55555/fleet-commander-accounts.conf')))
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(
+                    self.test_directory,
+                    "run/goa-1.0/55555/fleet-commander-accounts.conf",
+                )
+            )
+        )
 
         self.assertEqual(True, True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

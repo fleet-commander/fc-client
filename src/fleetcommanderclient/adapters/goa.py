@@ -35,9 +35,9 @@ class GOAAdapter(BaseAdapter):
     """
 
     # Namespace this config adapter handles
-    NAMESPACE = 'org.gnome.online-accounts'
+    NAMESPACE = "org.gnome.online-accounts"
 
-    ACCOUNTS_FILE = 'fleet-commander-accounts.conf'
+    ACCOUNTS_FILE = "fleet-commander-accounts.conf"
 
     def __init__(self, goa_runtime_path):
         self.goa_runtime_path = goa_runtime_path
@@ -48,7 +48,7 @@ class GOAAdapter(BaseAdapter):
         This method needs to be defined by each configuration adapter.
         """
         # Prepare data for saving it in keyfile
-        logging.debug('Preparing GOA data for saving to keyfile')
+        logging.debug("Preparing GOA data for saving to keyfile")
         keyfile = GLib.KeyFile.new()
         for account, accountdata in config_data.items():
             for key, value in accountdata.items():
@@ -63,8 +63,7 @@ class GOAAdapter(BaseAdapter):
         try:
             keyfile.save_to_file(keyfile_path)
         except Exception as e:
-            logging.error('Error saving GOA keyfile at {}: {}'.format(
-                keyfile_path, e))
+            logging.error("Error saving GOA keyfile at {}: {}".format(keyfile_path, e))
             return
 
     def deploy_files(self, cache_path, uid):
@@ -72,34 +71,33 @@ class GOAAdapter(BaseAdapter):
         Copy cached policies file to policies directory
         This method will be called by privileged process
         """
-        cached_file_path = os.path.join(
-            cache_path, self.ACCOUNTS_FILE)
+        cached_file_path = os.path.join(cache_path, self.ACCOUNTS_FILE)
 
         if os.path.isfile(cached_file_path):
-            logging.debug(
-                'Deploying GOA accounts from {}'.format(cached_file_path))
-            
+            logging.debug("Deploying GOA accounts from {}".format(cached_file_path))
+
             # Remove previous GOA files
             runtime_path = os.path.join(self.goa_runtime_path, str(uid))
-            logging.debug('Removing GOA runtime path {}'.format(runtime_path))
+            logging.debug("Removing GOA runtime path {}".format(runtime_path))
             try:
                 shutil.rmtree(runtime_path)
             except Exception as e:
-                logging.warning('Error removing GOA runtime path {}: {}'.format(
-                    runtime_path, e))
+                logging.warning(
+                    "Error removing GOA runtime path {}: {}".format(runtime_path, e)
+                )
 
             # Create runtime path
-            logging.debug('Creating GOA runtime path {}'.format(runtime_path))
+            logging.debug("Creating GOA runtime path {}".format(runtime_path))
             try:
                 os.makedirs(runtime_path)
             except Exception as e:
-                logging.error('Error creating GOA runtime path {}: {}'.format(
-                    runtime_path, e))
+                logging.error(
+                    "Error creating GOA runtime path {}: {}".format(runtime_path, e)
+                )
                 return
 
             # Copy file from cache to runtime path
-            deploy_file_path = os.path.join(
-                runtime_path, self.ACCOUNTS_FILE)
+            deploy_file_path = os.path.join(runtime_path, self.ACCOUNTS_FILE)
             shutil.copyfile(cached_file_path, deploy_file_path)
 
             # Change permissions and ownership for accounts file
@@ -111,4 +109,5 @@ class GOAAdapter(BaseAdapter):
             os.chmod(runtime_path, stat.S_IREAD | stat.S_IEXEC)
         else:
             logging.debug(
-                'GOA accounts file {} is not present'.format(cached_file_path))
+                "GOA accounts file {} is not present".format(cached_file_path)
+            )

@@ -30,7 +30,7 @@ class BaseMerger(object):
     Default policy: Overwrite same key with new value, create new keys
     """
 
-    KEY_NAME = 'key'
+    KEY_NAME = "key"
 
     def get_key(self, setting):
         """
@@ -57,6 +57,7 @@ class GSettingsMerger(BaseMerger):
 
     Policy: Overwrite same key with new value, create new keys
     """
+
     pass
 
 
@@ -66,6 +67,7 @@ class LibreOfficeMerger(BaseMerger):
 
     Policy: Overwrite same key with new value, create new keys
     """
+
     pass
 
 
@@ -76,6 +78,7 @@ class ChromiumMerger(BaseMerger):
     Policy: Overwrite same key with new value, create new keys
     Except: ManagedBookmarks key: Merge contents
     """
+
     def merge(self, *args):
         """
         Merge settings in the given order
@@ -85,23 +88,23 @@ class ChromiumMerger(BaseMerger):
         for settings in args:
             for setting in settings:
                 key = self.get_key(setting)
-                if key == 'ManagedBookmarks':
-                    bookmarks = self.merge_bookmarks(bookmarks, setting['value'])
-                    setting = {self.KEY_NAME: key, 'value': bookmarks}
+                if key == "ManagedBookmarks":
+                    bookmarks = self.merge_bookmarks(bookmarks, setting["value"])
+                    setting = {self.KEY_NAME: key, "value": bookmarks}
                 index[key] = setting
         return list(index.values())
 
     def merge_bookmarks(self, a, b):
         for elem_b in b:
-            logging.debug('Processing %s' % elem_b)
-            if 'children' in elem_b:
+            logging.debug("Processing %s" % elem_b)
+            if "children" in elem_b:
                 merged = False
                 for elem_a in a:
-                    if elem_a['name'] == elem_b['name'] and 'children' in elem_a:
-                        logging.debug(
-                            'Processing children of %s' % elem_b['name'])
-                        elem_a['children'] = self.merge_bookmarks(
-                            elem_a['children'], elem_b['children'])
+                    if elem_a["name"] == elem_b["name"] and "children" in elem_a:
+                        logging.debug("Processing children of %s" % elem_b["name"])
+                        elem_a["children"] = self.merge_bookmarks(
+                            elem_a["children"], elem_b["children"]
+                        )
                         merged = True
                         break
                 if not merged:
@@ -109,7 +112,7 @@ class ChromiumMerger(BaseMerger):
             else:
                 if elem_b not in a:
                     a.append(elem_b)
-        logging.debug('Returning %s' % a)
+        logging.debug("Returning %s" % a)
         return a
 
 
@@ -119,6 +122,7 @@ class FirefoxMerger(BaseMerger):
 
     Policy: Overwrite same key with new value, create new keys
     """
+
     pass
 
 
@@ -128,7 +132,8 @@ class NetworkManagerMerger(BaseMerger):
 
     Policy: Overwrite same key with new value, create new keys
     """
-    KEY_NAME = 'uuid'
+
+    KEY_NAME = "uuid"
 
 
 class GOAMerger(BaseMerger):

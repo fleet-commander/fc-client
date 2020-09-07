@@ -27,7 +27,7 @@ import logging
 
 import dbus
 
-PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
+PYTHONPATH = os.path.join(os.environ["TOPSRCDIR"], "src")
 sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
@@ -43,6 +43,7 @@ def mocked_uname(uid):
     """
     This is a mock for os.pwd.getpwuid
     """
+
     class MockPwd:
         pw_name = USER_NAME
         pw_dir = sys.argv[1]
@@ -60,32 +61,31 @@ class TestConfigLoader(ConfigLoader):
     pass
 
 
-class TestFleetCommanderClientDbusService(
-        fcclient.FleetCommanderClientDbusService):
-
+class TestFleetCommanderClientDbusService(fcclient.FleetCommanderClientDbusService):
     def __init__(self):
 
         # Create a config loader that loads modified defaults
         self.tmpdir = sys.argv[1]
 
         TestConfigLoader.DEFAULTS = {
-            'dconf_db_path': os.path.join(self.tmpdir, 'etc/dconf/db'),
-            'dconf_profile_path': os.path.join(self.tmpdir, 'run/dconf/user'),
-            'goa_run_path': os.path.join(self.tmpdir, 'run/goa-1.0'),
-            'log_level': 'info',
+            "dconf_db_path": os.path.join(self.tmpdir, "etc/dconf/db"),
+            "dconf_profile_path": os.path.join(self.tmpdir, "run/dconf/user"),
+            "goa_run_path": os.path.join(self.tmpdir, "run/goa-1.0"),
+            "log_level": "info",
         }
 
         fcclient.ConfigLoader = TestConfigLoader
 
-        super(TestFleetCommanderClientDbusService, self).__init__(configfile='NON_EXISTENT')
+        super(TestFleetCommanderClientDbusService, self).__init__(
+            configfile="NON_EXISTENT"
+        )
 
-
-    @dbus.service.method(fcclient.DBUS_INTERFACE_NAME,
-                         in_signature='', out_signature='b')
+    @dbus.service.method(
+        fcclient.DBUS_INTERFACE_NAME, in_signature="", out_signature="b"
+    )
     def TestServiceAlive(self):
         return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     TestFleetCommanderClientDbusService().run(sessionbus=True)
-    

@@ -28,14 +28,14 @@ from gi.repository import GLib
 class ConfigLoader(object):
 
     DEFAULTS = {
-        'dconf_db_path': '/etc/dconf/db',
-        'dconf_profile_path': '/run/dconf/user',
-        'goa_run_path': '/run/goa-1.0',
-        'chromium_policies_path': '/etc/chromium/policies/managed',
-        'chrome_policies_path': '/etc/opt/chrome/policies/managed',
-        'firefox_prefs_path': '/etc/firefox/pref',
-        'firefox_policies_path': '/run/user/{}/firefox',
-        'log_level': 'info',
+        "dconf_db_path": "/etc/dconf/db",
+        "dconf_profile_path": "/run/dconf/user",
+        "goa_run_path": "/run/goa-1.0",
+        "chromium_policies_path": "/etc/chromium/policies/managed",
+        "chrome_policies_path": "/etc/opt/chrome/policies/managed",
+        "firefox_prefs_path": "/etc/firefox/pref",
+        "firefox_policies_path": "/run/user/{}/firefox",
+        "log_level": "info",
     }
 
     def __init__(self, configfile):
@@ -45,16 +45,15 @@ class ConfigLoader(object):
             self.keyfile.load_from_file(configfile, GLib.KeyFileFlags.NONE)
         except Exception as e:
             logging.warning(
-                'Can not load config file %s. Using defaults. %s' % (
-                    configfile, e))
+                "Can not load config file %s. Using defaults. %s" % (configfile, e)
+            )
 
     def get_value(self, key):
         try:
-            return self.keyfile.get_string('fleet-commander', key)
+            return self.keyfile.get_string("fleet-commander", key)
         except Exception as e:
             if key in self.DEFAULTS.keys():
                 return self.DEFAULTS[key]
             else:
-                logging.warning('Can not read key %s from config: %s' % (
-                    key, e))
+                logging.warning("Can not read key %s from config: %s" % (key, e))
         return None

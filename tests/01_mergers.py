@@ -26,7 +26,7 @@ import sys
 import unittest
 import json
 
-sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
+sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 # Fleet commander imports
 from fleetcommanderclient import mergers
@@ -38,56 +38,56 @@ class TestBaseMerger(unittest.TestCase):
 
     merger_class = mergers.BaseMerger
 
-    KEY_NAME = 'key'
+    KEY_NAME = "key"
 
     TEST_SETTINGS_A = [
         {
-          "signature": "s",
-          "value": "'#FFFFFF'",
-          "key": "/org/yorba/shotwell/preferences/ui/background-color",
-          "schema": "org.yorba.shotwell.preferences.ui"
+            "signature": "s",
+            "value": "'#FFFFFF'",
+            "key": "/org/yorba/shotwell/preferences/ui/background-color",
+            "schema": "org.yorba.shotwell.preferences.ui",
         },
         {
-          "schema": "org.gnome.nautilus.preferences",
-          "key": "/org/gnome/nautilus/preferences/default-folder-viewer",
-          "value": "'list-view'",
-          "signature": "s"
+            "schema": "org.gnome.nautilus.preferences",
+            "key": "/org/gnome/nautilus/preferences/default-folder-viewer",
+            "value": "'list-view'",
+            "signature": "s",
         },
     ]
 
     TEST_SETTINGS_B = [
         {
-          "signature": "s",
-          "value": "'#000000'",
-          "key": "/org/yorba/shotwell/preferences/ui/background-color",
-          "schema": "org.yorba.shotwell.preferences.ui"
+            "signature": "s",
+            "value": "'#000000'",
+            "key": "/org/yorba/shotwell/preferences/ui/background-color",
+            "schema": "org.yorba.shotwell.preferences.ui",
         },
         {
-          "schema": "org.gnome.nautilus.list-view",
-          "key": "/org/gnome/nautilus/list-view/default-zoom-level",
-          "value": "'large'",
-          "signature": "s"
+            "schema": "org.gnome.nautilus.list-view",
+            "key": "/org/gnome/nautilus/list-view/default-zoom-level",
+            "value": "'large'",
+            "signature": "s",
         },
     ]
 
     TEST_SETTINGS_MERGED = [
         {
-          "signature": "s",
-          "value": "'#000000'",
-          "key": "/org/yorba/shotwell/preferences/ui/background-color",
-          "schema": "org.yorba.shotwell.preferences.ui"
+            "signature": "s",
+            "value": "'#000000'",
+            "key": "/org/yorba/shotwell/preferences/ui/background-color",
+            "schema": "org.yorba.shotwell.preferences.ui",
         },
         {
-          "schema": "org.gnome.nautilus.preferences",
-          "key": "/org/gnome/nautilus/preferences/default-folder-viewer",
-          "value": "'list-view'",
-          "signature": "s"
+            "schema": "org.gnome.nautilus.preferences",
+            "key": "/org/gnome/nautilus/preferences/default-folder-viewer",
+            "value": "'list-view'",
+            "signature": "s",
         },
         {
-          "schema": "org.gnome.nautilus.list-view",
-          "key": "/org/gnome/nautilus/list-view/default-zoom-level",
-          "value": "'large'",
-          "signature": "s"
+            "schema": "org.gnome.nautilus.list-view",
+            "key": "/org/gnome/nautilus/list-view/default-zoom-level",
+            "value": "'large'",
+            "signature": "s",
         },
     ]
 
@@ -100,12 +100,10 @@ class TestBaseMerger(unittest.TestCase):
 
     def test_01_merge(self):
         result = self.merger.merge(self.TEST_SETTINGS_A, self.TEST_SETTINGS_B)
-        result = sorted(
-            result,
-            key=lambda item: item[self.KEY_NAME])
+        result = sorted(result, key=lambda item: item[self.KEY_NAME])
         expected = sorted(
-            self.TEST_SETTINGS_MERGED,
-            key=lambda item: item[self.KEY_NAME])
+            self.TEST_SETTINGS_MERGED, key=lambda item: item[self.KEY_NAME]
+        )
         self.assertEqual(result, expected)
 
 
@@ -113,56 +111,56 @@ class TestNetworkManagerMerger(TestBaseMerger):
 
     merger_class = mergers.NetworkManagerMerger
 
-    KEY_NAME = 'id'
+    KEY_NAME = "id"
 
     TEST_SETTINGS_A = [
         {
-          "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'old_vpnusername', 'IPSec gateway': 'old_vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
-          "type": "vpn",
-          "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
-          "id": "Company VPN"
+            "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'old_vpnusername', 'IPSec gateway': 'old_vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+            "type": "vpn",
+            "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
+            "id": "Company VPN",
         },
         {
-          "data": "{'connection': {'id': <'Marketing VPN'>, 'uuid': <'c2e76cf0-14a0-11e7-8f7e-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'marketing.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
-          "type": "vpn",
-          "uuid": "c2e76cf0-14a0-11e7-8f7e-68f728db19d3",
-          "id": "Marketing VPN"
+            "data": "{'connection': {'id': <'Marketing VPN'>, 'uuid': <'c2e76cf0-14a0-11e7-8f7e-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'marketing.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+            "type": "vpn",
+            "uuid": "c2e76cf0-14a0-11e7-8f7e-68f728db19d3",
+            "id": "Marketing VPN",
         },
     ]
 
     TEST_SETTINGS_B = [
         {
-          "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
-          "type": "vpn",
-          "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
-          "id": "Company VPN"
+            "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+            "type": "vpn",
+            "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
+            "id": "Company VPN",
         },
         {
-          "data": "{'connection': {'id': <'IT VPN'>, 'uuid': <'cf1bf3b0-14a0-11e7-a133-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'it.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
-          "type": "vpn",
-          "uuid": "cf1bf3b0-14a0-11e7-a133-68f728db19d3",
-          "id": "IT VPN"
+            "data": "{'connection': {'id': <'IT VPN'>, 'uuid': <'cf1bf3b0-14a0-11e7-a133-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'it.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+            "type": "vpn",
+            "uuid": "cf1bf3b0-14a0-11e7-a133-68f728db19d3",
+            "id": "IT VPN",
         },
     ]
 
     TEST_SETTINGS_MERGED = [
         {
-          "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
-          "type": "vpn",
-          "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
-          "id": "Company VPN"
+            "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+            "type": "vpn",
+            "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
+            "id": "Company VPN",
         },
         {
-          "data": "{'connection': {'id': <'Marketing VPN'>, 'uuid': <'c2e76cf0-14a0-11e7-8f7e-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'marketing.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
-          "type": "vpn",
-          "uuid": "c2e76cf0-14a0-11e7-8f7e-68f728db19d3",
-          "id": "Marketing VPN"
+            "data": "{'connection': {'id': <'Marketing VPN'>, 'uuid': <'c2e76cf0-14a0-11e7-8f7e-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'marketing.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+            "type": "vpn",
+            "uuid": "c2e76cf0-14a0-11e7-8f7e-68f728db19d3",
+            "id": "Marketing VPN",
         },
         {
-          "data": "{'connection': {'id': <'IT VPN'>, 'uuid': <'cf1bf3b0-14a0-11e7-a133-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'it.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
-          "type": "vpn",
-          "uuid": "cf1bf3b0-14a0-11e7-a133-68f728db19d3",
-          "id": "IT VPN"
+            "data": "{'connection': {'id': <'IT VPN'>, 'uuid': <'cf1bf3b0-14a0-11e7-a133-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'it.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
+            "type": "vpn",
+            "uuid": "cf1bf3b0-14a0-11e7-a133-68f728db19d3",
+            "id": "IT VPN",
         },
     ]
 
@@ -173,64 +171,64 @@ class TestGOAMerger(unittest.TestCase):
 
     TEST_SETTINGS_A = {
         "Template account_fc_1490729747_0": {
-          "FilesEnabled": False,
-          "PhotosEnabled": False,
-          "ContactsEnabled": False,
-          "CalendarEnabled": True,
-          "Provider": "google",
-          "DocumentsEnabled": False,
-          "PrintersEnabled": False,
-          "MailEnabled": True
+            "FilesEnabled": False,
+            "PhotosEnabled": False,
+            "ContactsEnabled": False,
+            "CalendarEnabled": True,
+            "Provider": "google",
+            "DocumentsEnabled": False,
+            "PrintersEnabled": False,
+            "MailEnabled": True,
         },
         "Template account_fc_1490729845_0": {
-          "PhotosEnabled": False,
-          "Provider": "facebook",
-          "MapsEnabled": True
+            "PhotosEnabled": False,
+            "Provider": "facebook",
+            "MapsEnabled": True,
         },
     }
 
     TEST_SETTINGS_B = {
         "Template account_fc_1490729747_0": {
-          "FilesEnabled": False,
-          "PhotosEnabled": False,
-          "ContactsEnabled": True,
-          "CalendarEnabled": False,
-          "Provider": "google",
-          "DocumentsEnabled": False,
-          "PrintersEnabled": True,
-          "MailEnabled": True
+            "FilesEnabled": False,
+            "PhotosEnabled": False,
+            "ContactsEnabled": True,
+            "CalendarEnabled": False,
+            "Provider": "google",
+            "DocumentsEnabled": False,
+            "PrintersEnabled": True,
+            "MailEnabled": True,
         },
         "Template account_fc_1490729989_0": {
-          "FilesEnabled": True,
-          "ContactsEnabled": False,
-          "CalendarEnabled": True,
-          "Provider": "owncloud",
-          "DocumentsEnabled": False,
+            "FilesEnabled": True,
+            "ContactsEnabled": False,
+            "CalendarEnabled": True,
+            "Provider": "owncloud",
+            "DocumentsEnabled": False,
         },
     }
 
     TEST_SETTINGS_MERGED = {
         "Template account_fc_1490729747_0": {
-          "FilesEnabled": False,
-          "PhotosEnabled": False,
-          "ContactsEnabled": True,
-          "CalendarEnabled": False,
-          "Provider": "google",
-          "DocumentsEnabled": False,
-          "PrintersEnabled": True,
-          "MailEnabled": True
+            "FilesEnabled": False,
+            "PhotosEnabled": False,
+            "ContactsEnabled": True,
+            "CalendarEnabled": False,
+            "Provider": "google",
+            "DocumentsEnabled": False,
+            "PrintersEnabled": True,
+            "MailEnabled": True,
         },
         "Template account_fc_1490729989_0": {
-          "FilesEnabled": True,
-          "ContactsEnabled": False,
-          "CalendarEnabled": True,
-          "Provider": "owncloud",
-          "DocumentsEnabled": False,
+            "FilesEnabled": True,
+            "ContactsEnabled": False,
+            "CalendarEnabled": True,
+            "Provider": "owncloud",
+            "DocumentsEnabled": False,
         },
         "Template account_fc_1490729845_0": {
-          "PhotosEnabled": False,
-          "Provider": "facebook",
-          "MapsEnabled": True
+            "PhotosEnabled": False,
+            "Provider": "facebook",
+            "MapsEnabled": True,
         },
     }
 
@@ -253,82 +251,94 @@ class TestChromiumMerger(unittest.TestCase):
     merger_class = mergers.ChromiumMerger
 
     TEST_SETTINGS_A = [
+        {"key": "ShutUpAndTakeMyMoney", "value": "FullMoney"},
+        {"key": "FooBarBaz", "value": "BooFarFaz"},
         {
-            'key': 'ShutUpAndTakeMyMoney',
-            'value': 'FullMoney'
-        },
-        {
-            'key': 'FooBarBaz',
-            'value': 'BooFarFaz'
-        },
-        {
-            'key': 'ManagedBookmarks',
-            'value': [
-                {'name': 'Fedora', 'children': [
-                    {'name': 'Get Fedora', 'url': 'https://getfedora.org/'},
-                    {'name': 'Fedora Project', 'url': 'https://start.fedoraproject.org/'}
-                    ]
+            "key": "ManagedBookmarks",
+            "value": [
+                {
+                    "name": "Fedora",
+                    "children": [
+                        {"name": "Get Fedora", "url": "https://getfedora.org/"},
+                        {
+                            "name": "Fedora Project",
+                            "url": "https://start.fedoraproject.org/",
+                        },
+                    ],
                 },
-                {'name': 'FreeIPA', 'url': 'http://freeipa.org'},
-                {'name': 'Fleet Commander Github', 'url': 'https://github.com/fleet-commander/'}
-            ]
-        }
+                {"name": "FreeIPA", "url": "http://freeipa.org"},
+                {
+                    "name": "Fleet Commander Github",
+                    "url": "https://github.com/fleet-commander/",
+                },
+            ],
+        },
     ]
 
     TEST_SETTINGS_B = [
+        {"key": "ShutUpAndTakeMyMoney", "value": "NoMoney"},
+        {"key": "AllWorkAndNoPlay", "value": "MakesJackADullBoy"},
         {
-            'key': 'ShutUpAndTakeMyMoney',
-            'value': 'NoMoney'
-        },
-        {
-            'key': 'AllWorkAndNoPlay',
-            'value': 'MakesJackADullBoy'
-        },
-        {
-            'key': 'ManagedBookmarks',
-            'value': [
-                {'name': 'Fedora', 'children': [
-                    {'name': 'Get Fedora NOW!!!', 'url': 'https://getfedora.org/'},
-                    {'name': 'Fedora Project', 'url': 'https://start.fedoraproject.org/'},
-                    {'name': 'The Chromium Projects', 'url': 'https://www.chromium.org/'},
-                    {'name': 'SSSD', 'url': 'pagure.org/SSSD'}
-                    ]
+            "key": "ManagedBookmarks",
+            "value": [
+                {
+                    "name": "Fedora",
+                    "children": [
+                        {"name": "Get Fedora NOW!!!", "url": "https://getfedora.org/"},
+                        {
+                            "name": "Fedora Project",
+                            "url": "https://start.fedoraproject.org/",
+                        },
+                        {
+                            "name": "The Chromium Projects",
+                            "url": "https://www.chromium.org/",
+                        },
+                        {"name": "SSSD", "url": "pagure.org/SSSD"},
+                    ],
                 },
-                {'name': 'FreeIPA', 'url': 'http://freeipa.org'},
-                {'name': 'Fleet Commander Docs', 'url': 'http://fleet-commander.org/documentation.html'}
-            ]
-        }
+                {"name": "FreeIPA", "url": "http://freeipa.org"},
+                {
+                    "name": "Fleet Commander Docs",
+                    "url": "http://fleet-commander.org/documentation.html",
+                },
+            ],
+        },
     ]
 
     TEST_SETTINGS_MERGED = [
+        {"key": "ShutUpAndTakeMyMoney", "value": "NoMoney"},
+        {"key": "FooBarBaz", "value": "BooFarFaz"},
+        {"key": "AllWorkAndNoPlay", "value": "MakesJackADullBoy"},
         {
-            'key': 'ShutUpAndTakeMyMoney',
-            'value': 'NoMoney'
-        },
-        {
-            'key': 'FooBarBaz',
-            'value': 'BooFarFaz'
-        },
-        {
-            'key': 'AllWorkAndNoPlay',
-            'value': 'MakesJackADullBoy'
-        },
-        {
-            'key': 'ManagedBookmarks',
-            'value': [
-                {'name': 'Fedora', 'children': [
-                    {'name': 'Get Fedora', 'url': 'https://getfedora.org/'},
-                    {'name': 'Fedora Project', 'url': 'https://start.fedoraproject.org/'},
-                    {'name': 'Get Fedora NOW!!!', 'url': 'https://getfedora.org/'},
-                    {'name': 'The Chromium Projects', 'url': 'https://www.chromium.org/'},
-                    {'name': 'SSSD', 'url': 'pagure.org/SSSD'}
-                    ]
+            "key": "ManagedBookmarks",
+            "value": [
+                {
+                    "name": "Fedora",
+                    "children": [
+                        {"name": "Get Fedora", "url": "https://getfedora.org/"},
+                        {
+                            "name": "Fedora Project",
+                            "url": "https://start.fedoraproject.org/",
+                        },
+                        {"name": "Get Fedora NOW!!!", "url": "https://getfedora.org/"},
+                        {
+                            "name": "The Chromium Projects",
+                            "url": "https://www.chromium.org/",
+                        },
+                        {"name": "SSSD", "url": "pagure.org/SSSD"},
+                    ],
                 },
-                {'name': 'FreeIPA', 'url': 'http://freeipa.org'},
-                {'name': 'Fleet Commander Github', 'url': 'https://github.com/fleet-commander/'},
-                {'name': 'Fleet Commander Docs', 'url': 'http://fleet-commander.org/documentation.html'}
-            ]
-        }
+                {"name": "FreeIPA", "url": "http://freeipa.org"},
+                {
+                    "name": "Fleet Commander Github",
+                    "url": "https://github.com/fleet-commander/",
+                },
+                {
+                    "name": "Fleet Commander Docs",
+                    "url": "http://fleet-commander.org/documentation.html",
+                },
+            ],
+        },
     ]
 
     def setUp(self):
@@ -340,11 +350,10 @@ class TestChromiumMerger(unittest.TestCase):
 
     def test_01_merge(self):
         result = self.merger.merge(self.TEST_SETTINGS_A, self.TEST_SETTINGS_B)
-        result = sorted(result, key=lambda item: item['key'])
-        expected = sorted(self.TEST_SETTINGS_MERGED, key=lambda item: item['key'])
-        self.assertEqual(
-            result, expected)
+        result = sorted(result, key=lambda item: item["key"])
+        expected = sorted(self.TEST_SETTINGS_MERGED, key=lambda item: item["key"])
+        self.assertEqual(result, expected)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
