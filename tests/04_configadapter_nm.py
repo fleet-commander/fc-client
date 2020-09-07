@@ -35,13 +35,17 @@ else:
     from unittest import mock
 
 import dbusmock
-from dbusmock.templates.networkmanager import (CSETTINGS_IFACE, MANAGER_IFACE,
-                                               SETTINGS_OBJ, SETTINGS_IFACE)
+from dbusmock.templates.networkmanager import (
+    CSETTINGS_IFACE,
+    MANAGER_IFACE,
+    SETTINGS_OBJ,
+    SETTINGS_IFACE,
+)
 
 import gi
 from gi.repository import GLib
 
-sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
+sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 from fleetcommanderclient.configadapters import NetworkManagerConfigAdapter
 
@@ -57,8 +61,10 @@ def mocked_uname(uid):
     """
     This is a mock for os.pwd.getpwuid
     """
+
     class MockPwd:
         pw_name = USER_NAME
+
     if uid == 55555:
         return MockPwd()
     raise Exception("Unknown UID: %d" % uid)
@@ -71,14 +77,14 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
             "data": "{'connection': {'id': <'Company VPN'>, 'uuid': <'601d3b48-a44f-40f3-aa7a-35da4a10a099'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
             "type": "vpn",
             "uuid": "601d3b48-a44f-40f3-aa7a-35da4a10a099",
-            "id": "The Company VPN"
+            "id": "The Company VPN",
         },
         {
             "data": "{'connection': {'id': <'Intranet VPN'>, 'uuid': <'0be7d422-1635-11e7-a83f-68f728db19d3'>, 'type': <'vpn'>, 'autoconnect': <false>, 'secondaries': <@as []>}, 'ipv6': {'method': <'auto'>, 'dns': <@aay []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'ipv4': {'method': <'auto'>, 'dns': <@au []>, 'dns-search': <@as []>, 'address-data': <@aa{sv} []>, 'route-data': <@aa{sv} []>}, 'vpn': {'service-type': <'org.freedesktop.NetworkManager.vpnc'>, 'data': <{'NAT Traversal Mode': 'natt', 'ipsec-secret-type': 'ask', 'IPSec secret-flags': '2', 'xauth-password-type': 'ask', 'Vendor': 'cisco', 'Xauth username': 'vpnusername', 'IPSec gateway': 'vpn.mycompany.com', 'Xauth password-flags': '2', 'IPSec ID': 'vpngroupname', 'Perfect Forward Secrecy': 'server', 'IKE DH Group': 'dh2', 'Local Port': '0'}>, 'secrets': <@a{ss} {}>}}",
             "type": "vpn",
             "uuid": "0be7d422-1635-11e7-a83f-68f728db19d3",
-            "id": "Intranet VPN"
-        }
+            "id": "Intranet VPN",
+        },
     ]
 
     @classmethod
@@ -88,13 +94,11 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
 
     def setUp(self):
         self.p_mock, self.obj_nm = self.spawn_server_template(
-                'networkmanager',
-                {'NetworkingEnabled': True})
+            "networkmanager", {"NetworkingEnabled": True}
+        )
         self.settings = dbus.Interface(
-            self.dbus_con.get_object(
-                MANAGER_IFACE,
-                SETTINGS_OBJ),
-            SETTINGS_IFACE)
+            self.dbus_con.get_object(MANAGER_IFACE, SETTINGS_OBJ), SETTINGS_IFACE
+        )
 
     def tearDown(self):
         self.p_mock.terminate()
@@ -103,24 +107,31 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
     def test_00_bootstrap(self):
         NetworkManagerConfigAdapter().bootstrap(self.TEST_UID)
 
-    @mock.patch('pwd.getpwuid', side_effect=mocked_uname)
+    @mock.patch("pwd.getpwuid", side_effect=mocked_uname)
     def test_01_update(self, side_effect):
-        uuid1 = '601d3b48-a44f-40f3-aa7a-35da4a10a099'
-        uuid2 = '0be7d422-1635-11e7-a83f-68f728db19d3'
+        uuid1 = "601d3b48-a44f-40f3-aa7a-35da4a10a099"
+        uuid2 = "0be7d422-1635-11e7-a83f-68f728db19d3"
         hashed_uuid1 = str(uuid.uuid5(uuid.UUID(uuid1), USER_NAME))
         hashed_uuid2 = str(uuid.uuid5(uuid.UUID(uuid2), USER_NAME))
 
         # We add an existing connection to trigger an Update method
         self.settings.AddConnection(
-          dbus.Dictionary({
-            'connection': dbus.Dictionary({
-                'id': 'test connection',
-                'uuid': hashed_uuid1,
-                'type': '802-11-wireless'}, signature='sv'),
-            '802-11-wireless': dbus.Dictionary({
-                'ssid': dbus.ByteArray(
-                    'The_SSID'.encode('UTF-8'))}, signature='sv')
-          })
+            dbus.Dictionary(
+                {
+                    "connection": dbus.Dictionary(
+                        {
+                            "id": "test connection",
+                            "uuid": hashed_uuid1,
+                            "type": "802-11-wireless",
+                        },
+                        signature="sv",
+                    ),
+                    "802-11-wireless": dbus.Dictionary(
+                        {"ssid": dbus.ByteArray("The_SSID".encode("UTF-8"))},
+                        signature="sv",
+                    ),
+                }
+            )
         )
 
         ca = NetworkManagerConfigAdapter()
@@ -129,7 +140,7 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
 
         conns = self.settings.ListConnections()
 
-        logging.debug('Connections: {}'.format(conns))
+        logging.debug("Connections: {}".format(conns))
 
         self.assertEqual(len(conns), 2)
 
@@ -141,37 +152,46 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
 
         conn1 = dbus.Interface(
             self.dbus_con.get_object(MANAGER_IFACE, path1),
-            'org.freedesktop.NetworkManager.Settings.Connection')
+            "org.freedesktop.NetworkManager.Settings.Connection",
+        )
         conn2 = dbus.Interface(
             self.dbus_con.get_object(MANAGER_IFACE, path2),
-            'org.freedesktop.NetworkManager.Settings.Connection')
+            "org.freedesktop.NetworkManager.Settings.Connection",
+        )
 
         conn1_sett = conn1.GetSettings()
         conn2_sett = conn2.GetSettings()
 
-        self.assertEqual(conn1_sett['connection']['uuid'], hashed_uuid1)
-        self.assertEqual(conn2_sett['connection']['uuid'], hashed_uuid2)
+        self.assertEqual(conn1_sett["connection"]["uuid"], hashed_uuid1)
+        self.assertEqual(conn2_sett["connection"]["uuid"], hashed_uuid2)
 
         self.assertEqual(
-            conn1_sett['connection']['permissions'],
-            ['user:%s:' % USER_NAME, ])
+            conn1_sett["connection"]["permissions"],
+            [
+                "user:%s:" % USER_NAME,
+            ],
+        )
         self.assertEqual(
-            conn2_sett['connection']['permissions'],
-            ['user:%s:' % USER_NAME, ])
+            conn2_sett["connection"]["permissions"],
+            [
+                "user:%s:" % USER_NAME,
+            ],
+        )
 
         self.assertEqual(
-            conn1_sett['user']['data']['org.fleet-commander.connection'],
-            'true')
+            conn1_sett["user"]["data"]["org.fleet-commander.connection"], "true"
+        )
         self.assertEqual(
-            conn1_sett['user']['data']['org.fleet-commander.connection.uuid'],
-            uuid1)
+            conn1_sett["user"]["data"]["org.fleet-commander.connection.uuid"], uuid1
+        )
 
         self.assertEqual(
-            conn2_sett['user']['data']['org.fleet-commander.connection'],
-            'true')
+            conn2_sett["user"]["data"]["org.fleet-commander.connection"], "true"
+        )
         self.assertEqual(
-            conn2_sett['user']['data']['org.fleet-commander.connection.uuid'],
-            uuid2)
+            conn2_sett["user"]["data"]["org.fleet-commander.connection.uuid"], uuid2
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

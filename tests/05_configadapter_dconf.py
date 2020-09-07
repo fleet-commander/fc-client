@@ -29,7 +29,7 @@ import unittest
 import gi
 from gi.repository import GLib
 
-sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
+sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 
 from fleetcommanderclient.configadapters.dconf import DconfConfigAdapter
@@ -44,34 +44,32 @@ class TestDconfConfigAdapter(unittest.TestCase):
             "signature": "s",
             "value": "'#CCCCCC'",
             "key": "/org/yorba/shotwell/preferences/ui/background-color",
-            "schema": "org.yorba.shotwell.preferences.ui"
+            "schema": "org.yorba.shotwell.preferences.ui",
         },
         {
             "key": "/org/gnome/software/popular-overrides",
             "value": "['riot.desktop','matrix.desktop']",
-            "signature": "as"
-        }
+            "signature": "as",
+        },
     ]
 
     def setUp(self):
-        self.test_directory = tempfile.mkdtemp(
-            prefix='fc-client-dconf-test')
+        self.test_directory = tempfile.mkdtemp(prefix="fc-client-dconf-test")
 
-        self.profiledir = os.path.join(self.test_directory, 'profile')
-        self.dbdir = os.path.join(self.test_directory, 'db')
-        self.kfdir = os.path.join(self.dbdir, '%s%s.d' % (
-            DconfConfigAdapter.FC_DB_FILE, str(self.TEST_UID)))
-        self.profilepath = os.path.join(
-            self.profiledir, str(self.TEST_UID))
-        self.kfpath = os.path.join(
-            self.kfdir, DconfConfigAdapter.FC_PROFILE_FILE)
+        self.profiledir = os.path.join(self.test_directory, "profile")
+        self.dbdir = os.path.join(self.test_directory, "db")
+        self.kfdir = os.path.join(
+            self.dbdir, "%s%s.d" % (DconfConfigAdapter.FC_DB_FILE, str(self.TEST_UID))
+        )
+        self.profilepath = os.path.join(self.profiledir, str(self.TEST_UID))
+        self.kfpath = os.path.join(self.kfdir, DconfConfigAdapter.FC_PROFILE_FILE)
         self.dbpath = os.path.join(
-            self.dbdir, '%s%s' % (
-                DconfConfigAdapter.FC_DB_FILE, str(self.TEST_UID)))
+            self.dbdir, "%s%s" % (DconfConfigAdapter.FC_DB_FILE, str(self.TEST_UID))
+        )
 
         self.ca = DconfConfigAdapter(
-            os.path.join(self.test_directory, 'profile'),
-            os.path.join(self.test_directory, 'db'),
+            os.path.join(self.test_directory, "profile"),
+            os.path.join(self.test_directory, "db"),
         )
 
     def tearDown(self):
@@ -85,14 +83,14 @@ class TestDconfConfigAdapter(unittest.TestCase):
         os.makedirs(self.profiledir)
         os.makedirs(self.dbdir)
         os.makedirs(self.kfdir)
-        with open(self.profilepath, 'w') as fd:
-            fd.write('PROFILE_FILE')
+        with open(self.profilepath, "w") as fd:
+            fd.write("PROFILE_FILE")
             fd.close()
-        with open(self.kfpath, 'w') as fd:
-            fd.write('KEY_FILE')
+        with open(self.kfpath, "w") as fd:
+            fd.write("KEY_FILE")
             fd.close()
-        with open(self.dbpath, 'w') as fd:
-            fd.write('DB_FILE')
+        with open(self.dbpath, "w") as fd:
+            fd.write("DB_FILE")
             fd.close()
         self.assertTrue(os.path.isdir(self.profiledir))
         self.assertTrue(os.path.isdir(self.kfdir))
@@ -121,20 +119,20 @@ class TestDconfConfigAdapter(unittest.TestCase):
         # Check all sections
         for item in self.TEST_DATA:
             # Check all keys and values
-            keysplit = item['key'][1:].split('/')
-            keypath = '/'.join(keysplit[:-1])
+            keysplit = item["key"][1:].split("/")
+            keypath = "/".join(keysplit[:-1])
             keyname = keysplit[-1]
-            value = item['value']
+            value = item["value"]
             value_keyfile = keyfile.get_string(keypath, keyname)
             self.assertEqual(value, value_keyfile)
 
         # Check db file has been compiled
         self.assertTrue(os.path.exists(self.dbpath))
-        with open(self.dbpath, 'r') as fd:
+        with open(self.dbpath, "r") as fd:
             data = fd.read()
             fd.close()
-        self.assertEqual(data, 'COMPILED\n')
+        self.assertEqual(data, "COMPILED\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

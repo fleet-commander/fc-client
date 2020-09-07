@@ -35,9 +35,9 @@ from fleetcommanderclient import configadapters
 from fleetcommanderclient import adapters
 from fleetcommanderclient.settingscompiler import SettingsCompiler
 
-DBUS_BUS_NAME = 'org.freedesktop.FleetCommanderClientAD'
-DBUS_OBJECT_PATH = '/org/freedesktop/FleetCommanderClientAD'
-DBUS_INTERFACE_NAME = 'org.freedesktop.FleetCommanderClientAD'
+DBUS_BUS_NAME = "org.freedesktop.FleetCommanderClientAD"
+DBUS_OBJECT_PATH = "/org/freedesktop/FleetCommanderClientAD"
+DBUS_INTERFACE_NAME = "org.freedesktop.FleetCommanderClientAD"
 
 
 class FleetCommanderClientADDbusService(dbus.service.Object):
@@ -46,7 +46,7 @@ class FleetCommanderClientADDbusService(dbus.service.Object):
     Fleet commander client d-bus service class
     """
 
-    def __init__(self, configfile='/etc/xdg/fleet-commander-client.conf'):
+    def __init__(self, configfile="/etc/xdg/fleet-commander-client.conf"):
         """
         Class initialization
         """
@@ -54,7 +54,7 @@ class FleetCommanderClientADDbusService(dbus.service.Object):
         self.config = ConfigLoader(configfile)
 
         # Set logging level
-        self.log_level = self.config.get_value('log_level')
+        self.log_level = self.config.get_value("log_level")
         loglevel = getattr(logging, self.log_level.upper())
         logging.basicConfig(level=loglevel)
 
@@ -63,28 +63,27 @@ class FleetCommanderClientADDbusService(dbus.service.Object):
 
         self.register_adapter(
             adapters.DconfAdapter,
-            self.config.get_value('dconf_profile_path'),
-            self.config.get_value('dconf_db_path'))
+            self.config.get_value("dconf_profile_path"),
+            self.config.get_value("dconf_db_path"),
+        )
 
         self.register_adapter(
-            adapters.GOAAdapter,
-            self.config.get_value('goa_run_path'))
+            adapters.GOAAdapter, self.config.get_value("goa_run_path")
+        )
+
+        self.register_adapter(adapters.NetworkManagerAdapter)
 
         self.register_adapter(
-            adapters.NetworkManagerAdapter)
+            adapters.ChromiumAdapter, self.config.get_value("chromium_policies_path")
+        )
 
         self.register_adapter(
-            adapters.ChromiumAdapter,
-            self.config.get_value('chromium_policies_path'))
+            adapters.ChromeAdapter, self.config.get_value("chrome_policies_path")
+        )
 
         self.register_adapter(
-            adapters.ChromeAdapter,
-            self.config.get_value('chrome_policies_path'))
-
-        self.register_adapter(
-            adapters.FirefoxAdapter,
-            self.config.get_value('firefox_prefs_path'))
-
+            adapters.FirefoxAdapter, self.config.get_value("firefox_prefs_path")
+        )
 
         # Parent initialization
         super(FleetCommanderClientADDbusService, self).__init__()
@@ -109,40 +108,39 @@ class FleetCommanderClientADDbusService(dbus.service.Object):
         self.adapters[adapterclass.NAMESPACE] = adapterclass(*args, **kwargs)
 
     def get_peer_uid(self, sender):
-        proxy = dbus.SystemBus().get_object('org.freedesktop.DBus', '/')
-        interface = dbus.Interface(
-            proxy, dbus_interface='org.freedesktop.DBus')
+        proxy = dbus.SystemBus().get_object("org.freedesktop.DBus", "/")
+        interface = dbus.Interface(proxy, dbus_interface="org.freedesktop.DBus")
         return interface.GetConnectionUnixUser(sender)
 
-    @dbus.service.method(DBUS_INTERFACE_NAME,
-                         in_signature='', out_signature='',
-                         message_keyword='dbusmessage')
+    @dbus.service.method(
+        DBUS_INTERFACE_NAME,
+        in_signature="",
+        out_signature="",
+        message_keyword="dbusmessage",
+    )
     def ProcessFiles(self, dbusmessage):
 
-        logging.debug(
-            'FC Client: Applying user configuration')
+        logging.debug("FC Client: Applying user configuration")
 
         # Get peer UID for security
         uid = self.get_peer_uid(dbusmessage.get_sender())
 
-        logging.debug(
-            'FC Client: Got peer UID: {}'.format(uid))
+        logging.debug("FC Client: Got peer UID: {}".format(uid))
 
         # Cycle through configuration adapters and deploy existing data
         for namespace, adapter in self.adapters.items():
             logging.debug(
-                'FC Client: Deploying configuration for namespace {}'.format(
-                    namespace))
+                "FC Client: Deploying configuration for namespace {}".format(namespace)
+            )
 
             adapter.deploy(uid)
         self.quit()
 
-    @dbus.service.method(DBUS_INTERFACE_NAME,
-                         in_signature='', out_signature='')
+    @dbus.service.method(DBUS_INTERFACE_NAME, in_signature="", out_signature="")
     def Quit(self):
         self.quit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     svc = FleetCommanderClientADDbusService()
     svc.run()

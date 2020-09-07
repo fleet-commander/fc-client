@@ -34,9 +34,9 @@ class FirefoxAdapter(BaseAdapter):
     """
 
     # Namespace this config adapter handles
-    NAMESPACE = 'org.mozilla.firefox'
+    NAMESPACE = "org.mozilla.firefox"
 
-    PREFS_FILENAME = 'fleet-commander-{}'
+    PREFS_FILENAME = "fleet-commander-{}"
     PREF_TEMPLATE = 'pref("{}", {});'
 
     def __init__(self, prefs_path):
@@ -50,15 +50,16 @@ class FirefoxAdapter(BaseAdapter):
         # Prepare data
         preferences = []
         for item in config_data:
-            if 'key' in item and 'value' in item:
+            if "key" in item and "value" in item:
                 # TODO: Check for locked settings and use lockPref instead
-                preferences.append(self.PREF_TEMPLATE.format(
-                    item['key'], json.dumps(item['value'])))
+                preferences.append(
+                    self.PREF_TEMPLATE.format(item["key"], json.dumps(item["value"]))
+                )
         # Write preferences data
-        path = os.path.join(cache_path, 'fleet-commander')
-        logging.debug('Writing preferences data to {}'.format(path))
-        with open(path, 'w') as fd:
-            fd.write('\n'.join(preferences))
+        path = os.path.join(cache_path, "fleet-commander")
+        logging.debug("Writing preferences data to {}".format(path))
+        with open(path, "w") as fd:
+            fd.write("\n".join(preferences))
             fd.close()
 
     def deploy_files(self, cache_path, uid):
@@ -66,28 +67,29 @@ class FirefoxAdapter(BaseAdapter):
         Copy cached policies file to policies directory
         This method will be called by privileged process
         """
-        cached_file_path = os.path.join(
-            cache_path, 'fleet-commander')
+        cached_file_path = os.path.join(cache_path, "fleet-commander")
         if os.path.isfile(cached_file_path):
-            logging.debug(
-                'Deploying preferences at {}.'.format(cached_file_path))
+            logging.debug("Deploying preferences at {}.".format(cached_file_path))
             filename = self.PREFS_FILENAME.format(uid)
             path = os.path.join(self.prefs_path, filename)
             # Remove previous preferences file
-            logging.debug('Removing previous preferences file {}'.format(path))
+            logging.debug("Removing previous preferences file {}".format(path))
             try:
                 os.remove(path)
             except Exception as e:
                 logging.debug(
-                    'Failed to remove previous preferences file {}: {}'.format(
-                        path, e))
-
+                    "Failed to remove previous preferences file {}: {}".format(path, e)
+                )
 
             # Deploy new preferences file
-            logging.debug('Copying preferences file at {} to {}'.format(cached_file_path, path))
+            logging.debug(
+                "Copying preferences file at {} to {}".format(cached_file_path, path)
+            )
             shutil.copyfile(cached_file_path, path)
             # Change permissions and ownership
             os.chown(path, uid, -1)
             os.chmod(path, stat.S_IREAD)
         else:
-            logging.debug('No preferences file at {}. Ignoring.'.format(cached_file_path))
+            logging.debug(
+                "No preferences file at {}. Ignoring.".format(cached_file_path)
+            )

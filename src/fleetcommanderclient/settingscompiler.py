@@ -38,11 +38,11 @@ class SettingsCompiler(object):
 
         # Initialize data mergers
         self.mergers = {
-            'org.gnome.gsettings': mergers.GSettingsMerger(),
-            'org.libreoffice.registry': mergers.LibreOfficeMerger(),
-            'org.gnome.online-accounts': mergers.GOAMerger(),
-            'org.mozilla.firefox': mergers.FirefoxMerger(),
-            'org.freedesktop.NetworkManager': mergers.NetworkManagerMerger(),
+            "org.gnome.gsettings": mergers.GSettingsMerger(),
+            "org.libreoffice.registry": mergers.LibreOfficeMerger(),
+            "org.gnome.online-accounts": mergers.GOAMerger(),
+            "org.mozilla.firefox": mergers.FirefoxMerger(),
+            "org.freedesktop.NetworkManager": mergers.NetworkManagerMerger(),
         }
 
     def get_ordered_file_names(self):
@@ -59,17 +59,19 @@ class SettingsCompiler(object):
         """
         filepath = os.path.join(self.path, filename)
         try:
-            with open(filepath, 'r') as fd:
+            with open(filepath, "r") as fd:
                 contents = fd.read()
                 data = json.loads(contents)
                 fd.close()
                 return data
         except Exception as e:
             logging.error(
-                'ProfileGenerator: Ignoring profile data from %(f)s: %(e)s' % {
-                    'f': filepath,
-                    'e': e,
-                })
+                "ProfileGenerator: Ignoring profile data from %(f)s: %(e)s"
+                % {
+                    "f": filepath,
+                    "e": e,
+                }
+            )
         return {}
 
     def merge_profile_settings(self, old, new):
@@ -83,7 +85,8 @@ class SettingsCompiler(object):
                     old[namespace] = new[namespace]
                 else:
                     old[namespace] = self.mergers[namespace].merge(
-                        old[namespace], new[namespace])
+                        old[namespace], new[namespace]
+                    )
             else:
                 old[namespace] = new[namespace]
         return old
@@ -96,19 +99,18 @@ class SettingsCompiler(object):
         profile_settings = {}
         for filename in filenames:
             data = self.read_profile_settings(filename)
-            profile_settings = self.merge_profile_settings(
-                profile_settings, data)
+            profile_settings = self.merge_profile_settings(profile_settings, data)
 
         # FIXME: Right now merging libreoffice config data into gsettings
         #        because both use the same configuration adapter.
         #        We should change the config adapter interface to allow
         #        multiple namespaces for the same config adapter.
 
-        if 'org.libreoffice.registry' in profile_settings.keys():
+        if "org.libreoffice.registry" in profile_settings.keys():
             libreoffice_data = {
-                'org.gnome.gsettings':
-                    profile_settings['org.libreoffice.registry']
+                "org.gnome.gsettings": profile_settings["org.libreoffice.registry"]
             }
             profile_settings = self.merge_profile_settings(
-                profile_settings, libreoffice_data)
+                profile_settings, libreoffice_data
+            )
         return profile_settings

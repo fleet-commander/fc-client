@@ -32,8 +32,8 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
     Firefox config adapter
     """
 
-    NAMESPACE = 'org.mozilla.firefox'
-    PREFS_FILENAME = 'fleet-commander-%s.json'
+    NAMESPACE = "org.mozilla.firefox"
+    PREFS_FILENAME = "fleet-commander-%s.json"
     PREF_TEMPLATE = 'pref("%s", %s);'
 
     def __init__(self, preferences_path):
@@ -50,7 +50,7 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
             pass
 
     def update(self, uid, data):
-        logging.debug('Updating %s. Data received: %s' % (self.NAMESPACE, data))
+        logging.debug("Updating %s. Data received: %s" % (self.NAMESPACE, data))
         filename = self.PREFS_FILENAME % uid
         path = os.path.join(self.preferences_path, filename)
         # Create preferences path
@@ -61,14 +61,15 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
         # Prepare data
         preferences = []
         for item in data:
-            if 'key' in item and 'value' in item:
+            if "key" in item and "value" in item:
                 # TODO: Check for locked settings and use lockPref inst
-                preferences.append(self.PREF_TEMPLATE % (
-                    item['key'], json.dumps(item['value'])))
+                preferences.append(
+                    self.PREF_TEMPLATE % (item["key"], json.dumps(item["value"]))
+                )
         # Write preferences data
         logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
-        with open(path, 'w') as fd:
+        with open(path, "w") as fd:
             # Change permissions and ownership permisions
             self._set_perms(fd, uid, -1, 0o640)
-            fd.write('\n'.join(preferences))
+            fd.write("\n".join(preferences))
             fd.close()

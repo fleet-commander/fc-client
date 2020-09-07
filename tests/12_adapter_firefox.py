@@ -28,7 +28,7 @@ import shutil
 import json
 import unittest
 
-sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
+sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 import fleetcommanderclient.adapters.firefox
 from fleetcommanderclient.adapters.firefox import FirefoxAdapter
@@ -36,6 +36,7 @@ from fleetcommanderclient.adapters.firefox import FirefoxAdapter
 
 def universal_function(*args, **kwargs):
     pass
+
 
 # Monkey patch chown function in os module
 fleetcommanderclient.adapters.firefox.os.chown = universal_function
@@ -55,16 +56,15 @@ class TestFirefoxAdapter(unittest.TestCase):
 
     TEST_UID = 55555
 
-    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox']
+    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)["org.mozilla.firefox"]
 
     def setUp(self):
-        self.test_directory = tempfile.mkdtemp(
-            prefix='fc-client-firefox-test')
+        self.test_directory = tempfile.mkdtemp(prefix="fc-client-firefox-test")
         self.prefs_path = self.test_directory
-        self.cache_path = os.path.join(self.test_directory, 'cache')
+        self.cache_path = os.path.join(self.test_directory, "cache")
         self.prefs_file_path = os.path.join(
-            self.prefs_path,
-            FirefoxAdapter.PREFS_FILENAME.format(self.TEST_UID))
+            self.prefs_path, FirefoxAdapter.PREFS_FILENAME.format(self.TEST_UID)
+        )
         self.ca = FirefoxAdapter(self.prefs_path)
         self.ca._TEST_CACHE_PATH = self.cache_path
 
@@ -76,14 +76,11 @@ class TestFirefoxAdapter(unittest.TestCase):
         # Generate configuration
         self.ca.generate_config(self.TEST_DATA)
         # Check configuration file exists
-        filepath = os.path.join(
-            self.cache_path,
-            self.ca.NAMESPACE,
-            'fleet-commander')
-        logging.debug('Checking {} exists'.format(filepath))
+        filepath = os.path.join(self.cache_path, self.ca.NAMESPACE, "fleet-commander")
+        logging.debug("Checking {} exists".format(filepath))
         self.assertTrue(os.path.exists(filepath))
         # Check configuration file contents
-        with open(filepath, 'r') as fd:
+        with open(filepath, "r") as fd:
             data = fd.read()
             fd.close()
         self.assertEqual(data, PREFS_FILE_CONTENTS)
@@ -95,22 +92,21 @@ class TestFirefoxAdapter(unittest.TestCase):
         self.ca.deploy(self.TEST_UID)
         # Check file has been copied to policies path
         deployed_file_path = os.path.join(
-            self.prefs_path,
-            FirefoxAdapter.PREFS_FILENAME.format(self.TEST_UID))
+            self.prefs_path, FirefoxAdapter.PREFS_FILENAME.format(self.TEST_UID)
+        )
         self.assertTrue(os.path.isfile(deployed_file_path))
         # Check both files content is the same
-        with open(deployed_file_path, 'r') as fd:
+        with open(deployed_file_path, "r") as fd:
             data1 = fd.read()
             fd.close()
         cached_file_path = os.path.join(
-            self.cache_path,
-            self.ca.NAMESPACE,
-            'fleet-commander')
-        with open(cached_file_path, 'r') as fd:
+            self.cache_path, self.ca.NAMESPACE, "fleet-commander"
+        )
+        with open(cached_file_path, "r") as fd:
             data2 = fd.read()
             fd.close()
         self.assertEqual(data1, data2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

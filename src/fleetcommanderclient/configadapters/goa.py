@@ -34,8 +34,8 @@ class GOAConfigAdapter(BaseConfigAdapter):
     Configuration adapter for GNOME Online Accounts
     """
 
-    NAMESPACE = 'org.gnome.online-accounts'
-    FC_ACCOUNTS_FILE = 'fleet-commander-accounts.conf'
+    NAMESPACE = "org.gnome.online-accounts"
+    FC_ACCOUNTS_FILE = "fleet-commander-accounts.conf"
 
     def __init__(self, goa_runtime_path):
         self.goa_runtime_path = goa_runtime_path
@@ -46,8 +46,9 @@ class GOAConfigAdapter(BaseConfigAdapter):
         try:
             shutil.rmtree(runtime_path)
         except Exception as e:
-            logging.warning('Error removing GOA runtime path "%s": %s' % (
-                runtime_path, e))
+            logging.warning(
+                'Error removing GOA runtime path "%s": %s' % (runtime_path, e)
+            )
 
     def update(self, uid, data):
         # Create runtime path
@@ -56,12 +57,13 @@ class GOAConfigAdapter(BaseConfigAdapter):
         try:
             os.makedirs(runtime_path)
         except Exception as e:
-            logging.error('Error creating GOA runtime path "%s": %s' % (
-                runtime_path, e))
+            logging.error(
+                'Error creating GOA runtime path "%s": %s' % (runtime_path, e)
+            )
             return
 
         # Prepare data for saving it in keyfile
-        logging.debug('Preparing GOA data for saving to keyfile')
+        logging.debug("Preparing GOA data for saving to keyfile")
         keyfile = GLib.KeyFile.new()
         for account, accountdata in data.items():
             for key, value in accountdata.items():
@@ -76,8 +78,7 @@ class GOAConfigAdapter(BaseConfigAdapter):
         try:
             keyfile.save_to_file(keyfile_path)
         except Exception as e:
-            logging.error('Error saving GOA keyfile at "%s": %s' % (
-                keyfile_path, e))
+            logging.error('Error saving GOA keyfile at "%s": %s' % (keyfile_path, e))
             return
 
-        logging.info('Processed GOA configuration for UID %s')
+        logging.info("Processed GOA configuration for UID %s")

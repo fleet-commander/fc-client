@@ -25,7 +25,7 @@ import os
 import sys
 import unittest
 
-PYTHONPATH = os.path.join(os.environ['TOPSRCDIR'], 'src')
+PYTHONPATH = os.path.join(os.environ["TOPSRCDIR"], "src")
 sys.path.append(PYTHONPATH)
 
 # Fleet commander imports
@@ -39,10 +39,11 @@ class TestConfigLoader(unittest.TestCase):
     def test_00_load_inexistent_config_file(self):
         # Load inexistent configuration file
         configfile = os.path.join(
-            os.environ['TOPSRCDIR'], 'tests/data/inexistent_config_file.conf')
+            os.environ["TOPSRCDIR"], "tests/data/inexistent_config_file.conf"
+        )
         config = ConfigLoader(configloader)
         # Read a non existent key without default specified
-        result = config.get_value('inexistent_key')
+        result = config.get_value("inexistent_key")
         self.assertEqual(result, None)
         # Read non existent key but with default value
         for key, value in config.DEFAULTS.keys():
@@ -52,14 +53,15 @@ class TestConfigLoader(unittest.TestCase):
     def test_01_load_config_file(self):
         # Load inexistent configuration file
         configfile = os.path.join(
-            os.environ['TOPSRCDIR'], 'tests/data/test_config_file.conf')
+            os.environ["TOPSRCDIR"], "tests/data/test_config_file.conf"
+        )
         config = ConfigLoader(configloader)
         # Read a non existent key without default specified
-        result = config.get_value('inexistent_key')
+        result = config.get_value("inexistent_key")
         self.assertEqual(result, None)
         # Read non existent key but with default value
-        result = config.get_value('debug_level')
-        self.assertEqual(result, config.DEFAULTS['debug_level'])
+        result = config.get_value("debug_level")
+        self.assertEqual(result, config.DEFAULTS["debug_level"])
         # Read existent key
-        result = config.get_value('goa_run_path')
-        self.assertEqual(result, '/run/goa-1.0')
+        result = config.get_value("goa_run_path")
+        self.assertEqual(result, "/run/goa-1.0")

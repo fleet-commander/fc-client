@@ -32,7 +32,7 @@ import stat
 import gi
 from gi.repository import GLib
 
-sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
+sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 import fleetcommanderclient.configadapters.firefox
 from fleetcommanderclient.configadapters.firefox import FirefoxConfigAdapter
@@ -59,15 +59,14 @@ class TestFirefoxConfigAdapter(unittest.TestCase):
 
     TEST_UID = os.getuid()
 
-    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox']
+    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)["org.mozilla.firefox"]
 
     def setUp(self):
-        self.test_directory = tempfile.mkdtemp(
-            prefix='fc-client-firefox-test')
-        self.policies_path = os.path.join(self.test_directory, 'managed')
+        self.test_directory = tempfile.mkdtemp(prefix="fc-client-firefox-test")
+        self.policies_path = os.path.join(self.test_directory, "managed")
         self.policies_file_path = os.path.join(
-            self.policies_path,
-            FirefoxConfigAdapter.PREFS_FILENAME % self.TEST_UID)
+            self.policies_path, FirefoxConfigAdapter.PREFS_FILENAME % self.TEST_UID
+        )
         self.ca = FirefoxConfigAdapter(self.policies_path)
 
     def tearDown(self):
@@ -79,8 +78,8 @@ class TestFirefoxConfigAdapter(unittest.TestCase):
         self.ca.bootstrap(self.TEST_UID)
         # Run bootstrap with existing directories
         os.makedirs(self.policies_path)
-        with open(self.policies_file_path, 'w') as fd:
-            fd.write('PREFS')
+        with open(self.policies_file_path, "w") as fd:
+            fd.write("PREFS")
             fd.close()
         self.assertTrue(os.path.isdir(self.policies_path))
         self.assertTrue(os.path.exists(self.policies_file_path))
@@ -97,12 +96,12 @@ class TestFirefoxConfigAdapter(unittest.TestCase):
         # Change file mod because test user haven't root privilege
         os.chmod(self.policies_file_path, stat.S_IRUSR)
         # Read file
-        with open(self.policies_file_path, 'r') as fd:
+        with open(self.policies_file_path, "r") as fd:
             data = fd.read()
             fd.close()
         # Check file contents are ok
         self.assertEqual(PREFS_FILE_CONTENTS, data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

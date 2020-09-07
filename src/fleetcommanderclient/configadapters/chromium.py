@@ -32,8 +32,8 @@ class ChromiumConfigAdapter(BaseConfigAdapter):
     Chromium config adapter
     """
 
-    NAMESPACE = 'org.chromium.Policies'
-    POLICIES_FILENAME = 'fleet-commander-%s.json'
+    NAMESPACE = "org.chromium.Policies"
+    POLICIES_FILENAME = "fleet-commander-%s.json"
 
     def __init__(self, policies_path):
         self.policies_path = policies_path
@@ -59,11 +59,11 @@ class ChromiumConfigAdapter(BaseConfigAdapter):
         # Prepare data
         policies = {}
         for item in data:
-            if 'key' in item and 'value' in item:
-                policies[item['key']] = item['value']
+            if "key" in item and "value" in item:
+                policies[item["key"]] = item["value"]
         # Write policies data
         logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
-        with open(path, 'w') as fd:
+        with open(path, "w") as fd:
             # Change permissions and ownership permisions
             self._set_perms(fd, uid, -1, 0o640)
             fd.write(json.dumps(policies))
@@ -74,4 +74,5 @@ class ChromeConfigAdapter(ChromiumConfigAdapter):
     """
     Chrome config adapter
     """
-    NAMESPACE = 'org.google.chrome.Policies'
+
+    NAMESPACE = "org.google.chrome.Policies"

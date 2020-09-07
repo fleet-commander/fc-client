@@ -28,7 +28,7 @@ import shutil
 import json
 import unittest
 
-sys.path.append(os.path.join(os.environ['TOPSRCDIR'], 'src'))
+sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 import fleetcommanderclient.adapters.firefoxbookmarks
 from fleetcommanderclient.adapters.firefoxbookmarks import FirefoxBookmarksAdapter
@@ -36,6 +36,7 @@ from fleetcommanderclient.adapters.firefoxbookmarks import FirefoxBookmarksAdapt
 
 def universal_function(*args, **kwargs):
     pass
+
 
 # Monkey patch chown function in os module
 fleetcommanderclient.adapters.firefoxbookmarks.os.chown = universal_function
@@ -67,7 +68,7 @@ POLICIES_FILE_CONTENTS = {
                 "URL": "https://example.com",
                 "Favicon": "https://example.com/favicon.ico",
                 "Placement": "toolbar",
-                "Folder": "FolderName"
+                "Folder": "FolderName",
             }
         ]
     }
@@ -78,17 +79,16 @@ class TestFirefoxAdapter(unittest.TestCase):
 
     TEST_UID = 55555
 
-    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)['org.mozilla.firefox.Bookmarks']
+    TEST_DATA = json.loads(PROFILE_FILE_CONTENTS)["org.mozilla.firefox.Bookmarks"]
 
     def setUp(self):
-        self.test_directory = tempfile.mkdtemp(
-            prefix='fc-client-firefoxbookmarks-test')
-        policies_path_template = os.path.join(self.test_directory, '{}/firefox')
+        self.test_directory = tempfile.mkdtemp(prefix="fc-client-firefoxbookmarks-test")
+        policies_path_template = os.path.join(self.test_directory, "{}/firefox")
         self.policies_path = policies_path_template.format(self.TEST_UID)
-        self.cache_path = os.path.join(self.test_directory, 'cache')
+        self.cache_path = os.path.join(self.test_directory, "cache")
         self.policies_file_path = os.path.join(
-            self.policies_path,
-            FirefoxBookmarksAdapter.POLICIES_FILENAME)
+            self.policies_path, FirefoxBookmarksAdapter.POLICIES_FILENAME
+        )
         self.ca = FirefoxBookmarksAdapter(policies_path_template)
         self.ca._TEST_CACHE_PATH = self.cache_path
 
@@ -100,19 +100,17 @@ class TestFirefoxAdapter(unittest.TestCase):
         # Generate configuration
         self.ca.generate_config(self.TEST_DATA)
         # Check configuration file exists
-        filepath = os.path.join(
-            self.cache_path,
-            self.ca.NAMESPACE,
-            'fleet-commander')
-        logging.debug('Checking {} exists'.format(filepath))
+        filepath = os.path.join(self.cache_path, self.ca.NAMESPACE, "fleet-commander")
+        logging.debug("Checking {} exists".format(filepath))
         self.assertTrue(os.path.exists(filepath))
         # Check configuration file contents
-        with open(filepath, 'r') as fd:
+        with open(filepath, "r") as fd:
             data = json.loads(fd.read())
             fd.close()
         self.assertEqual(
             json.dumps(POLICIES_FILE_CONTENTS, sort_keys=True),
-            json.dumps(data, sort_keys=True))
+            json.dumps(data, sort_keys=True),
+        )
 
     def test_01_deploy(self):
         # Generate config files in cache
@@ -122,18 +120,17 @@ class TestFirefoxAdapter(unittest.TestCase):
         # Check file has been copied to policies path
         self.assertTrue(os.path.isfile(self.policies_file_path))
         # Check both files content is the same
-        with open(self.policies_file_path, 'r') as fd:
+        with open(self.policies_file_path, "r") as fd:
             data1 = fd.read()
             fd.close()
         cached_file_path = os.path.join(
-            self.cache_path,
-            self.ca.NAMESPACE,
-            'fleet-commander')
-        with open(cached_file_path, 'r') as fd:
+            self.cache_path, self.ca.NAMESPACE, "fleet-commander"
+        )
+        with open(cached_file_path, "r") as fd:
             data2 = fd.read()
             fd.close()
         self.assertEqual(data1, data2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
