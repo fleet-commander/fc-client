@@ -7,9 +7,8 @@ It is primarily targeted to Linux systems based on the GNOME desktop.
 
 Fleet Commander consists on two components:
 
-- a web service integrated with Apache that serves the dynamic application and
-  the profile data to the network.
-- and a client side daemon that runs on every host of the network.
+- a admin interface that stores profiles in your directory server (AKA FreeIPA, Active Directory)
+- and a client side service that runs on every host of the network when you log in.
 
 Fleet Commander relies on libvirt and KVM to generate the profile data
 dinamically from a template VM running the same environment as the rest of the
@@ -23,14 +22,3 @@ $ ./configure --prefix=$PREFIX # where $PREFIX can be /usr or /usr/local
 $ make
 $ make install
 
-CONFIGURATION
-
-You need to specify the Fleet Commander HTTP endpoint where the profile data is
-read from in /etc/xdg/fleet-commander.conf, this is an example:
-
-	[fleet-commander]
-	source = http://192.168.123.4:8181/clientdata/
-
-After any configuration changes you must restart the daemon:
-
-	# systemctl restart fleet-commander
