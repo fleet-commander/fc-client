@@ -17,7 +17,7 @@ steps:
     sudo dnf builddep -y \
         --skip-broken \
         -D "with_check 1" \
-        --spec fleet-commander-admin.spec \
+        --spec fleet-commander-client.spec \
         --best \
         --allowerasing \
         --setopt=install_weak_deps=False \
