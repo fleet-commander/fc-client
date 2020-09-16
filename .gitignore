@@ -28,7 +28,6 @@ install-rpm.sh
 full-install-rpm.sh
 check-full.sh
 check.sh
-fleet-commander-client.spec
 .vscode
 *.code-workspace
 build-copr.sh
