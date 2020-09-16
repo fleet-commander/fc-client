@@ -22,15 +22,11 @@
 # Python imports
 import logging
 
-# LDAP imports
-from ldap import modlist
-from ldap import LDAPError
+
+DOMAIN_DATA = {}
 
 
-DOMAIN_DATA = None
-
-
-class SASLMock(object):
+class SASLMock:
     @staticmethod
     def sasl(cb_value_dict, mech):
         # We asume auth is OK as long as mechanism is GSSAPI
@@ -40,12 +36,12 @@ class SASLMock(object):
         raise Exception("SASLMock: Auth mechanism is not GSSAPI (Kerberos)")
 
 
-class LDAPConnectionMock(object):
+class LDAPConnectionMock:
 
     protocol_version = 3
 
     def __init__(self, server_address):
-        logging.debug("LDAPMock initializing connection: %s" % server_address)
+        logging.debug("LDAPMock initializing connection: %s", server_address)
         self.server_address = server_address
         self.options = {}
         self._domain_data = DOMAIN_DATA
@@ -76,16 +72,16 @@ class LDAPConnectionMock(object):
         attrsonly=0,
         timeout=-1,
     ):
-        logging.debug("LDAPMock search_s: %s - %s" % (base, filterstr))
+        logging.debug("LDAPMock search_s: %s - %s", base, filterstr)
         if base == "DC=FC,DC=AD":
             groupfilter = "(&(objectclass=group)(CN="
             sidfilter = "(&(|(objectclass=computer)(objectclass=user)(objectclass=group))(objectSid="
             if filterstr == "(objectClass=*)" and attrlist == ["objectSid"]:
                 return (("cn", self._domain_data["domain"]),)
-            elif sidfilter in filterstr:
+            if sidfilter in filterstr:
                 filtersid = filterstr[len(sidfilter) : -2]
                 for objclass in ["users", "groups", "hosts"]:
-                    for key, elem in self._domain_data[objclass].items():
+                    for elem in self._domain_data[objclass].values():
                         # Use unpacked object sid to avoid use of ndr_unpack
                         if filtersid == elem["unpackedObjectSid"]:
                             return [
@@ -110,13 +106,13 @@ class LDAPConnectionMock(object):
         elif base == "CN=Policies,CN=System,DC=FC,DC=AD":
             if filterstr == "(objectclass=groupPolicyContainer)":
                 profile_list = []
-                for cn, profile in self._domain_data["profiles"].items():
+                for cn in self._domain_data["profiles"].keys():
                     profile_list.append((cn, self._domain_data["profiles"][cn]))
                 return profile_list
-            elif "(displayName=" in filterstr:
+            if "(displayName=" in filterstr:
                 displayname = filterstr[len("(displayName=") : -1]
                 # Trying to get a profile by its display name
-                for key, elem in self._domain_data["profiles"].items():
+                for elem in self._domain_data["profiles"].values():
                     if elem["displayName"][0].decode() == displayname:
                         return [(elem["cn"], elem)]
             else:
@@ -137,7 +133,7 @@ class LDAPConnectionMock(object):
             profile[dif[1]] = value
 
     def delete_s(self, dn):
-        logging.debug("LDAPMock: delete_s %s" % dn)
+        logging.debug("LDAPMock: delete_s %s", dn)
         if dn in self._domain_data["profiles"].keys():
             del self._domain_data["profiles"][dn]
 

@@ -26,7 +26,6 @@ import tempfile
 import shutil
 import unittest
 
-import gi
 from gi.repository import GLib
 
 sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))

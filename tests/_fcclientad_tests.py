@@ -23,7 +23,6 @@
 # Python imports
 import os
 import sys
-import shutil
 import tempfile
 import subprocess
 import time
@@ -38,7 +37,7 @@ sys.path.append(PYTHONPATH)
 from fleetcommanderclient import fcclientad
 
 
-class FleetCommanderClientADDbusClient(object):
+class FleetCommanderClientADDbusClient:
     """
     Fleet commander client dbus client
     """

@@ -24,7 +24,6 @@
 import os
 import sys
 import unittest
-import json
 
 sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
@@ -236,8 +235,7 @@ class TestGOAMerger(unittest.TestCase):
         self.merger = mergers.GOAMerger()
 
     def test_00_get_key(self):
-        result = self.merger.get_key(self.TEST_SETTINGS_A)
-        self.assertEqual(result, None)
+        self.assertEqual(self.merger.get_key(self.TEST_SETTINGS_A), None)
 
     def test_01_merge(self):
         result = self.merger.merge(self.TEST_SETTINGS_A, self.TEST_SETTINGS_B)

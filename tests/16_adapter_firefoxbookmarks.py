@@ -101,7 +101,7 @@ class TestFirefoxAdapter(unittest.TestCase):
         self.ca.generate_config(self.TEST_DATA)
         # Check configuration file exists
         filepath = os.path.join(self.cache_path, self.ca.NAMESPACE, "fleet-commander")
-        logging.debug("Checking {} exists".format(filepath))
+        logging.debug("Checking %s exists", filepath)
         self.assertTrue(os.path.exists(filepath))
         # Check configuration file contents
         with open(filepath, "r") as fd:

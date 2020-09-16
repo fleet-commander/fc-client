@@ -28,11 +28,11 @@ import logging
 TEMP_DIR = None
 
 
-class SMBMock(object):
+class SMBMock:
     def __init__(self, servername, service, lp, creds, sign=False):
-        logging.debug("SMBMock: Mocking SMB at \\\\%s\\%s" % (servername, service))
+        logging.debug("SMBMock: Mocking SMB at \\\\%s\\%s", servername, service)
         self.tempdir = TEMP_DIR
-        logging.debug("Using temporary directory at %s" % self.tempdir)
+        logging.debug("Using temporary directory at %s", self.tempdir)
         self.profilesdir = os.path.join(self.tempdir, "%s/Policies" % servername)
         if not os.path.exists(self.profilesdir):
             os.makedirs(self.profilesdir)
@@ -41,7 +41,7 @@ class SMBMock(object):
         return os.path.join(self.tempdir, uri.replace("\\", "/"))
 
     def loadfile(self, furi):
-        logging.debug("SMBMock: LOADFILE %s" % furi)
+        logging.debug("SMBMock: LOADFILE %s", furi)
         path = self._translate_path(furi)
         with open(path, "rb") as fd:
             data = fd.read()
@@ -49,26 +49,26 @@ class SMBMock(object):
         return data
 
     def savefile(self, furi, data):
-        logging.debug("SMBMock: SAVEFILE %s" % furi)
+        logging.debug("SMBMock: SAVEFILE %s", furi)
         path = self._translate_path(furi)
         with open(path, "wb") as fd:
             fd.write(data)
             fd.close()
-        logging.debug("SMBMock: Written %s" % path)
+        logging.debug("SMBMock: Written %s", path)
 
     def chkpath(self, duri):
-        logging.debug("SMBMock: CHKPATH %s" % duri)
+        logging.debug("SMBMock: CHKPATH %s", duri)
         path = self._translate_path(duri)
         return os.path.exists(path)
 
     def mkdir(self, duri):
-        logging.debug("SMBMock: MKDIR %s" % duri)
+        logging.debug("SMBMock: MKDIR %s", duri)
         path = self._translate_path(duri)
         if not os.path.exists(path):
             os.makedirs(path)
 
     def set_acl(self, duri, fssd, sio):
-        logging.debug("SMBMock: SETACL %s" % duri)
+        logging.debug("SMBMock: SETACL %s", duri)
         path = self._translate_path(duri)
         aclpath = os.path.join(path, "__acldata__.json")
         acldata = json.dumps(
@@ -83,7 +83,7 @@ class SMBMock(object):
             fd.close()
 
     def deltree(self, duri):
-        logging.debug("SMBMock: DELTREE %s" % duri)
+        logging.debug("SMBMock: DELTREE %s", duri)
         path = self._translate_path(duri)
         if os.path.exists(path):
             shutil.rmtree(path)

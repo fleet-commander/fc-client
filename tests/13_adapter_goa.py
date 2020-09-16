@@ -91,7 +91,7 @@ class TestGOAAdapter(unittest.TestCase):
         filepath = os.path.join(
             self.cache_path, self.ca.NAMESPACE, self.ca.ACCOUNTS_FILE
         )
-        logging.debug("Checking {} exists".format(filepath))
+        logging.debug("Checking %s exists", filepath)
         self.assertTrue(os.path.exists(filepath))
         # Check configuration file contents
 
@@ -100,10 +100,9 @@ class TestGOAAdapter(unittest.TestCase):
         keyfile.load_from_file(filepath, GLib.KeyFileFlags.NONE)
 
         # Check section list
-        accounts = self.TEST_DATA.keys()
+        accounts = list(self.TEST_DATA.keys())
         accounts_keyfile = keyfile.get_groups()[0]
-        accounts_keyfile.sort()
-        self.assertEqual(sorted(accounts), accounts_keyfile)
+        self.assertEqual(sorted(accounts), sorted(accounts_keyfile))
 
     def test_01_deploy(self):
         # Generate config files in cache

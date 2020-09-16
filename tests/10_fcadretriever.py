@@ -31,10 +31,6 @@ import dbus
 import dbusmock
 import subprocess
 
-# Samba imports
-from samba.ndr import ndr_pack
-from samba.dcerpc import security
-
 # Mocking imports
 import ldapmock
 import smbmock
@@ -56,8 +52,8 @@ fcadretriever.libsmb.Conn = smbmock.SMBMock
 
 
 # DNS resolver mock
-class DNSResolverMock(object):
-    class DNSResolverResult(object):
+class DNSResolverMock:
+    class DNSResolverResult:
         target = "FC.AD/"
 
     def query(self, name, querytype):
@@ -111,10 +107,13 @@ class TestSettingsCompiler(dbusmock.DBusTestCase):
         "hostgroups": [],
     }
 
+    dbus_realmd_provider_mock = None
+    dbus_fcclient_mock = None
+
     @classmethod
-    def setUpClass(klass):
-        klass.start_system_bus()
-        klass.dbus_con = klass.get_dbus(system_bus=True)
+    def setUpClass(cls):
+        cls.start_system_bus()
+        cls.dbus_con = cls.get_dbus(system_bus=True)
 
     def setUp(self):
         self._quit = False

@@ -81,7 +81,7 @@ class TestChromiumAdapter(unittest.TestCase):
         filepath = os.path.join(
             self.cache_path, self.ca.NAMESPACE, "fleet-commander.json"
         )
-        logging.debug("Checking {} exists".format(filepath))
+        logging.debug("Checking %s exists", filepath)
         self.assertTrue(os.path.exists(filepath))
         # Check configuration file contents
         with open(filepath, "r") as fd:
