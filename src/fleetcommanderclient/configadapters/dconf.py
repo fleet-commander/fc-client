@@ -24,7 +24,6 @@ import shutil
 import logging
 import subprocess
 
-import gi
 from gi.repository import GLib
 
 from fleetcommanderclient.configadapters.base import BaseConfigAdapter
@@ -52,7 +51,7 @@ class DconfConfigAdapter(BaseConfigAdapter):
         return (profile_path, keyfile_dir, db_path)
 
     def remove_path(self, path, throw=False):
-        logging.debug('Removing path: "%s"' % path)
+        logging.debug('Removing path: "%s"', path)
         try:
             if os.path.exists(path):
                 if os.path.isdir(path):
@@ -61,10 +60,9 @@ class DconfConfigAdapter(BaseConfigAdapter):
                     os.remove(path)
         except Exception as e:
             if throw:
-                logging.error('Error removing path "%s": %s' % (path, e))
+                logging.error('Error removing path "%s": %s', path, e)
                 raise e
-            else:
-                logging.warning('Error removing path "%s": %s' % (path, e))
+            logging.warning('Error removing path "%s": %s', path, e)
 
     def bootstrap(self, uid):
         # Remove old data
@@ -87,31 +85,31 @@ class DconfConfigAdapter(BaseConfigAdapter):
                 keyfile.set_string(keypath, keyname, item["value"])
 
         # Create keyfile path
-        logging.debug('Creating keyfile path for dconf: "%s"' % profile_path)
+        logging.debug('Creating keyfile path for dconf: "%s"', profile_path)
         try:
             os.makedirs(keyfile_dir)
-        except Exception:
-            logging.error('Error creating keyfile path "%s": %s' % (path, e))
+        except Exception as e:
+            logging.error('Error creating keyfile path "%s": %s', profile_path, e)
             return
 
         # Save config file
         keyfile_path = os.path.join(keyfile_dir, self.FC_PROFILE_FILE)
-        logging.debug('Saving dconf keyfile to "%s"' % keyfile_path)
+        logging.debug('Saving dconf keyfile to "%s"', keyfile_path)
         try:
             keyfile.save_to_file(keyfile_path)
         except Exception as e:
-            logging.error('Error saving dconf keyfile at "%s": %s' % (keyfile_path, e))
+            logging.error('Error saving dconf keyfile at "%s": %s', keyfile_path, e)
             return
 
         # Compile dconf database
         try:
             self._compile_dconf_db(uid)
         except Exception as e:
-            logging.error('Error compiling dconf data to "%s": %s' % (db_path, e))
+            logging.error('Error compiling dconf data to "%s": %s', db_path, e)
             return
 
         # Create runtime path
-        logging.debug('Creating profile path for dconf: "%s"' % profile_path)
+        logging.debug('Creating profile path for dconf: "%s"', profile_path)
         try:
             os.makedirs(self.dconf_profile_path)
         except Exception:
@@ -122,16 +120,16 @@ class DconfConfigAdapter(BaseConfigAdapter):
                 fd.write(profile_data)
                 fd.close()
         except Exception as e:
-            logging.error('Error saving dconf profile at "%s": %s' % (profile_path, e))
+            logging.error('Error saving dconf profile at "%s": %s', profile_path, e)
             return
 
-        logging.info("Processed dconf configuration for UID %s")
+        logging.info("Processed dconf configuration for UID %s", uid)
 
     def _compile_dconf_db(self, uid):
         """
         Compiles dconf database
         """
-        profile_path, keyfile_dir, db_path = self.get_paths_for_uid(uid)
+        keyfile_dir, db_path = self.get_paths_for_uid(uid)[1:]
 
         # Execute dbus service
         cmd = subprocess.Popen(

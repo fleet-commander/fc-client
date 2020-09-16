@@ -33,10 +33,10 @@ from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import NM
 
-from fleetcommanderclient.adapters import BaseAdapter
+from fleetcommanderclient.adapters.base import BaseAdapter
 
 
-class NetworkManagerDbusHelper(object):
+class NetworkManagerDbusHelper:
     """
     Network manager dbus helper
     """
@@ -121,7 +121,7 @@ class NetworkManagerAdapter(BaseAdapter):
         """
         # Write data as JSON
         path = os.path.join(cache_path, "fleet-commander")
-        logging.debug("Writing NM data to {}".format(path))
+        logging.debug("Writing NM data to %s", path)
         with open(path, "w") as fd:
             fd.write(json.dumps(config_data))
             fd.close()
@@ -134,7 +134,7 @@ class NetworkManagerAdapter(BaseAdapter):
         path = os.path.join(cache_path, "fleet-commander")
 
         if os.path.isfile(path):
-            logging.debug("Deploying connections from file {}".format(path))
+            logging.debug("Deploying connections from file %s", path)
             nmhelper = NetworkManagerDbusHelper()
             uname = nmhelper.get_user_name(uid)
             with open(path, "r") as fd:
@@ -146,10 +146,8 @@ class NetworkManagerAdapter(BaseAdapter):
                 connection_data, hashed_uuid = self._add_connection_metadata(
                     connection["data"], uname, conn_uuid
                 )
-
                 logging.debug(
-                    "Checking connection %s + %s -> %s"
-                    % (conn_uuid, uname, hashed_uuid)
+                    "Checking connection %s + %s -> %s", conn_uuid, uname, hashed_uuid
                 )
 
                 # Check if connection already exist
@@ -159,15 +157,13 @@ class NetworkManagerAdapter(BaseAdapter):
                     try:
                         nmhelper.update_connection(path, connection_data)
                     except Exception as e:
-                        logging.error(
-                            "Error updating connection %s: %s" % (conn_uuid, e)
-                        )
+                        logging.error("Error updating connection %s: %s", conn_uuid, e)
                 else:
                     # Connection does not exist. Add it
                     try:
                         nmhelper.add_connection(connection_data)
                     except Exception as e:
                         # Error adding connection
-                        logging.error("Error adding connection %s: %s" % (conn_uuid, e))
+                        logging.error("Error adding connection %s: %s", conn_uuid, e)
         else:
-            logging.debug("Connections file {} is not present. Ignoring.".format(path))
+            logging.debug("Connections file %s is not present. Ignoring.", path)

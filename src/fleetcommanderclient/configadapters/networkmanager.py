@@ -35,7 +35,7 @@ from gi.repository import NM
 from fleetcommanderclient.configadapters.base import BaseConfigAdapter
 
 
-class NetworkManagerDbusHelper(object):
+class NetworkManagerDbusHelper:
     """
     Network manager dbus helper
     """
@@ -94,8 +94,11 @@ class NetworkManagerConfigAdapter(BaseConfigAdapter):
 
     NAMESPACE = "org.freedesktop.NetworkManager"
 
-    def bootstrap(self, uid):
+    def __init__(self):
         self.nmhelper = NetworkManagerDbusHelper()
+
+    def bootstrap(self, uid):
+        pass
 
     def add_connection_metadata(self, serialized_data, uname, conn_uuid):
         sc = NM.SimpleConnection.new_from_dbus(
@@ -126,7 +129,7 @@ class NetworkManagerConfigAdapter(BaseConfigAdapter):
             )
 
             logging.debug(
-                "Checking connection %s + %s -> %s" % (conn_uuid, uname, hashed_uuid)
+                "Checking connection %s + %s -> %s", conn_uuid, uname, hashed_uuid
             )
             # Check if connection already exist
             path = self.nmhelper.get_connection_path_by_uuid(hashed_uuid)
@@ -135,11 +138,11 @@ class NetworkManagerConfigAdapter(BaseConfigAdapter):
                 try:
                     self.nmhelper.update_connection(path, connection_data)
                 except Exception as e:
-                    logging.error("Error updating connection %s: %s" % (conn_uuid, e))
+                    logging.error("Error updating connection %s: %s", conn_uuid, e)
             else:
                 # Connection does not exist. Add it
                 try:
                     self.nmhelper.add_connection(connection_data)
                 except Exception as e:
                     # Error adding connection
-                    logging.error("Error adding connection %s: %s" % (conn_uuid, e))
+                    logging.error("Error adding connection %s: %s", conn_uuid, e)

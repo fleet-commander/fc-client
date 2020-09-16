@@ -27,7 +27,7 @@ import platform
 import logging
 import json
 import shutil
-import optparse
+import optparse  # pylint: disable=deprecated-module
 
 import dns.resolver
 
@@ -51,7 +51,6 @@ except ImportError:
     logging.debug("Using SAMBA 3 SMB connection (Internal)")
 
 from gi.repository import Gio
-from gi.repository import GLib
 
 from fleetcommanderclient.configloader import ConfigLoader
 from fleetcommanderclient.settingscompiler import SettingsCompiler
@@ -99,7 +98,7 @@ FC_NO_MATCH_PRIORITY = "00000"
 GPO_APPLY_GROUP_POLICY_CAR = "edacfd8f-ffb3-11d1-b41d-00a0c968f939"
 
 
-class SecurityDescriptorHelper(object):
+class SecurityDescriptorHelper:
     def __init__(self, sd, connector):
         self.connector = connector
         self.dacl_flags = ""
@@ -119,7 +118,7 @@ class SecurityDescriptorHelper(object):
         self.parse_sddl(sddl)
 
     def parse_sddl(self, sddl):
-        logging.debug("Parsing SDDL for security descriptor. Given SDDL: %s" % sddl)
+        logging.debug("Parsing SDDL for security descriptor. Given SDDL: %s", sddl)
         # SACLs
         if "S:" in sddl:
             sacl_index = sddl.index("S:")
@@ -150,7 +149,7 @@ class SecurityDescriptorHelper(object):
         self.owner_sid = sddl[2:g_index]
 
     def add_dacl_ace(self, ace):
-        logging.debug("Adding ACE to security descriptor: %s")
+        logging.debug("Adding ACE to security descriptor: %s", ace)
         if ace not in self.dacls:
             self.dacls.append(ACEHelper(str(ace)))
         else:
@@ -180,7 +179,7 @@ class SecurityDescriptorHelper(object):
             "hosts": sorted(list(hosts)),
             "hostgroups": [],
         }
-        logging.debug("Retrieved applies: %s" % applies)
+        logging.debug("Retrieved applies: %s", applies)
         return applies
 
     def to_sddl(self):
@@ -202,13 +201,13 @@ class SecurityDescriptorHelper(object):
     def to_sd(self):
         logging.debug("Generating security descriptor")
         sddl = self.to_sddl()
-        logging.debug("SDDL for security descriptor generation: %s" % sddl)
+        logging.debug("SDDL for security descriptor generation: %s", sddl)
         domain_sid = self.connector.get_domain_sid()
         sd = security.descriptor.from_sddl(sddl, domain_sid)
         return sd
 
 
-class ACEHelper(object):
+class ACEHelper:
     def __init__(self, ace_string):
         # Remove parenthesis from ACE string
         ace_string = ace_string.replace("(", "").replace(")", "")
@@ -244,6 +243,9 @@ class ACEHelper(object):
         ace_str = str(other)
         return ace_str == self.ace_string
 
+    def __hash__(self):
+        return hash(self.ace_string)
+
     def __repr__(self):
         return "ACEHelper%s" % self.ace_string
 
@@ -251,7 +253,7 @@ class ACEHelper(object):
         return self.ace_string
 
 
-class FleetCommanderADProfileRetriever(object):
+class FleetCommanderADProfileRetriever:
     """
     Fleet commander Active Directory profile retriever
     """
@@ -261,6 +263,7 @@ class FleetCommanderADProfileRetriever(object):
     FC_BUS = Gio.BusType.SYSTEM
     CACHED_DOMAIN_DN = None
     CACHED_SERVER_NAME = None
+    connection = None
 
     def __init__(self, configfile="/etc/xdg/fleet-commander-client.conf"):
         """
@@ -323,7 +326,7 @@ class FleetCommanderADProfileRetriever(object):
                 "_ldap._tcp.dc._msdcs.%s" % self.DOMAIN.lower(), "SRV"
             )
             self.CACHED_SERVER_NAME = str(result[0].target)[:-1]
-        logging.debug("FCADRetriever: LDAP server: %s" % self.CACHED_SERVER_NAME)
+        logging.debug("FCADRetriever: LDAP server: %s", self.CACHED_SERVER_NAME)
         return self.CACHED_SERVER_NAME
 
     def _ldap_connect(self):
@@ -333,7 +336,7 @@ class FleetCommanderADProfileRetriever(object):
         logging.debug("FCADRetriever: Connecting to AD LDAP server")
         server_name = self._get_server_name()
         # Connect to LDAP using Kerberos
-        logging.debug("FCADRetriever: Initializing LDAP connection to %s" % server_name)
+        logging.debug("FCADRetriever: Initializing LDAP connection to %s", server_name)
         self.connection = ldap.initialize("ldap://%s" % server_name)
         self.connection.set_option(ldap.OPT_REFERRALS, 0)
         sasl_auth = ldap.sasl.sasl({}, "GSSAPI")
@@ -401,16 +404,13 @@ class FleetCommanderADProfileRetriever(object):
         if len(resultlist) > 0:
             data = resultlist[0][1]
             return {"cn": data["cn"][0], "objectClass": data["objectClass"]}
-        else:
-            return None
+        return None
 
     def get_sid(self, sid_ndr):
         return ndr_unpack(security.dom_sid, sid_ndr)
 
     def get_profile(self, filter):
-        logging.debug(
-            "FCADRetriever: Getting profile from AD LDAP. filter: %s" % filter
-        )
+        logging.debug("FCADRetriever: Getting profile from AD LDAP. filter: %s", filter)
         base_dn = "CN=Policies,CN=System,%s" % self._get_domain_dn()
         attrs = ["cn", "displayName", "gPCFileSysPath", "nTSecurityDescriptor"]
         resultlist = self.connection.search_s(
@@ -434,23 +434,23 @@ class FleetCommanderADProfileRetriever(object):
         for res in resultlist:
             resdata = res[1]
             if resdata:
-                logging.debug("FCADRetriever: Reading profile data: {}".format(resdata))
+                logging.debug("FCADRetriever: Reading profile data: %s", resdata)
                 profile = self._read_profile_data(resdata)
                 if profile is not None:
                     profiles.append(profile)
-        logging.debug("FCADRetriever: Read profiles: {}".format(profiles))
+        logging.debug("FCADRetriever: Read profiles: %s", profiles)
         return profiles
 
     def get_profile_cifs_data(self, cn):
-        logging.debug("FCADRetriever: Getting CIFs data for profile %s" % cn)
+        logging.debug("FCADRetriever: Getting CIFs data for profile %s", cn)
         conn = self._get_smb_connection()
         furi = "%s\\Policies\\%s\\fleet-commander.json" % (self.DOMAIN, cn)
-        logging.debug("FCADRetriever: Reading CIFs data from %s" % furi)
+        logging.debug("FCADRetriever: Reading CIFs data from %s", furi)
         try:
             return conn.loadfile(furi)
         except Exception as e:
             logging.error(
-                "FCADRetriever: Failed reading CIFs data from {}: {}".format(furi, e)
+                "FCADRetriever: Failed reading CIFs data from %s: %s", furi, e
             )
         return None
 
@@ -483,9 +483,7 @@ class FleetCommanderADProfileRetriever(object):
         )
         realms = sssd_provider.get_cached_property("Realms")
         if len(realms) > 0:
-            logging.debug(
-                "FCADRetriever: realmd queried. Realm object {}".format(realms[0])
-            )
+            logging.debug("FCADRetriever: realmd queried. Realm object %s", realms[0])
             realm = Gio.DBusProxy.new_for_bus_sync(
                 self.REALMD_BUS,
                 Gio.DBusProxyFlags.NONE,
@@ -498,15 +496,13 @@ class FleetCommanderADProfileRetriever(object):
             domain = str(realm.get_cached_property("Name")).replace("'", "")
             details = {str(k): str(v) for k, v in realm.get_cached_property("Details")}
             server = details.get("server-software", "not-ad")
-            logging.debug(
-                "FCADRetriever: Realm details: {} ({})".format(domain, server)
-            )
+            logging.debug("FCADRetriever: Realm details: %s (%s)", domain, server)
             if server != "active-directory":
                 logging.debug(
                     "FCADRetriever: Realm is not an Active Directory. Exiting."
                 )
                 self.quit()
-            return domain
+            self.DOMAIN = domain
         else:
             logging.debug(
                 "FCADRetriever: This computer is not part of any realm. Exiting."
@@ -599,13 +595,13 @@ class FleetCommanderADProfileRetriever(object):
 
     def run(self):
         # Check realm
-        self.DOMAIN = self.check_realm()
+        self.check_realm()
         # Connect to LDAP
         try:
             self._ldap_connect()
             logging.debug("FCADRetriever: LDAP connection succesful")
         except Exception as e:
-            logging.error("FCADRetriever: LDAP connection failed. {}".format(e))
+            logging.error("FCADRetriever: LDAP connection failed. %s", e)
             sys.exit(1)
 
         # First of all, execute a deployment with existing data so we can

@@ -20,7 +20,6 @@
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
 import os
-import stat
 import logging
 import json
 
@@ -42,7 +41,7 @@ class ChromiumConfigAdapter(BaseConfigAdapter):
         filename = self.POLICIES_FILENAME % uid
         path = os.path.join(self.policies_path, filename)
         # Delete file at managed profiles
-        logging.debug('Removing previous policies file: "%s"' % path)
+        logging.debug('Removing previous policies file: "%s"', path)
         try:
             os.remove(path)
         except Exception:
@@ -62,7 +61,7 @@ class ChromiumConfigAdapter(BaseConfigAdapter):
             if "key" in item and "value" in item:
                 policies[item["key"]] = item["value"]
         # Write policies data
-        logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
+        logging.debug('Writing %s data to: "%s"', self.NAMESPACE, path)
         with open(path, "w") as fd:
             # Change permissions and ownership permisions
             self._set_perms(fd, uid, -1, 0o640)

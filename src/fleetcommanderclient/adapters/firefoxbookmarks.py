@@ -25,7 +25,7 @@ import logging
 import shutil
 import json
 
-from fleetcommanderclient.adapters import BaseAdapter
+from fleetcommanderclient.adapters.base import BaseAdapter
 
 
 class FirefoxBookmarksAdapter(BaseAdapter):
@@ -53,7 +53,7 @@ class FirefoxBookmarksAdapter(BaseAdapter):
         policies_data = {"policies": {"Bookmarks": bookmarks}}
         # Write preferences data
         path = os.path.join(cache_path, "fleet-commander")
-        logging.debug("Writing preferences data to {}".format(path))
+        logging.debug("Writing preferences data to %s", path)
         with open(path, "w") as fd:
             fd.write(json.dumps(policies_data))
             fd.close()
@@ -65,29 +65,25 @@ class FirefoxBookmarksAdapter(BaseAdapter):
         """
         cached_file_path = os.path.join(cache_path, "fleet-commander")
         if os.path.isfile(cached_file_path):
-            logging.debug("Deploying preferences at {}.".format(cached_file_path))
+            logging.debug("Deploying preferences at %s.", cached_file_path)
             directory = self.policies_path.format(uid)
             path = os.path.join(directory, self.POLICIES_FILENAME)
             # Remove previous preferences file
-            logging.debug("Removing previous policies file {}".format(path))
+            logging.debug("Removing previous policies file %s", path)
             try:
                 os.remove(path)
             except Exception as e:
-                logging.debug(
-                    "Failed to remove previous policies file {}: {}".format(path, e)
-                )
+                logging.debug("Failed to remove previous policies file %s: %s", path, e)
             # Create directory
             try:
                 os.makedirs(directory)
             except Exception:
                 pass
             # Deploy new policies file
-            logging.debug(
-                "Copying policies file at {} to {}".format(cached_file_path, path)
-            )
+            logging.debug("Copying policies file at %s to %s", cached_file_path, path)
             shutil.copyfile(cached_file_path, path)
             # Change permissions and ownership
             os.chown(path, uid, -1)
             os.chmod(path, stat.S_IREAD)
         else:
-            logging.debug("No policies file at {}. Ignoring.".format(cached_file_path))
+            logging.debug("No policies file at %s. Ignoring.", cached_file_path)

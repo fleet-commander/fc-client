@@ -26,7 +26,7 @@ import shutil
 import logging
 
 
-class BaseAdapter(object):
+class BaseAdapter:
     """
     Base configuration adapter class
     """
@@ -47,10 +47,9 @@ class BaseAdapter(object):
             return os.path.join(
                 os.path.expanduser("~"), ".cache/fleet-commander", self.NAMESPACE
             )
-        else:
-            # Get user directory from password database
-            homedir = pwd.getpwuid(uid).pw_dir
-            return os.path.join(homedir, ".cache/fleet-commander/", self.NAMESPACE)
+        # Get user directory from password database
+        homedir = pwd.getpwuid(uid).pw_dir
+        return os.path.join(homedir, ".cache/fleet-commander/", self.NAMESPACE)
 
     def cleanup_cache(self, namespace_cache_path=None):
         """
@@ -58,7 +57,7 @@ class BaseAdapter(object):
         """
         if namespace_cache_path is None:
             namespace_cache_path = self._get_cache_path()
-        logging.debug("Cleaning up cache path {}".format(namespace_cache_path))
+        logging.debug("Cleaning up cache path %s", namespace_cache_path)
         if os.path.exists(namespace_cache_path):
             shutil.rmtree(namespace_cache_path)
 
@@ -70,11 +69,9 @@ class BaseAdapter(object):
         # Cleaning up cache path
         self.cleanup_cache(namespace_cache_path)
         # Create namespace cache path
-        logging.debug("Creating cache path {}".format(namespace_cache_path))
+        logging.debug("Creating cache path %s", namespace_cache_path)
         os.makedirs(namespace_cache_path)
-        logging.debug(
-            "Processing data configuration for namespace {}".format(self.NAMESPACE)
-        )
+        logging.debug("Processing data configuration for namespace %s", self.NAMESPACE)
         self.process_config_data(config_data, namespace_cache_path)
 
     def deploy(self, uid):
@@ -91,7 +88,7 @@ class BaseAdapter(object):
         """
         raise NotImplementedError("You must implement generate_config_data method")
 
-    def deploy_files(self, namespace_cache_path, uid):
+    def deploy_files(self, cache_path, uid):
         """
         File deployment method to be defined by each configuration adapter.
         This method will be called by privileged process

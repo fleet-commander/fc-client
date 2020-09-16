@@ -19,7 +19,6 @@
 # Author: Oliver Gutiérrez <ogutierrez@redhat.com>
 
 import os
-import stat
 import logging
 import json
 
@@ -36,26 +35,22 @@ class FirefoxBookmarksConfigAdapter(BaseConfigAdapter):
 
     def __init__(self, policies_path):
         logging.debug(
-            "Initialized firefox bookmarks config adapter with policies path {}".format(
-                policies_path
-            )
+            "Initialized firefox bookmarks config adapter with policies path %s",
+            policies_path,
         )
         self.policies_path = policies_path
 
     def bootstrap(self, uid):
         path = os.path.join(self.policies_path.format(uid), self.POLICIES_FILENAME)
         # Delete existing files
-        logging.debug('Removing previous policies file: "{}"'.format(path))
+        logging.debug('Removing previous policies file: "%s"', path)
         try:
             os.remove(path)
         except Exception as e:
-            logging.debug(
-                'Error removing previous policies file "{}": {}'.format(path, e)
-            )
-            pass
+            logging.debug('Error removing previous policies file "%s": %s', path, e)
 
     def update(self, uid, data):
-        logging.debug("Updating {}. Data received: {}".format(self.NAMESPACE, data))
+        logging.debug("Updating %s. Data received: %s", self.NAMESPACE, data)
         directory = self.policies_path.format(uid)
         path = os.path.join(directory, self.POLICIES_FILENAME)
         # Create directory
@@ -70,7 +65,7 @@ class FirefoxBookmarksConfigAdapter(BaseConfigAdapter):
                 bookmarks.append(item["value"])
         policies_data = {"policies": {"Bookmarks": bookmarks}}
         # Write preferences data
-        logging.debug('Writing {} data to: "{}"'.format(self.NAMESPACE, path))
+        logging.debug('Writing %s data to: "%s"', self.NAMESPACE, path)
         with open(path, "w") as fd:
             # Change permissions and ownership permisions
             self._set_perms(fd, uid, -1, 0o640)

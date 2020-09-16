@@ -22,7 +22,7 @@
 import os
 
 
-class BaseConfigAdapter(object):
+class BaseConfigAdapter:
     """
     Base configuration adapter class
     """

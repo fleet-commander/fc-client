@@ -20,7 +20,6 @@
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
 import os
-import stat
 import logging
 import json
 
@@ -43,14 +42,14 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
         filename = self.PREFS_FILENAME % uid
         path = os.path.join(self.preferences_path, filename)
         # Delete file at preferences path
-        logging.debug('Removing previous preferences file: "%s"' % path)
+        logging.debug('Removing previous preferences file: "%s"', path)
         try:
             os.remove(path)
         except Exception:
             pass
 
     def update(self, uid, data):
-        logging.debug("Updating %s. Data received: %s" % (self.NAMESPACE, data))
+        logging.debug("Updating %s. Data received: %s", self.NAMESPACE, data)
         filename = self.PREFS_FILENAME % uid
         path = os.path.join(self.preferences_path, filename)
         # Create preferences path
@@ -67,7 +66,7 @@ class FirefoxConfigAdapter(BaseConfigAdapter):
                     self.PREF_TEMPLATE % (item["key"], json.dumps(item["value"]))
                 )
         # Write preferences data
-        logging.debug('Writing %s data to: "%s"' % (self.NAMESPACE, path))
+        logging.debug('Writing %s data to: "%s"', self.NAMESPACE, path)
         with open(path, "w") as fd:
             # Change permissions and ownership permisions
             self._set_perms(fd, uid, -1, 0o640)
