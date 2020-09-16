@@ -36,14 +36,10 @@ else:
 
 import dbusmock
 from dbusmock.templates.networkmanager import (
-    CSETTINGS_IFACE,
     MANAGER_IFACE,
     SETTINGS_OBJ,
     SETTINGS_IFACE,
 )
-
-import gi
-from gi.repository import GLib
 
 sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
@@ -88,9 +84,9 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
     ]
 
     @classmethod
-    def setUpClass(klass):
-        klass.start_system_bus()
-        klass.dbus_con = klass.get_dbus(True)
+    def setUpClass(cls):
+        cls.start_system_bus()
+        cls.dbus_con = cls.get_dbus(True)
 
     def setUp(self):
         self.p_mock, self.obj_nm = self.spawn_server_template(
@@ -140,7 +136,7 @@ class TestNetworkManagerConfigAdapter(dbusmock.DBusTestCase):
 
         conns = self.settings.ListConnections()
 
-        logging.debug("Connections: {}".format(conns))
+        logging.debug("Connections: %s", conns)
 
         self.assertEqual(len(conns), 2)
 

@@ -28,9 +28,6 @@ import json
 import unittest
 import stat
 
-import gi
-from gi.repository import GLib
-
 sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
 import fleetcommanderclient.configadapters.chromium

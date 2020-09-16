@@ -41,12 +41,12 @@ class TestConfigLoader(unittest.TestCase):
         configfile = os.path.join(
             os.environ["TOPSRCDIR"], "tests/data/inexistent_config_file.conf"
         )
-        config = ConfigLoader(configloader)
+        config = ConfigLoader(configfile)
         # Read a non existent key without default specified
         result = config.get_value("inexistent_key")
         self.assertEqual(result, None)
         # Read non existent key but with default value
-        for key, value in config.DEFAULTS.keys():
+        for key, value in config.DEFAULTS.items():
             result = config.get_value(key)
             self.assertEqual(result, value)
 
@@ -55,13 +55,17 @@ class TestConfigLoader(unittest.TestCase):
         configfile = os.path.join(
             os.environ["TOPSRCDIR"], "tests/data/test_config_file.conf"
         )
-        config = ConfigLoader(configloader)
+        config = ConfigLoader(configfile)
         # Read a non existent key without default specified
         result = config.get_value("inexistent_key")
         self.assertEqual(result, None)
         # Read non existent key but with default value
-        result = config.get_value("debug_level")
-        self.assertEqual(result, config.DEFAULTS["debug_level"])
+        result = config.get_value("log_level")
+        self.assertEqual(result, config.DEFAULTS["log_level"])
         # Read existent key
         result = config.get_value("goa_run_path")
         self.assertEqual(result, "/run/goa-1.0")
+
+
+if __name__ == "__main__":
+    unittest.main()

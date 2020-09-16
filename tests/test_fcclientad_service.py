@@ -23,7 +23,6 @@
 # Python imports
 import os
 import sys
-import logging
 
 import dbus
 
@@ -33,7 +32,7 @@ sys.path.append(PYTHONPATH)
 # Fleet commander imports
 from fleetcommanderclient import fcclientad
 from fleetcommanderclient.configloader import ConfigLoader
-from fleetcommanderclient.adapters import nm, goa
+from fleetcommanderclient.adapters import goa
 
 USER_NAME = "myuser"
 USER_UID = 55555
@@ -85,12 +84,10 @@ class TestFleetCommanderClientADDbusService(
 
         fcclientad.ConfigLoader = TestConfigLoader
 
-        super(TestFleetCommanderClientADDbusService, self).__init__(
-            configfile="NON_EXISTENT"
-        )
+        super().__init__(configfile="NON_EXISTENT")
 
         # Put all adapters in test mode
-        for namespace, adapter in self.adapters.items():
+        for adapter in self.adapters.values():
             adapter._TEST_CACHE_PATH = os.path.join(self.tmpdir, "cache")
 
     def get_peer_uid(self, sender):

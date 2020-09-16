@@ -38,7 +38,7 @@ sys.path.append(PYTHONPATH)
 from fleetcommanderclient import fcclient
 
 
-class FleetCommanderClientDbusClient(object):
+class FleetCommanderClientDbusClient:
     """
     Fleet commander client dbus client
     """

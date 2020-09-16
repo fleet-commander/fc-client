@@ -34,13 +34,10 @@ import dbus.mainloop.glib
 
 import dbusmock
 from dbusmock.templates.networkmanager import (
-    CSETTINGS_IFACE,
     MANAGER_IFACE,
     SETTINGS_OBJ,
     SETTINGS_IFACE,
 )
-
-from gi.repository import GLib
 
 sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
 
@@ -53,7 +50,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def mock_getpwuid(uid):
-    class UserObject(object):
+    class UserObject:
         pw_name = "mockeduser{}".format(uid)
 
     return UserObject()
@@ -83,9 +80,9 @@ class TestNetworkManagerAdapter(dbusmock.DBusTestCase):
     ]
 
     @classmethod
-    def setUpClass(klass):
-        klass.start_system_bus()
-        klass.dbus_con = klass.get_dbus(True)
+    def setUpClass(cls):
+        cls.start_system_bus()
+        cls.dbus_con = cls.get_dbus(True)
 
     def setUp(self):
         self.test_directory = tempfile.mkdtemp(prefix="fc-client-nm-test")

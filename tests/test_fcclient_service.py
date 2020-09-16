@@ -23,7 +23,6 @@
 # Python imports
 import os
 import sys
-import logging
 
 import dbus
 
@@ -76,9 +75,7 @@ class TestFleetCommanderClientDbusService(fcclient.FleetCommanderClientDbusServi
 
         fcclient.ConfigLoader = TestConfigLoader
 
-        super(TestFleetCommanderClientDbusService, self).__init__(
-            configfile="NON_EXISTENT"
-        )
+        super().__init__(configfile="NON_EXISTENT")
 
     @dbus.service.method(
         fcclient.DBUS_INTERFACE_NAME, in_signature="", out_signature="b"

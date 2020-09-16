@@ -26,7 +26,6 @@ import tempfile
 import shutil
 import unittest
 
-import gi
 from gi.repository import GLib
 
 sys.path.append(os.path.join(os.environ["TOPSRCDIR"], "src"))
@@ -89,7 +88,7 @@ class TestGOAConfigAdapter(unittest.TestCase):
         keyfile.load_from_file(keyfile_path, GLib.KeyFileFlags.NONE)
 
         # Check section list
-        accounts = self.TEST_DATA.keys()
+        accounts = list(self.TEST_DATA.keys())
         accounts_keyfile = keyfile.get_groups()[0]
         accounts_keyfile.sort()
         self.assertEqual(sorted(accounts), accounts_keyfile)
@@ -98,7 +97,7 @@ class TestGOAConfigAdapter(unittest.TestCase):
         for account, accountdata in self.TEST_DATA.items():
             # Check all keys and values
             for key, value in accountdata.items():
-                if type(value) == bool:
+                if isinstance(value, bool):
                     value_keyfile = keyfile.get_boolean(account, key)
                 else:
                     value_keyfile = keyfile.get_string(account, key)
