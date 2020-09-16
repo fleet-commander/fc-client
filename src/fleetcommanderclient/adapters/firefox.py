@@ -25,7 +25,7 @@ import logging
 import shutil
 import json
 
-from fleetcommanderclient.adapters import BaseAdapter
+from fleetcommanderclient.adapters.base import BaseAdapter
 
 
 class FirefoxAdapter(BaseAdapter):
@@ -57,7 +57,7 @@ class FirefoxAdapter(BaseAdapter):
                 )
         # Write preferences data
         path = os.path.join(cache_path, "fleet-commander")
-        logging.debug("Writing preferences data to {}".format(path))
+        logging.debug("Writing preferences data to %s", path)
         with open(path, "w") as fd:
             fd.write("\n".join(preferences))
             fd.close()
@@ -69,27 +69,25 @@ class FirefoxAdapter(BaseAdapter):
         """
         cached_file_path = os.path.join(cache_path, "fleet-commander")
         if os.path.isfile(cached_file_path):
-            logging.debug("Deploying preferences at {}.".format(cached_file_path))
+            logging.debug("Deploying preferences at %s.", cached_file_path)
             filename = self.PREFS_FILENAME.format(uid)
             path = os.path.join(self.prefs_path, filename)
             # Remove previous preferences file
-            logging.debug("Removing previous preferences file {}".format(path))
+            logging.debug("Removing previous preferences file %s", path)
             try:
                 os.remove(path)
             except Exception as e:
                 logging.debug(
-                    "Failed to remove previous preferences file {}: {}".format(path, e)
+                    "Failed to remove previous preferences file %s: %s", path, e
                 )
 
             # Deploy new preferences file
             logging.debug(
-                "Copying preferences file at {} to {}".format(cached_file_path, path)
+                "Copying preferences file at %s to %s", cached_file_path, path
             )
             shutil.copyfile(cached_file_path, path)
             # Change permissions and ownership
             os.chown(path, uid, -1)
             os.chmod(path, stat.S_IREAD)
         else:
-            logging.debug(
-                "No preferences file at {}. Ignoring.".format(cached_file_path)
-            )
+            logging.debug("No preferences file at %s. Ignoring.", cached_file_path)

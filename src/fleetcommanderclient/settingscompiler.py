@@ -26,7 +26,7 @@ import json
 from fleetcommanderclient import mergers
 
 
-class SettingsCompiler(object):
+class SettingsCompiler:
     """
     Profile settings compiler class
 
@@ -66,11 +66,7 @@ class SettingsCompiler(object):
                 return data
         except Exception as e:
             logging.error(
-                "ProfileGenerator: Ignoring profile data from %(f)s: %(e)s"
-                % {
-                    "f": filepath,
-                    "e": e,
-                }
+                "ProfileGenerator: Ignoring profile data from %s: %s", filepath, e
             )
         return {}
 
@@ -78,7 +74,7 @@ class SettingsCompiler(object):
         """
         Merge two profiles overwriting previous values with new ones
         """
-        for namespace, settings in new.items():
+        for namespace in new.keys():
             # Check for merger
             if namespace in self.mergers:
                 if namespace not in old.keys():

@@ -23,7 +23,6 @@ import os
 import shutil
 import logging
 
-import gi
 from gi.repository import GLib
 
 from fleetcommanderclient.configadapters.base import BaseConfigAdapter
@@ -42,24 +41,20 @@ class GOAConfigAdapter(BaseConfigAdapter):
 
     def bootstrap(self, uid):
         runtime_path = os.path.join(self.goa_runtime_path, str(uid))
-        logging.debug('Removing runtime path for GOA: "%s"' % runtime_path)
+        logging.debug('Removing runtime path for GOA: "%s"', runtime_path)
         try:
             shutil.rmtree(runtime_path)
         except Exception as e:
-            logging.warning(
-                'Error removing GOA runtime path "%s": %s' % (runtime_path, e)
-            )
+            logging.warning('Error removing GOA runtime path "%s": %s', runtime_path, e)
 
     def update(self, uid, data):
         # Create runtime path
         runtime_path = os.path.join(self.goa_runtime_path, str(uid))
-        logging.debug('Creating runtime path for GOA: "%s"' % runtime_path)
+        logging.debug('Creating runtime path for GOA: "%s"', runtime_path)
         try:
             os.makedirs(runtime_path)
         except Exception as e:
-            logging.error(
-                'Error creating GOA runtime path "%s": %s' % (runtime_path, e)
-            )
+            logging.error('Error creating GOA runtime path "%s": %s', runtime_path, e)
             return
 
         # Prepare data for saving it in keyfile
@@ -67,18 +62,18 @@ class GOAConfigAdapter(BaseConfigAdapter):
         keyfile = GLib.KeyFile.new()
         for account, accountdata in data.items():
             for key, value in accountdata.items():
-                if type(value) == bool:
+                if isinstance(value, bool):
                     keyfile.set_boolean(account, key, value)
                 else:
                     keyfile.set_string(account, key, value)
 
         # Save config file
         keyfile_path = os.path.join(runtime_path, self.FC_ACCOUNTS_FILE)
-        logging.debug('Saving GOA keyfile to "%s"' % keyfile_path)
+        logging.debug('Saving GOA keyfile to "%s"', keyfile_path)
         try:
             keyfile.save_to_file(keyfile_path)
         except Exception as e:
-            logging.error('Error saving GOA keyfile at "%s": %s' % (keyfile_path, e))
+            logging.error('Error saving GOA keyfile at "%s": %s', keyfile_path, e)
             return
 
-        logging.info("Processed GOA configuration for UID %s")
+        logging.info("Processed GOA configuration for UID %s", uid)

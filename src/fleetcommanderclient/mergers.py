@@ -23,7 +23,7 @@
 import logging
 
 
-class BaseMerger(object):
+class BaseMerger:
     """
     Base merger class
 
@@ -38,6 +38,7 @@ class BaseMerger(object):
         """
         if self.KEY_NAME in setting:
             return setting[self.KEY_NAME]
+        return None
 
     def merge(self, *args):
         """
@@ -58,8 +59,6 @@ class GSettingsMerger(BaseMerger):
     Policy: Overwrite same key with new value, create new keys
     """
 
-    pass
-
 
 class LibreOfficeMerger(BaseMerger):
     """
@@ -67,8 +66,6 @@ class LibreOfficeMerger(BaseMerger):
 
     Policy: Overwrite same key with new value, create new keys
     """
-
-    pass
 
 
 class ChromiumMerger(BaseMerger):
@@ -96,12 +93,12 @@ class ChromiumMerger(BaseMerger):
 
     def merge_bookmarks(self, a, b):
         for elem_b in b:
-            logging.debug("Processing %s" % elem_b)
+            logging.debug("Processing %s", elem_b)
             if "children" in elem_b:
                 merged = False
                 for elem_a in a:
                     if elem_a["name"] == elem_b["name"] and "children" in elem_a:
-                        logging.debug("Processing children of %s" % elem_b["name"])
+                        logging.debug("Processing children of %s", elem_b["name"])
                         elem_a["children"] = self.merge_bookmarks(
                             elem_a["children"], elem_b["children"]
                         )
@@ -112,7 +109,7 @@ class ChromiumMerger(BaseMerger):
             else:
                 if elem_b not in a:
                     a.append(elem_b)
-        logging.debug("Returning %s" % a)
+        logging.debug("Returning %s", a)
         return a
 
 
@@ -122,8 +119,6 @@ class FirefoxMerger(BaseMerger):
 
     Policy: Overwrite same key with new value, create new keys
     """
-
-    pass
 
 
 class NetworkManagerMerger(BaseMerger):

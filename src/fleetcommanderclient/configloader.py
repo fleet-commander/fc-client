@@ -21,11 +21,10 @@
 
 import logging
 
-import gi
 from gi.repository import GLib
 
 
-class ConfigLoader(object):
+class ConfigLoader:
 
     DEFAULTS = {
         "dconf_db_path": "/etc/dconf/db",
@@ -45,7 +44,7 @@ class ConfigLoader(object):
             self.keyfile.load_from_file(configfile, GLib.KeyFileFlags.NONE)
         except Exception as e:
             logging.warning(
-                "Can not load config file %s. Using defaults. %s" % (configfile, e)
+                "Can not load config file %s. Using defaults. %s", configfile, e
             )
 
     def get_value(self, key):
@@ -54,6 +53,5 @@ class ConfigLoader(object):
         except Exception as e:
             if key in self.DEFAULTS.keys():
                 return self.DEFAULTS[key]
-            else:
-                logging.warning("Can not read key %s from config: %s" % (key, e))
+            logging.warning("Can not read key %s from config: %s", key, e)
         return None

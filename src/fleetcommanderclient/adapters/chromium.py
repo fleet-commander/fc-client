@@ -25,7 +25,7 @@ import logging
 import shutil
 import json
 
-from fleetcommanderclient.adapters import BaseAdapter
+from fleetcommanderclient.adapters.base import BaseAdapter
 
 
 class ChromiumAdapter(BaseAdapter):
@@ -57,7 +57,7 @@ class ChromiumAdapter(BaseAdapter):
                 policies[item["key"]] = item["value"]
         # Write policies data
         path = os.path.join(cache_path, "fleet-commander.json")
-        logging.debug("Writing policies data to {}".format(path))
+        logging.debug("Writing policies data to %s", path)
         with open(path, "w") as fd:
             fd.write(json.dumps(policies))
             fd.close()
@@ -71,43 +71,37 @@ class ChromiumAdapter(BaseAdapter):
         cached_file_path = os.path.join(cache_path, "fleet-commander.json")
 
         if os.path.isfile(cached_file_path):
-            logging.debug("Deploying policies at {}.".format(cached_file_path))
+            logging.debug("Deploying policies at %s.", cached_file_path)
             # Create policies path if does not exist
             if not os.path.exists(self.policies_path):
-                logging.debug(
-                    "Creating policies directory {}".format(self.policies_path)
-                )
+                logging.debug("Creating policies directory %s", self.policies_path)
                 try:
                     os.makedirs(self.policies_path)
                 except Exception as e:
                     logging.debug(
-                        "Failed to create policies directory {}: {}".format(
-                            self.policies_path, e
-                        )
+                        "Failed to create policies directory %s: %s",
+                        self.policies_path,
+                        e,
                     )
 
             # Delete any previous file at managed profiles
             path = os.path.join(self.policies_path, self.POLICIES_FILENAME.format(uid))
             if os.path.isfile(path):
-                logging.debug("Removing previous policies file {}".format(path))
+                logging.debug("Removing previous policies file %s", path)
                 try:
                     os.remove(path)
                 except Exception as e:
-                    logging.debug(
-                        "Failed to remove old policies file {}: {}".format(path, e)
-                    )
+                    logging.debug("Failed to remove old policies file %s: %s", path, e)
 
             # Deploy new policies file
-            logging.debug(
-                "Copying policies file at {} to {}".format(cached_file_path, path)
-            )
+            logging.debug("Copying policies file at %s to %s", cached_file_path, path)
             shutil.copyfile(cached_file_path, path)
 
             # Change permissions and ownership
             os.chown(path, uid, -1)
             os.chmod(path, stat.S_IREAD)
         else:
-            logging.debug("No policies file at {}. Ignoring.".format(cached_file_path))
+            logging.debug("No policies file at %s. Ignoring.", cached_file_path)
 
 
 class ChromeAdapter(ChromiumAdapter):

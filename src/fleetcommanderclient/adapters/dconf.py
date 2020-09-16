@@ -20,14 +20,13 @@
 #          Oliver Gutiérrez <ogutierrez@redhat.com>
 
 import os
-import stat
 import subprocess
 import logging
 import shutil
 
 from gi.repository import GLib
 
-from fleetcommanderclient.adapters import BaseAdapter
+from fleetcommanderclient.adapters.base import BaseAdapter
 
 
 class DconfAdapter(BaseAdapter):
@@ -78,7 +77,7 @@ class DconfAdapter(BaseAdapter):
             raise Exception("{}\n{}".format(out, err))
 
     def _remove_path(self, path, throw=False):
-        logging.debug("Removing path: {}".format(path))
+        logging.debug("Removing path: %s", path)
         try:
             if os.path.exists(path):
                 if os.path.isdir(path):
@@ -87,10 +86,9 @@ class DconfAdapter(BaseAdapter):
                     os.remove(path)
         except Exception as e:
             if throw:
-                logging.error("Error removing path {}: {}".format(path, e))
+                logging.error("Error removing path %s: %s", path, e)
                 raise e
-            else:
-                logging.warning("Error removing path {}: {}".format(path, e))
+            logging.warning("Error removing path %s: %s", path, e)
 
     def process_config_data(self, config_data, cache_path):
         """
@@ -100,11 +98,11 @@ class DconfAdapter(BaseAdapter):
 
         # Create keyfile path
         keyfiles_dir = os.path.join(cache_path, "keyfiles")
-        logging.debug("Creating keyfiles directory {}".format(keyfiles_dir))
+        logging.debug("Creating keyfiles directory %s", keyfiles_dir)
         try:
             os.makedirs(keyfiles_dir)
         except Exception as e:
-            logging.error("Error creating keyfiles path {}: {}".format(keyfiles_dir, e))
+            logging.error("Error creating keyfiles path %s: %s", keyfiles_dir, e)
             return
 
         # Prepare data for saving it in keyfile
@@ -119,11 +117,11 @@ class DconfAdapter(BaseAdapter):
 
         # Save keyfile
         keyfile_path = os.path.join(keyfiles_dir, self.PROFILE_FILE)
-        logging.debug("Saving dconf keyfile to {}".format(keyfile_path))
+        logging.debug("Saving dconf keyfile to %s", keyfile_path)
         try:
             keyfile.save_to_file(keyfile_path)
         except Exception as e:
-            logging.error('Error saving dconf keyfile at "%s": %s' % (keyfile_path, e))
+            logging.error('Error saving dconf keyfile at "%s": %s', keyfile_path, e)
             return
 
         # Compile dconf database
@@ -131,7 +129,7 @@ class DconfAdapter(BaseAdapter):
         try:
             self._compile_dconf_db(keyfiles_dir, db_path)
         except Exception as e:
-            logging.error("Error compiling dconf data to {}: {}".format(cache_path, e))
+            logging.error("Error compiling dconf data to %s: %s", cache_path, e)
             return
 
     def deploy_files(self, cache_path, uid):
@@ -144,10 +142,9 @@ class DconfAdapter(BaseAdapter):
 
         if os.path.isfile(cached_db_file_path):
             logging.debug(
-                "Deploying dconf settings from database file {}".format(
-                    cached_db_file_path
-                )
+                "Deploying dconf settings from database file %s", cached_db_file_path
             )
+
             profile_path, keyfile_dir, db_path = self._get_paths_for_uid(uid)
 
             # Remove old paths
@@ -155,7 +152,7 @@ class DconfAdapter(BaseAdapter):
                 self._remove_path(path)
 
             # Create runtime path
-            logging.debug("Creating profile path for dconf {}".format(profile_path))
+            logging.debug("Creating profile path for dconf %s", profile_path)
             try:
                 os.makedirs(self.dconf_profile_path)
             except Exception:
@@ -176,12 +173,10 @@ class DconfAdapter(BaseAdapter):
                     fd.write(profile_data)
                     fd.close()
             except Exception as e:
-                logging.error(
-                    "Error saving dconf profile at {}: {}".format(profile_path, e)
-                )
+                logging.error("Error saving dconf profile at %s: %s", profile_path, e)
                 return
 
-            logging.info("Processed dconf configuration for UID %s")
+            logging.info("Processed dconf configuration for UID %s", uid)
 
             # # Change permissions and ownership for accounts file
             # os.chown(deploy_file_path, uid, -1)
@@ -193,7 +188,6 @@ class DconfAdapter(BaseAdapter):
 
         else:
             logging.debug(
-                "Dconf settings database file {} not present. Ignoring.".format(
-                    cached_db_file_path
-                )
+                "Dconf settings database file %s not present. Ignoring.",
+                cached_db_file_path,
             )
