@@ -48,7 +48,7 @@ class BaseAdapter:
                 os.path.expanduser("~"), ".cache/fleet-commander", self.NAMESPACE
             )
         # Get user directory from password database
-        homedir = pwd.getpwuid(uid).pw_dir
+        homedir = getattr(pwd.getpwuid(uid), "pw_dir")
         return os.path.join(homedir, ".cache/fleet-commander/", self.NAMESPACE)
 
     def cleanup_cache(self, namespace_cache_path=None):
