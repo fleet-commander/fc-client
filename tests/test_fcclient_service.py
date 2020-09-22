@@ -32,32 +32,28 @@ sys.path.append(PYTHONPATH)
 # Fleet commander imports
 from fleetcommanderclient import fcclient
 from fleetcommanderclient.configloader import ConfigLoader
-from fleetcommanderclient.configadapters import networkmanager
-
-USER_NAME = "myuser"
-USER_UID = 55555
-
-
-def mocked_uname(uid):
-    """
-    This is a mock for os.pwd.getpwuid
-    """
-
-    class MockPwd:
-        pw_name = USER_NAME
-        pw_dir = sys.argv[1]
-
-    if uid == USER_UID:
-        return MockPwd()
-    raise Exception("Unknown UID: %d" % uid)
-
-
-# Mock networkmanager pwd.getpwuid
-networkmanager.pwd.getpwuid = mocked_uname
 
 
 class TestConfigLoader(ConfigLoader):
     pass
+
+
+class FakeNMConfigAdapter:
+    """
+    Fake configuration adapter for Network Manager
+    """
+
+    NAMESPACE = "org.freedesktop.NetworkManager"
+
+    def bootstrap(self, uid):
+
+        pass
+
+    def update(self, uid, data):
+        pass
+
+
+fcclient.configadapters.NetworkManagerConfigAdapter = FakeNMConfigAdapter
 
 
 class TestFleetCommanderClientDbusService(fcclient.FleetCommanderClientDbusService):
