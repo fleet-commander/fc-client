@@ -1,6 +1,6 @@
 # This package depends on automagic byte compilation
 # https://fedoraproject.org/wiki/Changes/No_more_automagic_Python_bytecompilation_phase_2
-%global _python_bytecompile_extra 1
+%global _python_bytecompile_extra 0
 
 Name:           fleet-commander-client
 Version:        0.15.0
