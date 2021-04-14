@@ -3,7 +3,6 @@ TESTS = 00_configloader.py 01_mergers.py 02_settingscompiler.py 03_configadapter
 
 EXTRA_DIST = \
 	$(TESTS) \
-	python-wrapper.sh \
 	_fcclient_tests.py \
 	_fcclientad_tests.py \
 	test_fcclient_service.py \

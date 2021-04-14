@@ -3,8 +3,8 @@
 %global _python_bytecompile_extra 1
 
 Name:           fleet-commander-client
-Version:        0.15.0
-Release:        3%{?dist}
+Version:        0.15.2
+Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
 BuildArch: noarch
@@ -15,14 +15,6 @@ Source0: https://github.com/fleet-commander/fc-client/releases/download/%{versio
 
 
 BuildRequires: dconf
-
-%if 0%{?rhel} && 0%{?rhel} < 8
-BuildRequires: python2-devel
-BuildRequires: dconf
-BuildRequires: pygobject3
-BuildRequires: dbus-python
-BuildRequires: python-dbusmock
-%endif
 
 %if 0%{?fedora} >= 30
 BuildRequires: python3-devel
@@ -54,12 +46,6 @@ Requires: systemd
 Requires: dconf
 Requires(preun): systemd
 
-%if 0%{?rhel} && 0%{?rhel} < 8
-Requires: python2
-Requires: pygobject2
-Requires: samba-python
-Requires: python-ldap
-%endif
 
 %if 0%{?fedora} >= 30
 Requires: python3
@@ -127,6 +113,9 @@ network of users and workstations/laptops.
 
 
 %changelog
+* Wed Apr 14 2021 Oliver Gutierrez <ogutierrez@redhat.com> - 0.15.2-1
+- Deprecation of python2
+
 * Tue Jan 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 0.15.0-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
 
