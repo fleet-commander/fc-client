@@ -1,5 +1,5 @@
 fc_client_confadapt_pydir = ${fcpythondir}/fleetcommanderclient/configadapters
-fc_client_confadapt_py_SCRIPTS = \
+fc_client_confadapt_py_DATA = \
 	fleetcommanderclient/configadapters/__init__.py \
 	fleetcommanderclient/configadapters/base.py \
 	fleetcommanderclient/configadapters/goa.py \
@@ -10,7 +10,7 @@ fc_client_confadapt_py_SCRIPTS = \
 	fleetcommanderclient/configadapters/dconf.py
 
 fc_client_adapters_pydir = ${fcpythondir}/fleetcommanderclient/adapters
-fc_client_adapters_py_SCRIPTS = \
+fc_client_adapters_py_DATA = \
 	fleetcommanderclient/adapters/__init__.py \
 	fleetcommanderclient/adapters/base.py \
 	fleetcommanderclient/adapters/goa.py \
@@ -22,7 +22,7 @@ fc_client_adapters_py_SCRIPTS = \
 
 
 fc_client_pydir = ${fcpythondir}/fleetcommanderclient
-fc_client_py_SCRIPTS = \
+fc_client_py_DATA = \
 	fleetcommanderclient/__init__.py \
 	fleetcommanderclient/configloader.py \
 	fleetcommanderclient/mergers.py \
@@ -33,9 +33,9 @@ fc_client_py_SCRIPTS = \
 
 
 EXTRA_DIST = \
-	$(fc_client_confadapt_py_SCRIPTS) \
-	$(fc_client_adapters_py_SCRIPTS) \
-	$(fc_client_py_SCRIPTS)
+	$(fc_client_confadapt_py_DATA) \
+	$(fc_client_adapters_py_DATA) \
+	$(fc_client_py_DATA)
 
 #CLEANFILESM = \
 #	$(fc_client_consts_DATA)
