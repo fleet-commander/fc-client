@@ -1,4 +1,4 @@
-#!/usr/bin/env python-wrapper.sh
+#!/usr/bin/env python3
 
 from __future__ import absolute_import
 
