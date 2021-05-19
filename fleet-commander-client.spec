@@ -3,7 +3,7 @@
 %global _python_bytecompile_extra 1
 
 Name:           fleet-commander-client
-Version:        0.15.2
+Version:        0.16.0
 Release:        1%{?dist}
 Summary:        Fleet Commander Client
 
@@ -33,7 +33,6 @@ BuildRequires: python3-dns
 BuildRequires: python3-ldap
 BuildRequires: python3-dbusmock
 BuildRequires: python3-ipalib
-BuildRequires: python3-six
 BuildRequires: python3-samba
 BuildRequires: NetworkManager-libnm
 BuildRequires: json-glib
@@ -113,7 +112,7 @@ network of users and workstations/laptops.
 
 
 %changelog
-* Wed Apr 14 2021 Oliver Gutierrez <ogutierrez@redhat.com> - 0.15.2-1
+* Wed May 19 2021 Oliver Gutierrez <ogutierrez@redhat.com> - 0.16.0-1
 - Deprecation of python2
 
 * Tue Jan 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 0.15.0-3
