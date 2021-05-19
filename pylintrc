@@ -48,6 +48,7 @@ disable=
     unused-argument,
     wrong-import-order,
     wrong-import-position,
+    consider-using-with,  # pylint 2.8.0, contextmanager is not mandatory
 
 [REPORTS]
 output-format=colorized

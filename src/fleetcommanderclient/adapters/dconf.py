@@ -58,7 +58,7 @@ class DconfAdapter(BaseAdapter):
         Compiles dconf database
         """
         # Execute dbus service
-        cmd = subprocess.Popen(
+        with subprocess.Popen(
             [
                 "dconf",
                 "compile",
@@ -67,14 +67,14 @@ class DconfAdapter(BaseAdapter):
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-        )
-        cmd.wait()
-        out = cmd.stdout.read()
-        err = cmd.stderr.read()
-        cmd.stdout.close()
-        cmd.stderr.close()
-        if cmd.returncode != 0:
-            raise Exception("{}\n{}".format(out, err))
+        ) as cmd:
+            cmd.wait()
+            out = cmd.stdout.read()
+            err = cmd.stderr.read()
+            cmd.stdout.close()
+            cmd.stderr.close()
+            if cmd.returncode != 0:
+                raise Exception("{}\n{}".format(out, err))
 
     def _remove_path(self, path, throw=False):
         logging.debug("Removing path: %s", path)
