@@ -132,7 +132,7 @@ class DconfConfigAdapter(BaseConfigAdapter):
         keyfile_dir, db_path = self.get_paths_for_uid(uid)[1:]
 
         # Execute dbus service
-        cmd = subprocess.Popen(
+        with subprocess.Popen(
             [
                 "dconf",
                 "compile",
@@ -141,11 +141,11 @@ class DconfConfigAdapter(BaseConfigAdapter):
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-        )
-        cmd.wait()
-        out = cmd.stdout.read()
-        err = cmd.stderr.read()
-        cmd.stdout.close()
-        cmd.stderr.close()
-        if cmd.returncode != 0:
-            raise Exception("%s\n%s" % (out, err))
+        ) as cmd:
+            cmd.wait()
+            out = cmd.stdout.read()
+            err = cmd.stderr.read()
+            cmd.stdout.close()
+            cmd.stderr.close()
+            if cmd.returncode != 0:
+                raise Exception("%s\n%s" % (out, err))
